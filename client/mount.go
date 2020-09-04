@@ -120,7 +120,7 @@ func NewMounter(s, t, mode string) (*Mounter, error) {
 	}, nil
 }
 
-// Mount updates the target digivice's model based on the source digivice's model;
+// Mount updates the target digivice's model with a mount reference to the source digivice;
 // a mount is successful iff 1. source and target are compatible; 2. caller has sufficient
 // access rights.
 func (m *Mounter) Mount() error {
@@ -130,7 +130,7 @@ func (m *Mounter) Mount() error {
 	}
 
 	// source digivice
-	sj, err := getDigiviceJson(client.DynamicClient, m.Source)
+	_, err = getDigiviceJson(client.DynamicClient, m.Source)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
@@ -146,9 +146,9 @@ func (m *Mounter) Mount() error {
 	doExpose := func() error {
 		log.Println("mount: do expose")
 
-		// merge source's attr-values to the target
+		// add the mount reference (the namespaced name) to the target
 		path := m.Source.Kind.Name + "." + m.Source.SpacedName()
-		tj, err := sjson.SetRaw(tj, path, sj)
+		tj, err := sjson.SetRaw(tj, path, "\"" + ExposeMode + "\"")
 		if err != nil {
 			return fmt.Errorf("unable to merge json: %v", err)
 		}

@@ -28,7 +28,7 @@ type K8sClient struct {
 func (k *K8sClient) UpdateFromJson(j, namespace string) error {
 	var obj *unstructured.Unstructured
 	if err := json.Unmarshal([]byte(j), &obj); err != nil {
-		return fmt.Errorf("unable to unmarshall target: %v", err)
+		return fmt.Errorf("unable to unmarshall %s: %v", j, err)
 	}
 
 	// update the target
