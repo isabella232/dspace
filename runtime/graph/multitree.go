@@ -146,7 +146,7 @@ func (mt *MultiTree) AddNode(n string) {
 	}
 }
 
-func (mt *MultiTree) DeleteEdge(start, end string) error {
+func (mt *MultiTree) RemoveEdge(start, end string) error {
 	sn, ok := mt.nodes[start]
 	if !ok {
 		return fmt.Errorf("start node %s does not exist", start)
@@ -181,14 +181,14 @@ func (mt *MultiTree) DeleteEdge(start, end string) error {
 	return nil
 }
 
-func (mt *MultiTree) DeleteNode(name string) error {
+func (mt *MultiTree) RemoveNode(name string) error {
 	n, ok := mt.nodes[name]
 	if !ok {
 		return fmt.Errorf("%s does not exist", name)
 	}
 
 	for _, cn := range n.children {
-		if err := mt.DeleteEdge(n.value, cn.value); err != nil {
+		if err := mt.RemoveEdge(n.value, cn.value); err != nil {
 			return err
 		}
 	}
@@ -199,5 +199,7 @@ func (mt *MultiTree) DeleteNode(name string) error {
 	}
 
 	delete(mt.nodes, name)
+	delete(mt.trees, name)
+
 	return nil
 }

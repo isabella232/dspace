@@ -98,4 +98,18 @@ func TestMultiTree(t *testing.T) {
 	t.Logf("current multi-tree:\n%s", mt.String())
 
 	// edge removal
+	t.Logf("removing edge B-X..")
+	err = mt.RemoveEdge("B", "X")
+	if err != nil {
+		t.Errorf("error removing edge %v:%v", "B-X", err)
+	}
+	t.Logf("current multi-tree:\n%s", mt.String())
+
+	// node removal
+	t.Logf("removing node A..")
+	err = mt.RemoveNode("A")
+	if err != nil {
+		t.Errorf("error removing node %v:%v", "A", err)
+	}
+	t.Logf("current multi-tree:\n%s", mt.String())
 }
