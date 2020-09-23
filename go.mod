@@ -8,6 +8,7 @@ require (
 	github.com/mccanne/charm v0.0.2
 	github.com/spf13/cobra v1.0.0
 	github.com/tidwall/sjson v1.1.1
+	github.com/xlab/treeprint v1.0.0
 	golang.org/x/tools v0.0.0-20200828161849-5deb26317202 // indirect
 	k8s.io/apimachinery v0.17.0
 	k8s.io/client-go v0.17.0
