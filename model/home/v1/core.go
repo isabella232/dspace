@@ -16,6 +16,10 @@ type LampModel struct {
 	Brightness string `json:"brightness,omitempty" protobuf:"bytes,2,opt,name=brightness"`
 }
 
+// Camera
+type CameraModel struct {
+}
+
 // Room
 
 // Schema of the room model

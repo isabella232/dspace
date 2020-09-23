@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	MountRefPrefix = "mounts"
 	HideMode    = "hide"
 	ExposeMode  = "expose"
 	DefaultMode = ExposeMode
@@ -141,13 +142,20 @@ func (m *Mounter) Mount() error {
 		return fmt.Errorf("%v", err)
 	}
 	//log.Printf("%s\n%s", sj, tj)
+	// TODO:
+	// 1. compatibility check - whether src can be added to target's mount reference;
+	// 2. access right check - whether the caller has sufficient access rights to do writes;
+	// 3. mount rule check - whether the mount breaks the mount rule;
+	// 4. yield policy check - whether the mount has yield flag set if there is an active mount already;
+	// 5. nits: whether the digivice has been mounted etc.
 
 	// expose
 	doExpose := func() error {
 		log.Println("mount: do expose")
 
-		// add the mount reference (the namespaced name) to the target
-		path := m.Source.Kind.Name + "." + m.Source.SpacedName()
+		// add the mount reference (Kind.SpacedName) to the target
+		path := strings.Join([]string{MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}, ".")
+
 		tj, err := sjson.SetRaw(tj, path, "\"" + ExposeMode + "\"")
 		if err != nil {
 			return fmt.Errorf("unable to merge json: %v", err)
@@ -172,6 +180,16 @@ func (m *Mounter) Mount() error {
 	default:
 		return nil
 	}
+}
+
+func (m *Mounter) Unmount() error {
+	// TODO
+	return nil
+}
+
+func (m *Mounter) Yield() error {
+	// TODO
+	return nil
 }
 
 func getDigiviceJson(client dynamic.Interface, i *ID) (string, error) {
