@@ -11,8 +11,13 @@ type stringSet map[string]struct{}
 
 type node struct {
 	value    string
-	children map[string]*node
+	children map[string]*child
 	roots    stringSet
+}
+
+type child struct {
+	node *node
+	status  string
 }
 
 type tree struct {
@@ -35,16 +40,25 @@ func (ss stringSet) slice() []string {
 	return keys
 }
 
-func buildPrintTree(n *node, pn treeprint.Tree) {
-	cpn := pn.AddBranch(n.value)
-	for _, cn := range n.children {
+func buildPrintTree(c *child, pn treeprint.Tree) {
+	cpn := pn.AddBranch(c.node.value)
+	for _, cn := range c.node.children {
 		buildPrintTree(cn, cpn)
+	}
+}
+
+func NewMultiTree() *MultiTree {
+	return &MultiTree{
+		nodes: make(map[string]*node),
+		trees: make(map[string]*tree),
 	}
 }
 
 func (t *tree) String() string {
 	pt := treeprint.New()
-	buildPrintTree(t.root, pt)
+	buildPrintTree(&child{
+		node: t.root,
+	}, pt)
 	return pt.String()
 }
 
@@ -57,14 +71,34 @@ func (mt *MultiTree) String() string {
 	return s
 }
 
+func (mt *MultiTree) NodeExists(name string) bool {
+	_, ok := mt.nodes[name]
+	return ok
+}
+
+func (mt *MultiTree) EdgeExists(start, end string) bool {
+	var sn *node
+	var ok bool
+
+	if sn, ok = mt.nodes[start]; !ok {
+		return false
+	}
+
+	if _, ok = sn.children[end]; !ok {
+		return false
+	}
+	return true
+}
+
 func (mt *MultiTree) AddEdge(start, end string) error {
-	sn, ok := mt.nodes[start]
-	if !ok {
+	var sn, en *node
+	var ok bool
+
+	if sn, ok = mt.nodes[start]; !ok {
 		return fmt.Errorf("start node %s does not exist", start)
 	}
 
-	en, ok := mt.nodes[end]
-	if !ok {
+	if en, ok = mt.nodes[end]; !ok {
 		return fmt.Errorf("end node %s does not exist", end)
 	}
 
@@ -79,7 +113,9 @@ func (mt *MultiTree) AddEdge(start, end string) error {
 	}
 
 	// add the edge
-	sn.children[end] = en
+	sn.children[end] = &child{
+		node: en,
+	}
 
 	// remove tree rooted at end
 	delete(mt.trees, end)
@@ -101,7 +137,7 @@ func deepUpdateRoots(rootsToDel, rootsToAdd []string, n *node) {
 	}
 
 	for _, cn := range n.children {
-		deepUpdateRoots(rootsToDel, rootsToAdd, cn)
+		deepUpdateRoots(rootsToDel, rootsToAdd, cn.node)
 	}
 }
 
@@ -111,7 +147,7 @@ func deepCompareRoots(n *node, roots stringSet) error {
 	}
 
 	for _, cn := range n.children {
-		if err := deepCompareRoots(cn, roots); err != nil {
+		if err := deepCompareRoots(cn.node, roots); err != nil {
 			return err
 		}
 	}
@@ -135,7 +171,7 @@ func (mt *MultiTree) AddNode(n string) {
 
 	nn := &node{
 		value:    n,
-		children: make(map[string]*node),
+		children: make(map[string]*child),
 		roots: stringSet{
 			n: struct{}{},
 		},
@@ -188,7 +224,7 @@ func (mt *MultiTree) RemoveNode(name string) error {
 	}
 
 	for _, cn := range n.children {
-		if err := mt.RemoveEdge(n.value, cn.value); err != nil {
+		if err := mt.RemoveEdge(n.value, cn.node.value); err != nil {
 			return err
 		}
 	}

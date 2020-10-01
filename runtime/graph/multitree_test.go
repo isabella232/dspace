@@ -10,33 +10,30 @@ func TestMultiTree(t *testing.T) {
 	nodes := []string{
 		"A", "B", "U", "X", "V", "W", "Y", "Z",
 	}
-	edges := []struct {
-		start string
-		end   string
-	}{
+	edges := []Edge {
 		{
-			start: "A",
-			end:   "U",
+			Start: "A",
+			End:   "U",
 		},
 		{
-			start: "A",
-			end:   "X",
+			Start: "A",
+			End:   "X",
 		},
 		{
-			start: "U",
-			end:   "V",
+			Start: "U",
+			End:   "V",
 		},
 		{
-			start: "U",
-			end:   "W",
+			Start: "U",
+			End:   "W",
 		},
 		{
-			start: "X",
-			end:   "Y",
+			Start: "X",
+			End:   "Y",
 		},
 		{
-			start: "X",
-			end:   "Z",
+			Start: "X",
+			End:   "Z",
 		},
 	}
 
@@ -45,7 +42,7 @@ func TestMultiTree(t *testing.T) {
 	}
 
 	for _, e := range edges {
-		if err := mt.AddEdge(e.start, e.end); err != nil {
+		if err := mt.AddEdge(e.Start, e.End); err != nil {
 			t.Errorf("error adding edge %v:%v", e, err)
 		}
 	}
@@ -53,21 +50,18 @@ func TestMultiTree(t *testing.T) {
 	t.Logf("current multi-tree:\n%s", mt.String())
 
 	// make it a multi-tree
-	edges = []struct {
-		start string
-		end   string
-	}{
+	edges = []Edge{
 		{
-			start: "B",
-			end:   "V",
+			Start: "B",
+			End:   "V",
 		},
 		{
-			start: "B",
-			end:   "X",
+			Start: "B",
+			End:   "X",
 		},
 	}
 	for _, e := range edges {
-		if err := mt.AddEdge(e.start, e.end); err != nil {
+		if err := mt.AddEdge(e.Start, e.End); err != nil {
 			t.Errorf("error adding edge %v:%v", e, err)
 		}
 	}

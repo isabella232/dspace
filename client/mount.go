@@ -1,24 +1,18 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
 	"digi.dev/digivice/client/config"
+	"digi.dev/digivice/common"
 	"github.com/tidwall/sjson"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-)
-
-const (
-	MountRefPrefix = "mounts"
-	HideMode    = "hide"
-	ExposeMode  = "expose"
-	DefaultMode = ExposeMode
-	DefaultNamespace = "default"
 )
 
 // Kind identifies a digivice model schema, e.g., digi.dev/v1/lamps
@@ -76,7 +70,7 @@ func ParseID(s string) (*ID, error) {
 	case 6:
 		g, v, kn, ns, n = ss[1], ss[2], ss[3], ss[4], ss[5]
 	case 5:
-		g, v, kn, ns, n = ss[1], ss[2], ss[3], DefaultNamespace, ss[4]
+		g, v, kn, ns, n = ss[1], ss[2], ss[3], common.DefaultNamespace, ss[4]
 	case 3:
 		return nil, fmt.Errorf("unimplemented")
 	case 2:
@@ -131,32 +125,25 @@ func (m *Mounter) Mount() error {
 	}
 
 	// source digivice
-	_, err = getDigiviceJson(client.DynamicClient, m.Source)
+	_, err = getResourceJson(client.DynamicClient, m.Source)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
 
 	// target digivice
-	tj, err := getDigiviceJson(client.DynamicClient, m.Target)
+	tj, err := getResourceJson(client.DynamicClient, m.Target)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
 	//log.Printf("%s\n%s", sj, tj)
-	// TODO:
-	// 1. compatibility check - whether src can be added to target's mount reference;
-	// 2. access right check - whether the caller has sufficient access rights to do writes;
-	// 3. mount rule check - whether the mount breaks the mount rule;
-	// 4. yield policy check - whether the mount has yield flag set if there is an active mount already;
-	// 5. nits: whether the digivice has been mounted etc.
 
-	// expose
-	doExpose := func() error {
-		log.Println("mount: do expose")
+	doMount := func() error {
+		log.Println("mount: do", m.Mode)
 
 		// add the mount reference (Kind.SpacedName) to the target
-		path := strings.Join([]string{MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}, ".")
+		path := strings.Join([]string{common.MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}, ".")
 
-		tj, err := sjson.SetRaw(tj, path, "\"" + ExposeMode + "\"")
+		tj, err := sjson.SetRaw(tj, path, "\"" + m.Mode + "\"")
 		if err != nil {
 			return fmt.Errorf("unable to merge json: %v", err)
 		}
@@ -165,21 +152,7 @@ func (m *Mounter) Mount() error {
 		return client.UpdateFromJson(tj, m.Target.Namespace)
 	}
 
-	// hide
-	doHide := func() error {
-		log.Println("mount: do hide")
-		log.Fatalf("TODO: unimplemented")
-		return nil
-	}
-
-	switch m.Mode {
-	case ExposeMode:
-		return doExpose()
-	case HideMode:
-		return doHide()
-	default:
-		return nil
-	}
+	return doMount()
 }
 
 func (m *Mounter) Unmount() error {
@@ -192,9 +165,9 @@ func (m *Mounter) Yield() error {
 	return nil
 }
 
-func getDigiviceJson(client dynamic.Interface, i *ID) (string, error) {
+func getResourceJson(client dynamic.Interface, i *ID) (string, error) {
 	gvr := i.Kind.Gvr()
-	d, err := client.Resource(gvr).Namespace(i.Namespace).Get(i.Name, metav1.GetOptions{})
+	d, err := client.Resource(gvr).Namespace(i.Namespace).Get(context.TODO(), i.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("unable to get digivice %v: %v", gvr, err)
 	}

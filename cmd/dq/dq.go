@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"digi.dev/digivice/client"
+	"digi.dev/digivice/common"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +26,7 @@ var mountCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var mode string
 		if len(args) < 3 {
-			mode = client.DefaultMode
+			mode = common.DefaultMode
 		} else {
 			mode = args[2]
 		}

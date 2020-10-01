@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -35,6 +36,7 @@ func (k *K8sClient) UpdateFromJson(j, namespace string) error {
 	gvk := obj.GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 
+	// TODO: measure time
 	groupResources, err := restmapper.GetAPIGroupResources(k.Clientset.Discovery())
 	if err != nil {
 		return fmt.Errorf("unable to discover resources: %v", err)
@@ -47,7 +49,7 @@ func (k *K8sClient) UpdateFromJson(j, namespace string) error {
 		return fmt.Errorf("unable to map resource: %v", err)
 	}
 
-	_, err = k.DynamicClient.Resource(mapping.Resource).Namespace(namespace).Update(obj, metav1.UpdateOptions{})
+	_, err = k.DynamicClient.Resource(mapping.Resource).Namespace(namespace).Update(context.TODO(), obj, metav1.UpdateOptions{})
 	return err
 }
 
@@ -72,7 +74,7 @@ func NewK8sClient() (*K8sClient, error) {
 		return nil, err
 	}
 
-	// create the clientsetrn
+	// create the clientset
 	cs, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
