@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -18,13 +19,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
-	"github.com/slok/kubewebhook/pkg/log"
 	kubewebhookcrd "github.com/slok/kubewebhook/test/integration/crd/client/clientset/versioned"
 )
 
 // ToAdmissionErrorResponse transforms an error into a admission response with error.
-func ToAdmissionErrorResponse(uid types.UID, err error, logger log.Logger) *adv1beta1.AdmissionResponse {
-	logger.Errorf("admission webhook error: %s", err)
+func ToAdmissionErrorResponse(uid types.UID, err error) *adv1beta1.AdmissionResponse {
+	log.Printf("admission webhook error: %s", err)
 	return &adv1beta1.AdmissionResponse{
 		UID: uid,
 		Result: &metav1.Status{

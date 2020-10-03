@@ -3,8 +3,8 @@ package validating
 import (
 	"context"
 	"fmt"
+	"log"
 
-	"github.com/slok/kubewebhook/pkg/log"
 	"github.com/slok/kubewebhook/pkg/webhook"
 	adv1beta1 "k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,11 +52,10 @@ func NewWebhook(cfg WebhookConfig, validator Validator) (webhook.Webhook, error)
 type validateWebhook struct {
 	validator Validator
 	cfg       WebhookConfig
-	logger    log.Logger
 }
 
 func (w validateWebhook) Review(ctx context.Context, ar *adv1beta1.AdmissionReview) *adv1beta1.AdmissionResponse {
-	w.logger.Debugf("reviewing request %s, named: %s/%s", ar.Request.UID, ar.Request.Namespace, ar.Request.Name)
+	log.Printf("reviewing request %s, named: %s/%s", ar.Request.UID, ar.Request.Namespace, ar.Request.Name)
 
 	res, err := w.validator.Validate(ctx, ar)
 	if err != nil {
@@ -80,5 +79,5 @@ func (w validateWebhook) Review(ctx context.Context, ar *adv1beta1.AdmissionRevi
 }
 
 func (w validateWebhook) toAdmissionErrorResponse(ar *adv1beta1.AdmissionReview, err error) *adv1beta1.AdmissionResponse {
-	return util.ToAdmissionErrorResponse(ar.Request.UID, err, w.logger)
+	return util.ToAdmissionErrorResponse(ar.Request.UID, err)
 }

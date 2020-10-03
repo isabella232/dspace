@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/banzaicloud/k8s-objectmatcher/patch"
-	whhttp "github.com/slok/kubewebhook/pkg/http"
 	adv1beta1 "k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,6 +23,7 @@ import (
 	"k8s.io/client-go/restmapper"
 
 	"digi.dev/digivice/common"
+	whhttp "digi.dev/digivice/runtime/admission/http"
 	"digi.dev/digivice/runtime/admission/util"
 	vlwh "digi.dev/digivice/runtime/admission/validating"
 	"digi.dev/digivice/runtime/graph"
@@ -289,6 +289,10 @@ func (v *Validator) doUpdate(njson, ojson []byte) (vlwh.ValidatorResult, error) 
 	}
 
 	log.Printf("diff %v", patchResult)
+	// XXX: all verbs, shadow check
+	// XXX: access verbs, single-writer check
+	// TODO: check if update mount/yield/connect reference and if it is valid
+	// TODO: update digi-graph
 	return vlwh.ValidatorResult{Valid: true}, nil
 }
 
