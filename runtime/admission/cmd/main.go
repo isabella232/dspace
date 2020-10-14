@@ -393,3 +393,7 @@ func main() {
 		log.Fatalf("error serving webhook: %s", err)
 	}
 }
+
+func init() {
+	log.SetFlags(log.Lmicroseconds)
+}

@@ -1,100 +1,22 @@
 package client
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
+	"github.com/tidwall/sjson"
+
 	"digi.dev/digivice/client/config"
 	"digi.dev/digivice/common"
-	"github.com/tidwall/sjson"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 )
-
-// Kind identifies a digivice model schema, e.g., digi.dev/v1/lamps
-type Kind struct {
-	// Model schema group
-	Group string `json:"group"`
-	// Schema version
-	Version string `json:"version"`
-	// Schema name in plural and non-capitalized, e.g., Lamp -> lamps
-	Name string `json:"string"`
-}
-
-// ID identifies a digivice model, e.g., digi.dev/v1/lamps/default/lamp-1
-type ID struct {
-	Kind      *Kind  `json:"kind"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
 
 // Mounter contains methods to perform a mount
 type Mounter struct {
-	Source *ID    `json:"source"`
-	Target *ID    `json:"target"`
-	Mode   string `json:"mode"`
-}
-
-func (k *Kind) Gvr() schema.GroupVersionResource {
-	return schema.GroupVersionResource{
-		Group:    k.Group,
-		Version:  k.Version,
-		Resource: k.Name,
-	}
-}
-
-func (k *Kind) String() string {
-	return strings.Join([]string{k.Group, k.Version, k.Name}, "/")
-}
-
-func (i *ID) SpacedName() string{
-	return strings.Join([]string{i.Namespace, i.Name}, "/")
-}
-
-// ParseID returns a parsed digivice ID from a slash separated string.
-// The following string formats are allowed:
-//  1. /group/ver/schema_name/namespace/name;
-//  2. /group/ver/schema_name/name (use default namespace);
-//  3. /namespace/name;
-//  4. /name (use default namespace);
-//  5. name (use default namespace);
-// For 3-5, Mounter will fetch the spacedNames to kinds mapping.
-func ParseID(s string) (*ID, error) {
-	ss := strings.Split(s, "/")
-	var g, v, kn, ns, n string
-	switch len(ss) {
-	case 6:
-		g, v, kn, ns, n = ss[1], ss[2], ss[3], ss[4], ss[5]
-	case 5:
-		g, v, kn, ns, n = ss[1], ss[2], ss[3], common.DefaultNamespace, ss[4]
-	case 3:
-		return nil, fmt.Errorf("unimplemented")
-	case 2:
-		return nil, fmt.Errorf("unimplemented")
-	case 1:
-		return nil, fmt.Errorf("unimplemented")
-	default:
-		return nil, fmt.Errorf("id needs to have either 5, 2, or 1 fields, "+
-			"given %d in %s; each field starts with a '/' except for single "+
-			"name on default namespace", len(ss)-1, s)
-	}
-	return &ID{
-		Kind: &Kind{
-			Group:   g,
-			Version: v,
-			Name:    kn,
-		},
-		Namespace: ns,
-		Name:      n,
-	}, nil
-}
-
-func (i *ID) String() string {
-	return strings.Join([]string{i.Kind.String(), i.Namespace, i.Name}, "/")
+	Source *ID    `json:"source,omitempty"`
+	Target *ID    `json:"target,omitempty"`
+	Mode   string `json:"mode,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 func NewMounter(s, t, mode string) (*Mounter, error) {
@@ -112,6 +34,7 @@ func NewMounter(s, t, mode string) (*Mounter, error) {
 		Source: sid,
 		Target: tid,
 		Mode:   mode,
+		Status: common.ActiveStatus,
 	}, nil
 }
 
@@ -125,13 +48,13 @@ func (m *Mounter) Mount() error {
 	}
 
 	// source digivice
-	_, err = getResourceJson(client.DynamicClient, m.Source)
+	_, err = GetResourceJson(client.DynamicClient, m.Source)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
 
 	// target digivice
-	tj, err := getResourceJson(client.DynamicClient, m.Target)
+	tj, err := GetResourceJson(client.DynamicClient, m.Target)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
@@ -141,12 +64,24 @@ func (m *Mounter) Mount() error {
 		log.Println("mount: do", m.Mode)
 
 		// add the mount reference (Kind.SpacedName) to the target
-		path := strings.Join([]string{common.MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}, ".")
+		//path := strings.Join([]string{common.MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}, ".")
+		pathPrefix := []string{common.MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}
 
-		tj, err := sjson.SetRaw(tj, path, "\"" + m.Mode + "\"")
+		// set mode
+		modePath := strings.Join(append(pathPrefix, "mode"), ".")
+		tj, err := sjson.SetRaw(tj, modePath, "\""+m.Mode+"\"")
 		if err != nil {
 			return fmt.Errorf("unable to merge json: %v", err)
 		}
+
+		// set status
+		statusPath := strings.Join(append(pathPrefix, "status"), ".")
+		tj, err = sjson.SetRaw(tj, statusPath, "\""+m.Status+"\"")
+		if err != nil {
+			return fmt.Errorf("unable to merge json: %v", err)
+		}
+
+		log.Printf("mount: %v", tj)
 
 		// update the target
 		return client.UpdateFromJson(tj, m.Target.Namespace)
@@ -163,19 +98,4 @@ func (m *Mounter) Unmount() error {
 func (m *Mounter) Yield() error {
 	// TODO
 	return nil
-}
-
-func getResourceJson(client dynamic.Interface, i *ID) (string, error) {
-	gvr := i.Kind.Gvr()
-	d, err := client.Resource(gvr).Namespace(i.Namespace).Get(context.TODO(), i.Name, metav1.GetOptions{})
-	if err != nil {
-		return "", fmt.Errorf("unable to get digivice %v: %v", gvr, err)
-	}
-
-	j, err := json.MarshalIndent(d, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("unable to parse digivice %s: %v", j, err)
-	}
-
-	return string(j), nil
 }

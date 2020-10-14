@@ -4,13 +4,18 @@ var (
 	DefaultNamespace = "default"
 
 	// mount labels
-	MountRefPrefix   = "mounts"
-	YieldRefPrefix   = "yields"
-	ExposeMode = "expose"
-	HideMode = "hide"
-	DefaultMode = ExposeMode
+	MountRefPrefix = "mounts"
+	ExposeMode     = "expose"
+	HideMode       = "hide"
+	DefaultMode    = ExposeMode
+	ActiveStatus   = "active"
+	InActiveStatus = "inactive"
+
+	// pipe labels
+	PipeSourceMode = "source"
+	PipeSinkMode   = "sink"
 
 	// connect labels
 	SourceRefPrefix = "sources"
-	SinkRefPrefix = "sinks"
+	SinkRefPrefix   = "sinks"
 )

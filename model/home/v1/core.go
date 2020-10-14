@@ -24,5 +24,6 @@ type CameraModel struct {
 
 // Schema of the room model
 type RoomModel struct {
-	Mode string `json:"mode,omitempty" protobuf:"bytes,1,rep,name=mode"`
+	Mode       string `json:"mode,omitempty" protobuf:"bytes,1,rep,name=mode"`
+	Brightness string `json:"brightness,omitempty" protobuf:"bytes,2,rep,name=brightness"`
 }

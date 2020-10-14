@@ -18,7 +18,7 @@ dq is a command-line tool for managing digivices.
 `,
 }
 
-// children commands
+// child commands
 var mountCmd = &cobra.Command{
 	Use:   "mount src target [mode]",
 	Short: "Mount a digivice to another digivice.",
@@ -45,12 +45,39 @@ var mountCmd = &cobra.Command{
 	},
 }
 
-// ..
-// TODO: add other verbs with client-go; we currently use kubectl to do these verbs;
+var pipeCmd = &cobra.Command{
+	Use:   "pipe src target",
+	Short: "Pipe an element.input to an element.output",
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		pp, err := client.NewPiper(args[0], args[1])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("try to pipe %s to %s\n", pp.Source, pp.Target)
+		if err = pp.Pipe(); err != nil {
+			fmt.Printf("pipe failed: %v\n", err)
+			os.Exit(1)
+		}
+	},
+}
+
+var runCmd = &cobra.Command{
+	Use:   "run src target [mode]",
+	Short: "run an element.",
+	Args: cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO
+	},
+}
 
 // add subcommands here
 func Execute() {
 	RootCmd.AddCommand(mountCmd)
+	RootCmd.AddCommand(pipeCmd)
+	RootCmd.AddCommand(runCmd)
 
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
