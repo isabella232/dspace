@@ -7,34 +7,33 @@ import (
 
 	"github.com/tidwall/sjson"
 
-	"digi.dev/digivice/client/config"
-	"digi.dev/digivice/common"
+	"digi.dev/digivice/pkg/core"
 )
 
 // Mounter contains methods to perform a mount
 type Mounter struct {
-	Source *ID    `json:"source,omitempty"`
-	Target *ID    `json:"target,omitempty"`
-	Mode   string `json:"mode,omitempty"`
-	Status string `json:"status,omitempty"`
+	Source core.Auri `json:"source,omitempty"`
+	Target core.Auri `json:"target,omitempty"`
+	Mode   string     `json:"mode,omitempty"`
+	Status string     `json:"status,omitempty"`
 }
 
 func NewMounter(s, t, mode string) (*Mounter, error) {
-	sid, err := ParseID(s)
+	si, err := core.ParseAuri(s)
 	if err != nil {
 		return nil, err
 	}
 
-	tid, err := ParseID(t)
+	ti, err := core.ParseAuri(t)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Mounter{
-		Source: sid,
-		Target: tid,
+		Source: si,
+		Target: ti,
 		Mode:   mode,
-		Status: common.ActiveStatus,
+		Status: core.ActiveStatus,
 	}, nil
 }
 
@@ -42,19 +41,19 @@ func NewMounter(s, t, mode string) (*Mounter, error) {
 // a mount is successful iff 1. source and target are compatible; 2. caller has sufficient
 // access rights.
 func (m *Mounter) Mount() error {
-	client, err := config.NewK8sClient()
+	c, err := NewClient()
 	if err != nil {
 		return fmt.Errorf("unable to create k8s client: %v", err)
 	}
 
 	// source digivice
-	_, err = GetResourceJson(client.DynamicClient, m.Source)
+	_, err = c.GetResourceJson(&m.Source)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
 
 	// target digivice
-	tj, err := GetResourceJson(client.DynamicClient, m.Target)
+	tj, err := c.GetResourceJson(&m.Target)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
@@ -65,7 +64,7 @@ func (m *Mounter) Mount() error {
 
 		// add the mount reference (Kind.SpacedName) to the target
 		//path := strings.Join([]string{common.MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}, ".")
-		pathPrefix := []string{common.MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}
+		pathPrefix := []string{core.MountRefPrefix, m.Source.Kind.Plural(), m.Source.SpacedName().String()}
 
 		// set mode
 		modePath := strings.Join(append(pathPrefix, "mode"), ".")
@@ -84,7 +83,7 @@ func (m *Mounter) Mount() error {
 		log.Printf("mount: %v", tj)
 
 		// update the target
-		return client.UpdateFromJson(tj, m.Target.Namespace)
+		return c.UpdateFromJson(tj, m.Target.Namespace)
 	}
 
 	return doMount()
