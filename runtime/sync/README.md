@@ -31,6 +31,6 @@ spec:
     mode: match
 ```
 
-
+TBD: concurrent writes in a `kind: Sync` binding might with concurrent reconciliations
 TBD: sync with stronger than eventual guarantee.
 

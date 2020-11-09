@@ -22,7 +22,7 @@ type PipeRef struct {
 	Mode string `json:"mode,omitempty"`
 }
 
-// Kind identifies a model schema, e.g., digi.dev/v1/lamps; it is a re-declaration of
+// Kind identifies a model schema, e.g., digi.dev/v1/Lamp; it is a re-declaration of
 // https://godoc.org/k8s.io/apimachinery/pkg/runtime/schema#GroupVersionResource with json tags and field name changes.
 type Kind struct {
 	// Model schema group
@@ -34,7 +34,7 @@ type Kind struct {
 }
 
 // Auri identifies a set of attributes belonging to a model on the semantic message bus
-// E.g., /digi.dev/v1/roombas/default/roomba-foo.power
+// E.g., /digi.dev/v1/Roomba/default/roomba-foo.power
 type Auri struct {
 	// model schema
 	Kind Kind `json:"kind,omitempty"`
