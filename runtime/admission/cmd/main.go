@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 
-	"digi.dev/digivice/common"
+	"digi.dev/digivice/pkg/core"
 	whhttp "digi.dev/digivice/runtime/admission/http"
 	"digi.dev/digivice/runtime/admission/util"
 	vlwh "digi.dev/digivice/runtime/admission/validating"
@@ -223,10 +223,9 @@ func getFlattenRefs(prefix string, o *unstructured.Unstructured) map[string]mode
 func getCompositionRefs(o *unstructured.Unstructured) *compositionRefs {
 	f := getFlattenRefs
 	return &compositionRefs{
-		mounts:  f(common.MountRefPrefix, o),
-		yields:  f(common.YieldRefPrefix, o),
-		sources: f(common.SourceRefPrefix, o),
-		sinks:   f(common.SinkRefPrefix, o),
+		mounts:  f(core.MountRefPrefix, o),
+		sources: f(core.SourceRefPrefix, o),
+		sinks:   f(core.SinkRefPrefix, o),
 	}
 }
 

@@ -74,7 +74,7 @@ func (bc *BindingCache) Add(b *Binding) error {
 	defer bc.mu.Unlock()
 
 	// validate sync mode
-	// TBD move to webhook
+	// TBD move to sync's admission webhook
 	if b.Mode != digiv1.MatchMode && b.Mode != digiv1.SyncMode {
 		return fmt.Errorf("unknown sync mode %s", b.Mode)
 	}
