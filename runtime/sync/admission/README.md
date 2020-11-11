@@ -1,1 +1,0 @@
-# Sync's admission webhook

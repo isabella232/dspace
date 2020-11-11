@@ -66,7 +66,26 @@ type BindingCache struct {
 func (bc *BindingCache) Remove(name string) {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
+
+	bd, ok := bc.bindings[name]
+	if !ok {
+		return
+	}
 	delete(bc.bindings, name)
+
+	var srcName, targetName string
+	srcName = bd.Source.SpacedName().String()
+	targetName = bd.Target.SpacedName().String()
+
+	srcBds, ok := bc.modelToBindings[srcName]
+	if ok {
+		delete(srcBds, name)
+	}
+
+	targetBds, ok := bc.modelToBindings[targetName]
+	if ok {
+		delete(targetBds, name)
+	}
 }
 
 func (bc *BindingCache) Add(b *Binding) error {
@@ -220,7 +239,6 @@ func (r *ReconcileSync) doSync(request reconcile.Request) (reconcile.Result, err
 	err := r.client.Get(context.TODO(), request.NamespacedName, sc)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Println("not found")
 			// prune cached binding
 			r.bindingCache.Remove(name)
 		}
@@ -238,7 +256,9 @@ func (r *ReconcileSync) doSync(request reconcile.Request) (reconcile.Result, err
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{}, nil
+	return r.doEnforce(reconcile.Request{
+		NamespacedName: sc.Spec.Source.SpacedName(),
+	})
 }
 
 func (r *ReconcileSync) doEnforce(request reconcile.Request) (reconcile.Result, error) {
@@ -256,6 +276,7 @@ func (r *ReconcileSync) doEnforce(request reconcile.Request) (reconcile.Result, 
 
 		bdSrc, err = getObj(r.client, bd.Source)
 		if err != nil {
+			// XXX log to sync reasons
 			log.Println("unable to get source model:", bd.Source)
 			continue
 		}
@@ -306,7 +327,7 @@ func (r *ReconcileSync) matchAttr(src *unstructured.Unstructured, srcPath string
 	}
 
 	err = unstructured.SetNestedField(target.Object, srcAttr, strings.Split(targetPath, ".")...)
-	log.Println("DEBUG: target", target.Object)
+	//log.Println("DEBUG: target", target.Object)
 	if err != nil {
 		log.Println("unable to set target attribute")
 		return err
