@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	this          controller.Controller
+	this controller.Controller
 	//labelSelector = metav1.LabelSelector{
 	//	MatchLabels: map[string]string{
 	//		"runtime.digi.dev": "sync",
@@ -61,31 +61,6 @@ type BindingCache struct {
 	client client.Client
 
 	mu sync.RWMutex
-}
-
-func (bc *BindingCache) Remove(name string) {
-	bc.mu.Lock()
-	defer bc.mu.Unlock()
-
-	bd, ok := bc.bindings[name]
-	if !ok {
-		return
-	}
-	delete(bc.bindings, name)
-
-	var srcName, targetName string
-	srcName = bd.Source.SpacedName().String()
-	targetName = bd.Target.SpacedName().String()
-
-	srcBds, ok := bc.modelToBindings[srcName]
-	if ok {
-		delete(srcBds, name)
-	}
-
-	targetBds, ok := bc.modelToBindings[targetName]
-	if ok {
-		delete(targetBds, name)
-	}
 }
 
 func (bc *BindingCache) Add(b *Binding) error {
@@ -126,6 +101,7 @@ func (bc *BindingCache) Add(b *Binding) error {
 	srcKind = b.Source.Kind.String()
 	if _, ok := bc.watched[srcKind]; !ok {
 		if err := addWatchFunc(&b.Source); err != nil {
+			log.Println(err)
 			return err
 		}
 		bc.watched[srcKind] = struct{}{}
@@ -134,6 +110,7 @@ func (bc *BindingCache) Add(b *Binding) error {
 	targetKind = b.Target.Kind.String()
 	if _, ok := bc.watched[targetKind]; !ok {
 		if err := addWatchFunc(&b.Target); err != nil {
+			log.Println(err)
 			return err
 		}
 		bc.watched[targetKind] = struct{}{}
@@ -153,6 +130,31 @@ func (bc *BindingCache) Add(b *Binding) error {
 	setFunc(m, srcName, b.name, b)
 	setFunc(m, targetName, b.name, b)
 	return nil
+}
+
+func (bc *BindingCache) Remove(name string) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+
+	bd, ok := bc.bindings[name]
+	if !ok {
+		return
+	}
+	delete(bc.bindings, name)
+
+	var srcName, targetName string
+	srcName = bd.Source.SpacedName().String()
+	targetName = bd.Target.SpacedName().String()
+
+	srcBds, ok := bc.modelToBindings[srcName]
+	if ok {
+		delete(srcBds, name)
+	}
+
+	targetBds, ok := bc.modelToBindings[targetName]
+	if ok {
+		delete(targetBds, name)
+	}
 }
 
 func (bc *BindingCache) Exist(b *Binding) bool {
@@ -205,10 +207,10 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		client: c,
 		scheme: mgr.GetScheme(),
 		bindingCache: &BindingCache{
-			bindings: make(map[string]*Binding),
+			bindings:        make(map[string]*Binding),
 			modelToBindings: make(map[string]Bindings),
-			watched:  make(map[string]struct{}),
-			client:   c,
+			watched:         make(map[string]struct{}),
+			client:          c,
 		},
 	}
 }
@@ -241,8 +243,10 @@ func (r *ReconcileSync) doSync(request reconcile.Request) (reconcile.Result, err
 		if errors.IsNotFound(err) {
 			// prune cached binding
 			r.bindingCache.Remove(name)
+
+			log.Println(err)
+			return reconcile.Result{}, nil
 		}
-		log.Println(err)
 		return reconcile.Result{}, err
 	}
 
@@ -250,7 +254,7 @@ func (r *ReconcileSync) doSync(request reconcile.Request) (reconcile.Result, err
 
 	// XXX write any sync failure to the event/reasons or observations
 	if err := r.bindingCache.Add(&Binding{
-		name: name,
+		name:     name,
 		SyncSpec: sc.Spec,
 	}); err != nil {
 		return reconcile.Result{}, err
@@ -268,6 +272,8 @@ func (r *ReconcileSync) doEnforce(request reconcile.Request) (reconcile.Result, 
 		// skip
 		return reconcile.Result{}, nil
 	}
+
+	log.Println("do Enforce")
 
 	var err error
 	for _, bd := range bds {
@@ -319,7 +325,7 @@ func (r *ReconcileSync) doEnforce(request reconcile.Request) (reconcile.Result, 
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileSync) matchAttr(src *unstructured.Unstructured, srcPath string,  target *unstructured.Unstructured, targetPath string) error {
+func (r *ReconcileSync) matchAttr(src *unstructured.Unstructured, srcPath string, target *unstructured.Unstructured, targetPath string) error {
 	srcAttr, err := getAttr(src, srcPath)
 	if err != nil {
 		log.Println("unable to get source attr from:", src, "path:", srcPath)

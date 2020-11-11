@@ -52,7 +52,7 @@ func (p *Piper) Unpipe() error {
 func (p *Piper) createSyncBinding() error {
 	c, err := newClientForSyncBinding()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to create sync binding: %v", err)
 	}
 
 	return c.Create(context.TODO(), p.newSyncBinding())
@@ -61,7 +61,7 @@ func (p *Piper) createSyncBinding() error {
 func (p *Piper) deleteSyncBinding() error {
 	c, err := newClientForSyncBinding()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to delete sync binding: %v", err)
 	}
 	return c.Delete(context.TODO(), p.newSyncBinding())
 }
@@ -89,7 +89,9 @@ func (p *Piper) newSyncBinding() *syncv1.Sync {
 
 func newClientForSyncBinding() (client.Client, error) {
 	sm := runtime.NewScheme()
-	SchemeBuilder := &scheme.Builder{GroupVersion: syncv1.SchemeGroupVersion}
+	SchemeBuilder := &scheme.Builder{
+		GroupVersion: syncv1.SchemeGroupVersion,
+	}
 	SchemeBuilder.Register(&syncv1.Sync{})
 	if err := SchemeBuilder.AddToScheme(sm); err != nil {
 		return nil, err
