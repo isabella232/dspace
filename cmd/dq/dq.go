@@ -21,7 +21,7 @@ dq is a command-line tool for managing digivices.
 
 // child commands
 var mountCmd = &cobra.Command{
-	Use:   "mount src target [mode]",
+	Use:   "mount src target [mode] [-d]",
 	Short: "Mount a digivice to another digivice.",
 	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -38,17 +38,22 @@ var mountCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("try to mount %s to %s\n", mt.Source, mt.Target)
-		if err = mt.Mount(); err != nil {
-			fmt.Printf("mount failed: %v\n", err)
+		fmt.Printf("source: %s, target: %s\n", mt.Source, mt.Target)
+
+		f := mt.Mount
+		if d, _ := cmd.Flags().GetBool("delete"); d {
+			f = mt.Unmount
+		}
+		if err = f(); err != nil {
+			fmt.Printf("failed: %v\n", err)
 			os.Exit(1)
 		}
 	},
 }
 
 var pipeCmd = &cobra.Command{
-	Use:   "pipe src target",
-	Short: "Pipe an element.input to an element.output",
+	Use:   "pipe src target [-d]",
+	Short: "Pipe a model.input.X to a model.output.Y",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		pp, err := client.NewPiper(args[0], args[1])
@@ -57,8 +62,13 @@ var pipeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("try to pipe %s to %s\n", pp.Source, pp.Target)
-		if err = pp.Pipe(); err != nil {
+		fmt.Printf("source: %s, target: %s\n", pp.Source, pp.Target)
+
+		f := pp.Pipe
+		if d, _ := cmd.Flags().GetBool("delete"); d {
+			f = pp.Unpipe
+		}
+		if err = f(); err != nil {
 			fmt.Printf("pipe failed: %v\n", err)
 			os.Exit(1)
 		}
@@ -77,7 +87,11 @@ var runCmd = &cobra.Command{
 // add subcommands here
 func Execute() {
 	RootCmd.AddCommand(mountCmd)
+	mountCmd.Flags().BoolP("delete", "d", false, "Unmount")
+
 	RootCmd.AddCommand(pipeCmd)
+	pipeCmd.Flags().BoolP("delete", "d", false, "Unpipe")
+
 	RootCmd.AddCommand(runCmd)
 
 	if err := RootCmd.Execute(); err != nil {

@@ -233,6 +233,7 @@ BenchmarkDotNet.Artifacts/
 .idea/
 *.pyc
 .DS_Store
+/cmd/dq/dq
 
 # examples
 examples/kome

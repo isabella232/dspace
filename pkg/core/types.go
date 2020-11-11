@@ -91,20 +91,21 @@ func (ar *Auri) String() string {
 
 // ParseAuri returns an Auri from a slash separated string.
 // The following string formats are allowed:
-//  1. /group/ver/schema_name/namespace/name;
-//  2. /group/ver/schema_name/name (use default namespace);
-//  3. /namespace/name;
-//  4. /name (use default namespace);
-//  5. name (use default namespace);
-// XXX: parse dot for attribute
+//  1. /group/ver/schema_name/namespace/name.[];
+//  2. /group/ver/schema_name/name.[] (use default namespace);
+//  3. /namespace/name.[];
+//  4. /name.[] (use default namespace);
+//  5. name.[] (use default namespace);
+// .[]: model attributes
 func ParseAuri(s string) (Auri, error) {
 	ss := strings.Split(s, fmt.Sprintf("%c", Separator))
-	var g, v, kn, ns, n string
+	var g, v, kn, ns, n, path, other string
 	switch len(ss) {
 	case 6:
-		g, v, kn, ns, n = ss[1], ss[2], ss[3], ss[4], ss[5]
+		g, v, kn, ns, other = ss[1], ss[2], ss[3], ss[4], ss[5]
+
 	case 5:
-		g, v, kn, ns, n = ss[1], ss[2], ss[3], DefaultNamespace, ss[4]
+		g, v, kn, ns, other = ss[1], ss[2], ss[3], DefaultNamespace, ss[4]
 	case 3:
 		return Auri{}, fmt.Errorf("unimplemented")
 	case 2:
@@ -116,6 +117,16 @@ func ParseAuri(s string) (Auri, error) {
 			"given %d in %s; each field starts with a '/' except for single "+
 			"name on default namespace", len(ss)-1, s)
 	}
+
+	ss = strings.Split(other, fmt.Sprintf("%c", SubSeparator))
+	if len(ss) > 1 {
+		n = ss[0]
+		path = strings.Join(ss[1:], fmt.Sprintf("%c", SubSeparator))
+	} else {
+		n = other
+		path = ""
+	}
+
 	return Auri{
 		Kind: Kind{
 			Group:   g,
@@ -124,5 +135,6 @@ func ParseAuri(s string) (Auri, error) {
 		},
 		Namespace: ns,
 		Name:      n,
+		Path:      path,
 	}, nil
 }

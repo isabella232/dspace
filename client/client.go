@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"digi.dev/digivice/client/k8s"
-	"digi.dev/digivice/pkg/core"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/restmapper"
+
+	"digi.dev/digivice/client/k8s"
+	"digi.dev/digivice/pkg/core"
 )
 
 
@@ -19,7 +20,7 @@ type Client struct {
 }
 
 func NewClient() (*Client, error) {
-	kc, err := k8s.NewK8sClient()
+	kc, err := k8s.NewClientSet()
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func (c *Client) UpdateFromJson(j, namespace string) error {
 	gvk := obj.GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 
-	// XXX use controller-runtime's generic client to avoid the discovery?
+	// XXX use controller-runtime's generic client to avoid the discovery? (see syncer)
 	// TODO: measure time;
 	groupResources, err := restmapper.GetAPIGroupResources(c.k.Clientset.Discovery())
 	if err != nil {
