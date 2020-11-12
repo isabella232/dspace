@@ -3,5 +3,5 @@ kind: MockLamp
 metadata:
   name: mock-lamp-1
 spec:
-  power: "on"
+  power: "off"
   brightness: "0.1"

@@ -1,13 +1,17 @@
-.PHONY: build run
 REPO=silveryfu
+IMAGE=syncer:latest
+
+.PHONY: build
 build:
 	operator-sdk generate k8s || exit 1
 	operator-sdk generate crds || exit 1
 
 	docker login
-	operator-sdk build $(REPO)/syncer:latest
-	docker push $(REPO)/syncer:latest
+	operator-sdk build $(REPO)/$(IMAGE)
+	docker push $(REPO)/$(IMAGE)
 	sed -e 's/{{REPO}}/$(REPO)/g' ./deploy/actor.template > ./deploy/actor.yaml
+
+.PHONY: stop run mock test
 stop:
 	kubectl delete -f deploy/crds/ || true
 	kubectl delete -f deploy/ || true
@@ -19,6 +23,8 @@ mock:
 	kubectl apply -f deploy/mocks/crs/ || true
 test: | run mock
 	$(info test on mocks)
+
+.PHONY: log all
 log:
 	kubectl logs $(shell kubectl get pods --selector=name=syncer -o jsonpath="{.items[*].metadata.name}")
 all: | build test

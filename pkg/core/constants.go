@@ -4,18 +4,19 @@ var (
 	DefaultNamespace = "default"
 
 	// mount labels
+	// XXX move to core
 	MountRefPrefix = "mounts"
+
 	ExposeMode     = "expose"
 	HideMode       = "hide"
 	DefaultMode    = ExposeMode
-	ActiveStatus   = "active"
-	InActiveStatus = "inactive"
 
-	// pipe labels
-	PipeSourceMode = "source"
-	PipeSinkMode   = "sink"
+	// XXX MountActiveStatus
+	ActiveStatus   = "active"
+	InactiveStatus = "inactive"
 
 	// connect labels
+	// XXX remove; no need pipe references
 	SourceRefPrefix = "sources"
 	SinkRefPrefix   = "sinks"
 )

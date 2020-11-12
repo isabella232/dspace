@@ -18,6 +18,7 @@ type MountRef struct {
 	Status string `json:"status,omitempty"`
 }
 
+// XXX remove Pipe ref
 type PipeRef struct {
 	Mode string `json:"mode,omitempty"`
 }
@@ -31,19 +32,6 @@ type Kind struct {
 	Version string `json:"version,omitempty"`
 	// Schema name; first letter capitalized, e.g., Roomba
 	Name string `json:"name,omitempty"`
-}
-
-// Auri identifies a set of attributes belonging to a model on the semantic message bus
-// E.g., /digi.dev/v1/Roomba/default/roomba-foo.power
-type Auri struct {
-	// model schema
-	Kind Kind `json:"kind,omitempty"`
-	// name of the model
-	Name string `json:"name,omitempty"`
-	// namespace of the model
-	Namespace string `json:"namespace,omitempty"`
-	// path to attribute(s) in the model; if path empty, Auri points to the model
-	Path string `json:"path,omitempty"`
 }
 
 func (k *Kind) Plural() string {
@@ -61,6 +49,19 @@ func (k *Kind) Gvr() schema.GroupVersionResource {
 
 func (k *Kind) String() string {
 	return k.Gvr().String()
+}
+
+// Auri identifies a set of attributes belonging to a model on the semantic message bus
+// E.g., /digi.dev/v1/Roomba/default/roomba-foo.power
+type Auri struct {
+	// model schema
+	Kind Kind `json:"kind,omitempty"`
+	// name of the model
+	Name string `json:"name,omitempty"`
+	// namespace of the model
+	Namespace string `json:"namespace,omitempty"`
+	// path to attribute(s) in the model; if path empty, Auri points to the model
+	Path string `json:"path,omitempty"`
 }
 
 func (ar *Auri) Gvr() schema.GroupVersionResource {

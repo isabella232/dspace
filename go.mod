@@ -3,7 +3,6 @@ module digi.dev/digivice
 go 1.13
 
 require (
-	digi.dev/digivice/runtime/sync v0.0.0
 	github.com/banzaicloud/k8s-objectmatcher v1.4.1
 	github.com/slok/kubewebhook v0.10.0
 	github.com/spf13/cobra v1.0.0
@@ -16,8 +15,4 @@ require (
 	sigs.k8s.io/controller-runtime v0.6.3
 )
 
-replace (
-	digi.dev/digivice v0.0.0 => ./
-	digi.dev/digivice/runtime/sync v0.0.0 => ./runtime/sync
-	k8s.io/client-go => k8s.io/client-go v0.18.2
-)
+replace k8s.io/client-go => k8s.io/client-go v0.18.2
