@@ -11,7 +11,7 @@ spec:
       name: MockLamp
     name: mock-lamp-1
     namespace: default
-    path: spec.power
+    path: .spec.power
   target:
     kind:
       group: digi.dev
@@ -19,4 +19,4 @@ spec:
       name: MockLamp
     name: mock-lamp-2
     namespace: default
-    path: spec.power
+    path: .spec.power

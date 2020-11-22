@@ -353,7 +353,7 @@ func getObj(c client.Client, ar core.Auri) (*unstructured.Unstructured, error) {
 }
 
 func getAttr(obj *unstructured.Unstructured, path string) (interface{}, error) {
-	objAttr, ok, err := unstructured.NestedFieldCopy(obj.Object, strings.Split(path, ".")...)
+	objAttr, ok, err := unstructured.NestedFieldCopy(obj.Object, core.AttrPathSlice(path)...)
 	if err != nil {
 		return nil, err
 	}

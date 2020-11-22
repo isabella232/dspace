@@ -18,7 +18,7 @@ stop:
 run: | stop
 	kubectl create -f deploy/crds/
 	kubectl create -f deploy/
-mock:
+mock: 
 	kubectl apply -f deploy/mocks/crds/ || true
 	kubectl apply -f deploy/mocks/crs/ || true
 test: | run mock
