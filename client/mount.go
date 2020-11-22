@@ -12,35 +12,35 @@ import (
 
 // Mounter contains methods to perform a mount
 type Mounter struct {
-	Source core.Auri `json:"source,omitempty"`
-	Target core.Auri `json:"target,omitempty"`
-	Mode   string     `json:"mode,omitempty"`
-	Status string     `json:"status,omitempty"`
+	core.Mount
 }
 
 func NewMounter(s, t, mode string) (*Mounter, error) {
-	si, err := core.ParseAuri(s)
+	si, err := ParseAuri(s)
 	if err != nil {
 		return nil, err
 	}
 
-	ti, err := core.ParseAuri(t)
+	ti, err := ParseAuri(t)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Mounter{
-		Source: si,
-		Target: ti,
-		Mode:   mode,
-		Status: core.ActiveStatus,
+		Mount:
+			core.Mount{
+				Source: si,
+				Target: ti,
+				Mode:   mode,
+				Status: core.MountActiveStatus,
+			},
 	}, nil
 }
 
-// Mount updates the target digivice's model with a mount reference to the source digivice;
+// DoMount updates the target digivice's model with a mount reference to the source digivice;
 // a mount is successful iff 1. source and target are compatible; 2. caller has sufficient
 // access rights.
-func (m *Mounter) Mount() error {
+func (m *Mounter) DoMount() error {
 	c, err := NewClient()
 	if err != nil {
 		return fmt.Errorf("unable to create k8s client: %v", err)
@@ -89,7 +89,7 @@ func (m *Mounter) Mount() error {
 	return doMount()
 }
 
-func (m *Mounter) Unmount() error {
+func (m *Mounter) DoUnmount() error {
 	// TODO
 	return nil
 }

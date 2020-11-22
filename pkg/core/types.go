@@ -2,26 +2,18 @@ package core
 
 import (
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"strings"
 )
 
 const (
-	Separator    = types.Separator
-	SubSeparator = '.'
+	DefaultNamespace = "default"
+
+	UriSeparator      = types.Separator
+	AttrPathSeparator = '.'
 )
-
-type MountRef struct {
-	Mode   string `json:"mode,omitempty"`
-	Status string `json:"status,omitempty"`
-}
-
-// XXX remove Pipe ref
-type PipeRef struct {
-	Mode string `json:"mode,omitempty"`
-}
 
 // Kind identifies a model schema, e.g., digi.dev/v1/Lamp; it is a re-declaration of
 // https://godoc.org/k8s.io/apimachinery/pkg/runtime/schema#GroupVersionResource with json tags and field name changes.
@@ -39,6 +31,14 @@ func (k *Kind) Plural() string {
 	return strings.ToLower(k.Name) + "s"
 }
 
+func (k *Kind) Gvk() schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   k.Group,
+		Version: k.Version,
+		Kind:    k.Name,
+	}
+}
+
 func (k *Kind) Gvr() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
 		Group:    k.Group,
@@ -48,7 +48,7 @@ func (k *Kind) Gvr() schema.GroupVersionResource {
 }
 
 func (k *Kind) String() string {
-	return k.Gvr().String()
+	return k.Gvk().String()
 }
 
 // Auri identifies a set of attributes belonging to a model on the semantic message bus
@@ -69,11 +69,7 @@ func (ar *Auri) Gvr() schema.GroupVersionResource {
 }
 
 func (ar *Auri) Gvk() schema.GroupVersionKind {
-	return schema.GroupVersionKind{
-		Group:   ar.Kind.Group,
-		Version: ar.Kind.Version,
-		Kind:    ar.Kind.Name,
-	}
+	return ar.Kind.Gvk()
 }
 
 func (ar *Auri) SpacedName() types.NamespacedName {
@@ -85,57 +81,13 @@ func (ar *Auri) SpacedName() types.NamespacedName {
 
 func (ar *Auri) String() string {
 	if ar.Path == "" {
-		return fmt.Sprintf("%s%c%s", ar.Gvr().String(), Separator, ar.SpacedName().String())
+		return fmt.Sprintf("%s%c%s", ar.Gvr().String(), UriSeparator, ar.SpacedName().String())
 	}
-	return fmt.Sprintf("%s%c%s%c%s", ar.Gvr().String(), Separator, ar.SpacedName().String(), SubSeparator, ar.Path)
+	return fmt.Sprintf("%s%c%s%c%s", ar.Gvr().String(), UriSeparator, ar.SpacedName().String(), AttrPathSeparator, strings.TrimLeft(ar.Path, fmt.Sprintf("%c", AttrPathSeparator)))
 }
 
-// ParseAuri returns an Auri from a slash separated string.
-// The following string formats are allowed:
-//  1. /group/ver/schema_name/namespace/name.[];
-//  2. /group/ver/schema_name/name.[] (use default namespace);
-//  3. /namespace/name.[];
-//  4. /name.[] (use default namespace);
-//  5. name.[] (use default namespace);
-// .[]: model attributes
-func ParseAuri(s string) (Auri, error) {
-	ss := strings.Split(s, fmt.Sprintf("%c", Separator))
-	var g, v, kn, ns, n, path, other string
-	switch len(ss) {
-	case 6:
-		g, v, kn, ns, other = ss[1], ss[2], ss[3], ss[4], ss[5]
-
-	case 5:
-		g, v, kn, ns, other = ss[1], ss[2], ss[3], DefaultNamespace, ss[4]
-	case 3:
-		return Auri{}, fmt.Errorf("unimplemented")
-	case 2:
-		return Auri{}, fmt.Errorf("unimplemented")
-	case 1:
-		return Auri{}, fmt.Errorf("unimplemented")
-	default:
-		return Auri{}, fmt.Errorf("auri needs to have either 5, 2, or 1 fields, "+
-			"given %d in %s; each field starts with a '/' except for single "+
-			"name on default namespace", len(ss)-1, s)
-	}
-
-	ss = strings.Split(other, fmt.Sprintf("%c", SubSeparator))
-	if len(ss) > 1 {
-		n = ss[0]
-		path = strings.Join(ss[1:], fmt.Sprintf("%c", SubSeparator))
-	} else {
-		n = other
-		path = ""
-	}
-
-	return Auri{
-		Kind: Kind{
-			Group:   g,
-			Version: v,
-			Name:    kn,
-		},
-		Namespace: ns,
-		Name:      n,
-		Path:      path,
-	}, nil
+func AttrPathSlice(p string) []string {
+	sep := fmt.Sprintf("%c", AttrPathSeparator)
+	// leading dots in the attribute path is optional
+	return strings.Split(strings.TrimLeft(p, sep), sep)
 }

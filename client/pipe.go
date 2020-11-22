@@ -15,18 +15,19 @@ import (
 	syncv1 "digi.dev/digivice/runtime/sync/pkg/apis/digi/v1"
 )
 
+// XXX Move to core
 type Piper struct {
 	Source core.Auri `json:"source,omitempty"`
 	Target core.Auri `json:"target,omitempty"`
 }
 
 func NewPiper(s, t string) (*Piper, error) {
-	si, err := core.ParseAuri(s)
+	si, err := ParseAuri(s)
 	if err != nil {
 		return nil, err
 	}
 
-	ti, err := core.ParseAuri(t)
+	ti, err := ParseAuri(t)
 	if err != nil {
 		return nil, err
 	}

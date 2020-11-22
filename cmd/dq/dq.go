@@ -23,11 +23,11 @@ dq is a command-line tool for managing digivices.
 var mountCmd = &cobra.Command{
 	Use:   "mount src target [mode] [-d]",
 	Short: "Mount a digivice to another digivice.",
-	Args: cobra.MinimumNArgs(2),
+	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		var mode string
 		if len(args) < 3 {
-			mode = core.DefaultMode
+			mode = core.DefaultMountMode
 		} else {
 			mode = args[2]
 		}
@@ -40,9 +40,9 @@ var mountCmd = &cobra.Command{
 
 		fmt.Printf("source: %s, target: %s\n", mt.Source, mt.Target)
 
-		f := mt.Mount
+		f := mt.DoMount
 		if d, _ := cmd.Flags().GetBool("delete"); d {
-			f = mt.Unmount
+			f = mt.DoUnmount
 		}
 		if err = f(); err != nil {
 			fmt.Printf("failed: %v\n", err)
@@ -54,7 +54,7 @@ var mountCmd = &cobra.Command{
 var pipeCmd = &cobra.Command{
 	Use:   "pipe src target [-d]",
 	Short: "Pipe a model.input.X to a model.output.Y",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		pp, err := client.NewPiper(args[0], args[1])
 		if err != nil {
@@ -75,14 +75,23 @@ var pipeCmd = &cobra.Command{
 	},
 }
 
-var runCmd = &cobra.Command{
-	Use:   "run src target [mode]",
-	Short: "run an element.",
-	Args: cobra.MinimumNArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		// TODO
-	},
-}
+//var createCmd = &cobra.Command{
+//	Use:   "creat -f ",
+//	Short: "create a model",
+//	Args:  cobra.MinimumNArgs(2),
+//	Run: func(cmd *cobra.Command, args []string) {
+//		// TODO
+//	},
+//}
+//
+//var aliasCmd = &cobra.Command{
+//	Use:   "alias model name",
+//	Short: "create a model alias",
+//	Args:  cobra.MinimumNArgs(2),
+//	Run: func(cmd *cobra.Command, args []string) {
+//		// TODO
+//	},
+//}
 
 // add subcommands here
 func Execute() {
@@ -91,8 +100,6 @@ func Execute() {
 
 	RootCmd.AddCommand(pipeCmd)
 	pipeCmd.Flags().BoolP("delete", "d", false, "Unpipe")
-
-	RootCmd.AddCommand(runCmd)
 
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
