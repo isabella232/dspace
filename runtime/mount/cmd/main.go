@@ -57,9 +57,8 @@ type mode string
 
 type compositionRefs struct {
 	mounts  map[string]mode
+	// XXX remove yields
 	yields  map[string]mode
-	sources map[string]mode
-	sinks   map[string]mode
 }
 
 func NewApiClient(config *rest.Config) (*apiClient, error) {
@@ -224,8 +223,6 @@ func getCompositionRefs(o *unstructured.Unstructured) *compositionRefs {
 	f := getFlattenRefs
 	return &compositionRefs{
 		mounts:  f(core.MountRefPrefix, o),
-		sources: f(core.SourceRefPrefix, o),
-		sinks:   f(core.SinkRefPrefix, o),
 	}
 }
 

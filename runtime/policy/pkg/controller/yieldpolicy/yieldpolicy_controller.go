@@ -335,7 +335,7 @@ func (r *ReconcileYieldPolicy) doEnforce(request reconcile.Request) (reconcile.R
 				continue
 			}
 
-			plTarget, err = setMounts(plTarget, srcMounts)
+			plTarget, err = setMounts(plTarget, targetMounts)
 			if err != nil {
 				log.Println("err updating target's mounts", err)
 				continue
@@ -396,12 +396,12 @@ func setMounts(o *unstructured.Unstructured, mts map[string]core.MountRefs) (*un
 		return nil, err
 	}
 
-	log.Println("cur before ->", o.Object)
+	//log.Println("cur before ->", o)
 	err = unstructured.SetNestedMap(o.Object, unstructuredMts, core.MountAttrPathSlice...)
 	if err != nil {
 		return nil, err
 	}
-	log.Println("cur after ->", o.Object)
+	//log.Println("cur after ->", o)
 	return o, nil
 }
 
