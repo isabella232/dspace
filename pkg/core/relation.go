@@ -1,19 +1,17 @@
 package core
 
-var (
+const (
 	MountRefPrefix      = "mounts"
 	DefaultMountMode    = "expose"
 
 	MountActiveStatus   = "active"
 	MountInactiveStatus = "inactive"
 
-	_ = MountActiveStatus
-	_ = MountInactiveStatus
-
 	MountAttrPath = ".spec.mounts"
-	MountAttrPathSlice = AttrPathSlice(MountAttrPath)
+)
 
-	_ = MountAttrPath
+var (
+	MountAttrPathSlice = AttrPathSlice(MountAttrPath)
 	_ = MountAttrPathSlice
 )
 

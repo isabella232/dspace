@@ -4,9 +4,10 @@ go 1.13
 
 require (
 	github.com/banzaicloud/k8s-objectmatcher v1.4.1
+	github.com/itchyny/gojq v0.11.2 // indirect
 	github.com/slok/kubewebhook v0.10.0
 	github.com/spf13/cobra v1.0.0
-	github.com/stretchr/testify v1.5.1
+	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/sjson v1.1.1
 	github.com/xlab/treeprint v1.0.0
 	k8s.io/api v0.18.6
