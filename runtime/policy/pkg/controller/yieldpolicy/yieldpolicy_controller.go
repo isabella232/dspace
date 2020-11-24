@@ -2,8 +2,6 @@ package yieldpolicy
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"sync"
 
@@ -30,7 +28,7 @@ const (
 	enforceTag = "enforce"
 
 	ACTIVE   = core.MountActiveStatus
-	INACTIVE = core.MountActiveStatus
+	INACTIVE = core.MountInactiveStatus
 )
 
 var (
@@ -70,7 +68,7 @@ func (pc *PolicyCache) Add(p *Policy) error {
 	// add watches
 	// XXX add label selector predicate
 	addWatchFunc := func(auri *core.Auri) error {
-		o, err := getObj(pc.client, *auri)
+		o, err := helper.GetObj(pc.client, auri)
 		if err != nil {
 			return err
 		}
@@ -248,7 +246,7 @@ func (r *ReconcileYieldPolicy) doEnforce(request reconcile.Request) (reconcile.R
 		log.Println("enforcing policy:", pl)
 		var plSrc, plTarget *unstructured.Unstructured
 
-		plSrc, err = getObj(r.client, pl.Source)
+		plSrc, err = helper.GetObj(r.client, &pl.Source)
 
 		// XXX log to sync reasons
 		if err != nil {
@@ -256,14 +254,13 @@ func (r *ReconcileYieldPolicy) doEnforce(request reconcile.Request) (reconcile.R
 			continue
 		}
 
-		plTarget, err = getObj(r.client, pl.Target)
+		plTarget, err = helper.GetObj(r.client, &pl.Target)
 		if err != nil {
 			log.Println("unable to get target model:", pl.Target)
 			continue
 		}
 
 		log.Println(plSrc.GetName(), plTarget.GetName())
-		log.Println("before:", plSrc, plTarget)
 
 		// check if condition is met; the condition is written in jq;
 		// it can take either or both the source and target models as
@@ -293,13 +290,13 @@ func (r *ReconcileYieldPolicy) doEnforce(request reconcile.Request) (reconcile.R
 		}
 
 		// update mounts; obtain the current mounts of the source and the target
-		srcMounts, err := getMounts(plSrc)
+		srcMounts, err := helper.GetMounts(plSrc)
 		if err != nil {
 			log.Println("err getting mounts:", plSrc.GetName(), err)
 			return reconcile.Result{}, err
 		}
 
-		targetMounts, err := getMounts(plTarget)
+		targetMounts, err := helper.GetMounts(plTarget)
 		if err != nil {
 			log.Println("err getting mounts:", plTarget.GetName(), err)
 			return reconcile.Result{}, err
@@ -308,109 +305,46 @@ func (r *ReconcileYieldPolicy) doEnforce(request reconcile.Request) (reconcile.R
 		// any models mounted to both the source and the target AND are
 		// active mounts to the source should now become active mounts
 		// to the target
-		log.Println(srcMounts, targetMounts)
-
 		var updated bool
 		for k, srcMtRefs := range srcMounts {
-			targetMtRefs, ok := targetMounts[k]
-			log.Println("CUR -> ", k, srcMtRefs)
+			_, ok := targetMounts[k]
 			if !ok {
 				continue
 			}
 			for n, srcMtRef := range srcMtRefs {
-				targetMtRef, ok := targetMtRefs[n]
+				_, ok := targetMounts[k][n]
 				if ok && srcMtRef.Status == ACTIVE {
-					srcMtRef.Status = INACTIVE
-					targetMtRef.Status = ACTIVE
-
+					srcMounts[k][n].Status = INACTIVE
+					targetMounts[k][n].Status = ACTIVE
 					updated = true
 				}
 			}
 		}
 
 		if updated {
-			plSrc, err = setMounts(plSrc, srcMounts)
+			plSrc, err = helper.SetMounts(plSrc, srcMounts)
 			if err != nil {
 				log.Println("err updating source's mounts", err)
 				continue
 			}
 
-			plTarget, err = setMounts(plTarget, targetMounts)
+			plTarget, err = helper.SetMounts(plTarget, targetMounts)
 			if err != nil {
 				log.Println("err updating target's mounts", err)
 				continue
 			}
 		}
 
-		log.Println("after:", plSrc, plTarget)
+		// XXX better error handling
 		if err := r.client.Update(context.TODO(), plSrc); err != nil {
 			log.Println("err updating source")
 			continue
 		}
 		if err := r.client.Update(context.TODO(), plTarget); err != nil {
 			log.Println("err updating target")
-			// XXX better error handling
 		}
 	}
 
 	return reconcile.Result{}, nil
 }
 
-// XXX move below to core helpers
-func getMounts(o *unstructured.Unstructured) (map[string]core.MountRefs, error) {
-	rawMounts, ok, err := unstructured.NestedMap(o.Object, core.MountAttrPathSlice...)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, nil
-	}
-
-	var mounts map[string]core.MountRefs
-	mounts = make(map[string]core.MountRefs)
-
-	for n, m := range rawMounts {
-		jsonBody, err := json.Marshal(m)
-		if err != nil {
-			return nil, fmt.Errorf("error marshalling mount references: %v", err)
-		}
-
-		var mr core.MountRefs
-		if err := json.Unmarshal(jsonBody, &mr); err != nil {
-			return nil, fmt.Errorf("error unmarshalling mount references: %v", err)
-		}
-		mounts[n] = mr
-	}
-
-	return mounts, nil
-}
-
-func setMounts(o *unstructured.Unstructured, mts map[string]core.MountRefs) (*unstructured.Unstructured, error) {
-	jsonBody, err := json.Marshal(mts)
-	if err != nil {
-		return nil, err
-	}
-
-	var unstructuredMts map[string]interface{}
-	if err := json.Unmarshal(jsonBody, &unstructuredMts); err != nil {
-		return nil, err
-	}
-
-	//log.Println("cur before ->", o)
-	err = unstructured.SetNestedMap(o.Object, unstructuredMts, core.MountAttrPathSlice...)
-	if err != nil {
-		return nil, err
-	}
-	//log.Println("cur after ->", o)
-	return o, nil
-}
-
-func getObj(c client.Client, ar core.Auri) (*unstructured.Unstructured, error) {
-	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(ar.Gvk())
-
-	if err := c.Get(context.TODO(), ar.SpacedName(), obj); err != nil {
-		return nil, err
-	}
-	return obj, nil
-}

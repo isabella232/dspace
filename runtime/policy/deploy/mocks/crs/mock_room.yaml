@@ -3,7 +3,7 @@ kind: MockRoom
 metadata:
   name: mock-room
 spec:
-  mode: emergency
+  mode: work
   mounts:
     mocklamps:
       default/mock-lamp:

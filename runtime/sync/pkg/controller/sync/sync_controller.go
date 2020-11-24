@@ -81,13 +81,13 @@ func (bc *BindingCache) Add(b *Binding) error {
 	// been watched before
 	// XXX add label selector predicate
 	addWatchFunc := func(auri *core.Auri) error {
-		o, err := getObj(bc.client, *auri)
+		o, err := helper.GetObj(bc.client, auri)
 		if err != nil {
 			return err
 		}
 
 		// validate path
-		if _, err := getAttr(o, auri.Path); err != nil {
+		if _, err := helper.GetAttr(o, auri.Path); err != nil {
 			return err
 		}
 
@@ -280,14 +280,14 @@ func (r *ReconcileSync) doEnforce(request reconcile.Request) (reconcile.Result, 
 		log.Println("enforcing binding:", bd)
 		var bdSrc, bdTarget *unstructured.Unstructured
 
-		bdSrc, err = getObj(r.client, bd.Source)
+		bdSrc, err = helper.GetObj(r.client, &bd.Source)
 		if err != nil {
 			// XXX log to sync reasons
 			log.Println("unable to get source model:", bd.Source)
 			continue
 		}
 
-		bdTarget, err = getObj(r.client, bd.Target)
+		bdTarget, err = helper.GetObj(r.client, &bd.Target)
 		if err != nil {
 			log.Println("unable to get target model:", bd.Target)
 			continue
@@ -326,7 +326,7 @@ func (r *ReconcileSync) doEnforce(request reconcile.Request) (reconcile.Result, 
 }
 
 func (r *ReconcileSync) matchAttr(src *unstructured.Unstructured, srcPath string, target *unstructured.Unstructured, targetPath string) error {
-	srcAttr, err := getAttr(src, srcPath)
+	srcAttr, err := helper.GetAttr(src, srcPath)
 	if err != nil {
 		log.Println("unable to get source attr from:", src, "path:", srcPath)
 		return err
@@ -340,25 +340,4 @@ func (r *ReconcileSync) matchAttr(src *unstructured.Unstructured, srcPath string
 	}
 
 	return r.client.Update(context.TODO(), target)
-}
-
-func getObj(c client.Client, ar core.Auri) (*unstructured.Unstructured, error) {
-	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(ar.Gvk())
-
-	if err := c.Get(context.TODO(), ar.SpacedName(), obj); err != nil {
-		return nil, err
-	}
-	return obj, nil
-}
-
-func getAttr(obj *unstructured.Unstructured, path string) (interface{}, error) {
-	objAttr, ok, err := unstructured.NestedFieldCopy(obj.Object, core.AttrPathSlice(path)...)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, fmt.Errorf("unable to find attrs in source given %s", path)
-	}
-	return objAttr, nil
 }

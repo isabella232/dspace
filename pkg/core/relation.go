@@ -24,4 +24,4 @@ type Mount struct {
 }
 
 // mounts indexed by the target's namespaced name
-type MountRefs map[string]Mount
+type MountRefs map[string]*Mount
