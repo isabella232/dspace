@@ -1,12 +1,12 @@
 module digi.dev/digivice
 
-go 1.13
+go 1.15
 
 require (
 	github.com/banzaicloud/k8s-objectmatcher v1.4.1
-	github.com/itchyny/gojq v0.11.2 // indirect
 	github.com/slok/kubewebhook v0.10.0
 	github.com/spf13/cobra v1.0.0
+	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/sjson v1.1.1
 	github.com/xlab/treeprint v1.0.0
@@ -16,4 +16,8 @@ require (
 	sigs.k8s.io/controller-runtime v0.6.3
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.18.2
+replace (
+	digi.dev/digivice v0.0.0 => ./
+	digi.dev/digivice/runtime/sync v0.0.0 => ./runtime/sync
+	k8s.io/client-go => k8s.io/client-go v0.18.2
+)

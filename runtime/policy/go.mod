@@ -1,6 +1,6 @@
 module digi.dev/digivice/runtime/policy
 
-go 1.13
+go 1.15
 
 require (
 	digi.dev/digivice v0.0.0
@@ -15,7 +15,6 @@ require (
 
 replace (
 	digi.dev/digivice v0.0.0 => ../../
-	digi.dev/digivice/runtime/policy v0.0.0 => ./
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	k8s.io/client-go => k8s.io/client-go v0.18.2 // Required by prometheus-operator
 )
