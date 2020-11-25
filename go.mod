@@ -17,7 +17,5 @@ require (
 )
 
 replace (
-	digi.dev/digivice v0.0.0 => ./
-	digi.dev/digivice/runtime/sync v0.0.0 => ./runtime/sync
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
