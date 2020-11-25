@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+    "github.com/jinzhu/inflection"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -27,8 +29,7 @@ type Kind struct {
 }
 
 func (k *Kind) Plural() string {
-	// XXX allow reading plural from input or define a conversion rule
-	return strings.ToLower(k.Name) + "s"
+	return inflection.Plural(strings.ToLower(k.Name))
 }
 
 func (k *Kind) Gvk() schema.GroupVersionKind {
@@ -48,7 +49,7 @@ func (k *Kind) Gvr() schema.GroupVersionResource {
 }
 
 func (k *Kind) String() string {
-	return k.Gvk().String()
+	return fmt.Sprintf("%s%c%s%c%s", k.Group, UriSeparator, k.Version, AttrPathSeparator, k.Name)
 }
 
 // Auri identifies a set of attributes belonging to a model on the semantic message bus
@@ -81,6 +82,7 @@ func (ar *Auri) SpacedName() types.NamespacedName {
 
 func (ar *Auri) String() string {
 	if ar.Path == "" {
+		println(ar.Gvr().String())
 		return fmt.Sprintf("%s%c%s", ar.Gvr().String(), UriSeparator, ar.SpacedName().String())
 	}
 	return fmt.Sprintf("%s%c%s%c%s", ar.Gvr().String(), UriSeparator, ar.SpacedName().String(), AttrPathSeparator, strings.TrimLeft(ar.Path, fmt.Sprintf("%c", AttrPathSeparator)))

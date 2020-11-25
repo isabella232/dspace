@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/banzaicloud/k8s-objectmatcher v1.4.1
+	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/slok/kubewebhook v0.10.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.4.0
@@ -16,6 +17,4 @@ require (
 	sigs.k8s.io/controller-runtime v0.6.3
 )
 
-replace (
-	k8s.io/client-go => k8s.io/client-go v0.18.2
-)
+replace k8s.io/client-go => k8s.io/client-go v0.18.2
