@@ -1,4 +1,4 @@
-package mconfig
+package config
 
 import (
 	"fmt"
@@ -25,13 +25,15 @@ func init() {
 	}
 }
 
-func main() {
+func Load() {
 	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			fileName := filepath.Join(configDir, "config")
+
 			touch(fileName)
 			fmt.Println("dq: new config file at: ", fileName)
 			fmt.Println("dq: try again")

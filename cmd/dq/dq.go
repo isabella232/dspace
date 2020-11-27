@@ -21,7 +21,7 @@ dq is a command-line tool for managing digivices.
 
 // child commands
 var mountCmd = &cobra.Command{
-	Use:   "mount src target [mode] [-d]",
+	Use:   "mount SRC TARGET [mode] [-d]",
 	Short: "Mount a digivice to another digivice.",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -52,7 +52,7 @@ var mountCmd = &cobra.Command{
 }
 
 var pipeCmd = &cobra.Command{
-	Use:   "pipe src target [-d]",
+	Use:   "pipe SRC TARGET [-d]",
 	Short: "Pipe a model.input.X to a model.output.Y",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -84,14 +84,67 @@ var pipeCmd = &cobra.Command{
 //	},
 //}
 //
-//var aliasCmd = &cobra.Command{
-//	Use:   "alias model name",
-//	Short: "create a model alias",
-//	Args:  cobra.MinimumNArgs(2),
-//	Run: func(cmd *cobra.Command, args []string) {
-//		// TODO
-//	},
-//}
+
+var (
+	aliasCmd = &cobra.Command{
+		Use:   "alias [AURI ALIAS]",
+		Short: "create a model alias",
+		Args:  cobra.MaximumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 {
+				if err := client.ShowAll(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				os.Exit(0)
+			}
+
+			if len(args) == 1 {
+				fmt.Println("args should be either none or 2")
+				os.Exit(1)
+			}
+
+			// parse the auri
+			auri, err := client.ParseAuri(args[0])
+			if err != nil {
+				fmt.Printf("unable to parse auri %s: %v\n", args[0], err)
+				os.Exit(1)
+			}
+
+			a := &client.Alias{
+				Auri: &auri,
+				Name: args[1],
+			}
+
+			if err := a.Set(); err != nil {
+				fmt.Println("unable to set alias: ", err)
+				os.Exit(1)
+			}
+		},
+	}
+	aliasClearCmd = &cobra.Command{
+		Use:   "clear",
+		Short: "clear all aliases",
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := client.ClearAlias(); err != nil {
+				fmt.Println("unable to clear alias: ", err)
+				os.Exit(1)
+			}
+		},
+	}
+	aliasResolveCmd = &cobra.Command{
+		Use:   "resolve ALIAS",
+		Short: "resolve an alias",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := client.ResolveAndPrint(args[0]); err != nil {
+				fmt.Printf("unable to resolve alias %s: %v\n", args[0], err)
+				os.Exit(1)
+			}
+		},
+	}
+)
 
 // add subcommands here
 func Execute() {
@@ -100,6 +153,10 @@ func Execute() {
 
 	RootCmd.AddCommand(pipeCmd)
 	pipeCmd.Flags().BoolP("delete", "d", false, "Unpipe")
+
+	RootCmd.AddCommand(aliasCmd)
+	aliasCmd.AddCommand(aliasClearCmd)
+	aliasCmd.AddCommand(aliasResolveCmd)
 
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)

@@ -82,10 +82,9 @@ func (ar *Auri) SpacedName() types.NamespacedName {
 
 func (ar *Auri) String() string {
 	if ar.Path == "" {
-		println(ar.Gvr().String())
-		return fmt.Sprintf("%s%c%s", ar.Gvr().String(), UriSeparator, ar.SpacedName().String())
+		return fmt.Sprintf("%s%c%s", ar.Kind.String(), UriSeparator, ar.SpacedName())
 	}
-	return fmt.Sprintf("%s%c%s%c%s", ar.Gvr().String(), UriSeparator, ar.SpacedName().String(), AttrPathSeparator, strings.TrimLeft(ar.Path, fmt.Sprintf("%c", AttrPathSeparator)))
+	return fmt.Sprintf("%s%c%s%c%s", ar.Kind.String(), UriSeparator, ar.SpacedName(), AttrPathSeparator, strings.TrimLeft(ar.Path, fmt.Sprintf("%c", AttrPathSeparator)))
 }
 
 func AttrPathSlice(p string) []string {
