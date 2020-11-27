@@ -80,8 +80,8 @@ func (c *Client) UpdateFromJson(j, namespace string) error {
 //  1. /group/ver/schema_name/namespace/name.[];
 //  2. /group/ver/schema_name/name.[] (use default namespace);
 //  3. /namespace/name.[];
-//  4. /name.[] (use default namespace);
-//  5. name.[] (use default namespace);
+//  4. /name.[] (use alias);
+//  5. name.[] (use alias);
 // .[]: model attributes
 func ParseAuri(s string) (core.Auri, error) {
 	ss := strings.Split(s, fmt.Sprintf("%c", core.UriSeparator))
@@ -89,15 +89,22 @@ func ParseAuri(s string) (core.Auri, error) {
 	switch len(ss) {
 	case 6:
 		g, v, kn, ns, other = ss[1], ss[2], ss[3], ss[4], ss[5]
-
 	case 5:
 		g, v, kn, ns, other = ss[1], ss[2], ss[3], core.DefaultNamespace, ss[4]
 	case 3:
 		return core.Auri{}, fmt.Errorf("unimplemented")
 	case 2:
-		return core.Auri{}, fmt.Errorf("unimplemented")
+		auri, err := Resolve(ss[1])
+		if err != nil {
+			return core.Auri{}, err
+		}
+		return *auri, nil
 	case 1:
-		return core.Auri{}, fmt.Errorf("unimplemented")
+		auri, err := Resolve(ss[0])
+		if err != nil {
+			return core.Auri{}, err
+		}
+		return *auri, nil
 	default:
 		return core.Auri{}, fmt.Errorf("auri needs to have either 5, 2, or 1 fields, "+
 			"given %d in %s; each field starts with a '/' except for single "+

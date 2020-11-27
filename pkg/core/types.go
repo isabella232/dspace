@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-    "github.com/jinzhu/inflection"
+	"github.com/jinzhu/inflection"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -49,7 +49,7 @@ func (k *Kind) Gvr() schema.GroupVersionResource {
 }
 
 func (k *Kind) String() string {
-	return fmt.Sprintf("%s%c%s%c%s", k.Group, UriSeparator, k.Version, AttrPathSeparator, k.Name)
+	return fmt.Sprintf("%c%s%c%s%c%s", UriSeparator, k.Group, UriSeparator, k.Version, UriSeparator, k.Name)
 }
 
 // Auri identifies a set of attributes belonging to a model on the semantic message bus
@@ -82,9 +82,10 @@ func (ar *Auri) SpacedName() types.NamespacedName {
 
 func (ar *Auri) String() string {
 	if ar.Path == "" {
-		return fmt.Sprintf("%s%c%s", ar.Kind.String(), UriSeparator, ar.SpacedName())
+		return fmt.Sprintf("%s%c%s", ar.Kind.String(), UriSeparator, ar.SpacedName().String())
 	}
-	return fmt.Sprintf("%s%c%s%c%s", ar.Kind.String(), UriSeparator, ar.SpacedName(), AttrPathSeparator, strings.TrimLeft(ar.Path, fmt.Sprintf("%c", AttrPathSeparator)))
+	return fmt.Sprintf("%s%c%s%c%s", ar.Kind.String(), UriSeparator, ar.SpacedName().String(),
+		AttrPathSeparator, strings.TrimLeft(ar.Path, fmt.Sprintf("%c", AttrPathSeparator)))
 }
 
 func AttrPathSlice(p string) []string {
