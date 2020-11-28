@@ -16,7 +16,7 @@ const (
 	MOUNT = iota
 	UNMOUNT
 	YIELD
-	UNYIELD
+	ACTIVATE // unyield
 )
 
 // Mounter contains methods to perform a mount
@@ -92,13 +92,8 @@ func (m *Mounter) Do() error {
 		return c.UpdateFromJson(tj)
 
 	case UNMOUNT:
-		// validate mount reference
-		ok, err := attrExists(tj, pathPrefix)
-		if err != nil {
+		if ok, err := m.mountExists(tj, pathPrefix); err != nil || !ok {
 			return fmt.Errorf("unable to find mount %s in %s: %v", pathPrefix, m.Target.SpacedName(), err)
-		}
-		if !ok {
-			return fmt.Errorf("unable to find mount %s in %s", pathPrefix, m.Target.SpacedName())
 		}
 
 		// now remove it
@@ -109,13 +104,8 @@ func (m *Mounter) Do() error {
 		return c.UpdateFromJson(tj)
 
 	case YIELD:
-		// validate mount reference
-		ok, err := attrExists(tj, pathPrefix)
-		if err != nil {
+		if ok, err := m.mountExists(tj, pathPrefix); err != nil || !ok {
 			return fmt.Errorf("unable to find mount %s in %s: %v", pathPrefix, m.Target.SpacedName(), err)
-		}
-		if !ok {
-			return fmt.Errorf("unable to find mount %s in %s", pathPrefix, m.Target.SpacedName())
 		}
 
 		// update its status
@@ -128,14 +118,27 @@ func (m *Mounter) Do() error {
 			return fmt.Errorf("unable to merge json: %v", err)
 		}
 		return c.UpdateFromJson(tj)
-	case UNYIELD:
+
+	case ACTIVATE:
+		if ok, err := m.mountExists(tj, pathPrefix); err != nil || !ok {
+			return fmt.Errorf("unable to find mount %s in %s: %v", pathPrefix, m.Target.SpacedName(), err)
+		}
+
+		statusPath := pathPrefix + core.MountStatusAttrPath
+
+		m.Status = core.MountActiveStatus
+		tj, err = sjson.SetRaw(tj, statusPath, "\""+m.Status+"\"")
+		if err != nil {
+			return fmt.Errorf("unable to merge json: %v", err)
+		}
+		return c.UpdateFromJson(tj)
 
 	default:
 		return fmt.Errorf("unrecognized mount mode")
 	}
 }
 
-func attrExists(j, path string) (bool, error) {
+func (m *Mounter) mountExists(j, path string) (bool, error) {
 	var obj map[string]interface{}
 	if err := json.Unmarshal([]byte(j), &obj); err != nil {
 		return false, err
@@ -143,5 +146,12 @@ func attrExists(j, path string) (bool, error) {
 
 	// TBD leaf attr throws an error
 	_, ok, err := unstructured.NestedMap(obj, strings.Split(path, ".")...)
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return false, nil
+	}
+
 	return ok, err
 }

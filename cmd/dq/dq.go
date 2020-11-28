@@ -46,6 +46,10 @@ var mountCmd = &cobra.Command{
 			mt.Op = client.YIELD
 		}
 
+		if d, _ := cmd.Flags().GetBool("activate"); d {
+			mt.Op = client.ACTIVATE
+		}
+
 		if d, _ := cmd.Flags().GetBool("delete"); d {
 			mt.Op = client.UNMOUNT
 		}
@@ -165,6 +169,7 @@ func Execute() {
 	RootCmd.AddCommand(mountCmd)
 	mountCmd.Flags().BoolP("delete", "d", false, "Unmount")
 	mountCmd.Flags().BoolP("yield", "y", false, "Yield")
+	mountCmd.Flags().BoolP("activate", "a", false, "Activate")
 
 	RootCmd.AddCommand(pipeCmd)
 	pipeCmd.Flags().BoolP("delete", "d", false, "Unpipe")
