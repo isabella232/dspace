@@ -222,7 +222,7 @@ func getFlattenRefs(prefix string, o *unstructured.Unstructured) map[string]mode
 func getCompositionRefs(o *unstructured.Unstructured) *compositionRefs {
 	f := getFlattenRefs
 	return &compositionRefs{
-		mounts:  f(core.MountRefPrefix, o),
+		mounts:  f(core.MountAttrPath, o),
 	}
 }
 
@@ -251,19 +251,6 @@ func (v *Validator) doCreate(njson []byte) (vlwh.ValidatorResult, error) {
 
 	// XXX: handle connect
 
-	return vlwh.ValidatorResult{Valid: true}, nil
-}
-
-func (v *Validator) doDelete(ojson []byte) (vlwh.ValidatorResult, error) {
-	doc := util.NewDynamicObjectCreator()
-	o, err := doc.NewObject(ojson)
-	if err != nil {
-		return vlwh.ValidatorResult{}, fmt.Errorf("delete: unable to parse object: %v", err)
-	}
-
-	// TODO:
-
-	_ = o
 	return vlwh.ValidatorResult{Valid: true}, nil
 }
 
@@ -298,8 +285,6 @@ func (v *Validator) Validate(_ context.Context, ar *adv1beta1.AdmissionReview) (
 	switch ar.Request.Operation {
 	case adv1beta1.Create:
 		return v.doCreate(njson)
-	case adv1beta1.Delete:
-		return v.doDelete(ojson)
 	case adv1beta1.Update:
 		return v.doUpdate(njson, ojson)
 	}
