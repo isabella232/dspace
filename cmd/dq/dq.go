@@ -12,8 +12,8 @@ import (
 
 // root command
 var RootCmd = &cobra.Command{
-	Use:   "dq [ options ] [ dql ]",
-	Short: "command line digivice client",
+	Use:   "dq [command]",
+	Short: "command line dSpace client",
 	Long: `
 dq is a command-line tool for managing digivices.
 `,
@@ -21,7 +21,7 @@ dq is a command-line tool for managing digivices.
 
 // child commands
 var mountCmd = &cobra.Command{
-	Use:   "mount SRC TARGET [mode] [-d]",
+	Use:   "mount SRC TARGET [ mode ]",
 	Short: "Mount a digivice to another digivice.",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -41,6 +41,11 @@ var mountCmd = &cobra.Command{
 		fmt.Printf("source: %s, target: %s\n", mt.Source, mt.Target)
 
 		mt.Op = client.MOUNT
+
+		if d, _ := cmd.Flags().GetBool("yield"); d {
+			mt.Op = client.YIELD
+		}
+
 		if d, _ := cmd.Flags().GetBool("delete"); d {
 			mt.Op = client.UNMOUNT
 		}
@@ -53,7 +58,7 @@ var mountCmd = &cobra.Command{
 }
 
 var pipeCmd = &cobra.Command{
-	Use:   "pipe SRC TARGET [-d]",
+	Use:   "pipe SRC TARGET",
 	Short: "Pipe a model.input.X to a model.output.Y",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -88,7 +93,7 @@ var pipeCmd = &cobra.Command{
 
 var (
 	aliasCmd = &cobra.Command{
-		Use:   "alias [AURI ALIAS]",
+		Use:   "alias [ AURI ALIAS ]",
 		Short: "create a model alias",
 		Args:  cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -151,6 +156,7 @@ var (
 func Execute() {
 	RootCmd.AddCommand(mountCmd)
 	mountCmd.Flags().BoolP("delete", "d", false, "Unmount")
+	mountCmd.Flags().BoolP("yield", "y", false, "Yield")
 
 	RootCmd.AddCommand(pipeCmd)
 	pipeCmd.Flags().BoolP("delete", "d", false, "Unpipe")
