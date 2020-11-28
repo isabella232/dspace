@@ -85,6 +85,23 @@ func (c *Client) UpdateFromJson(j string) error {
 // .[]: model attributes
 func ParseAuri(s string) (core.Auri, error) {
 	ss := strings.Split(s, fmt.Sprintf("%c", core.UriSeparator))
+
+	splitAttr := func(s string) []string {
+		return strings.Split(s, fmt.Sprintf("%c", core.AttrPathSeparator))
+	}
+
+	fromAlias := func(s string) (core.Auri, error) {
+		ss := splitAttr(s)
+		auri, err := Resolve(ss[0])
+		if err != nil {
+			return core.Auri{}, err
+		}
+		if len(ss) > 1 {
+			auri.Path = strings.Join(ss[1:], fmt.Sprintf("%c", core.AttrPathSeparator))
+		}
+		return *auri, nil
+	}
+
 	var g, v, kn, ns, n, path, other string
 	switch len(ss) {
 	case 6:
@@ -94,24 +111,16 @@ func ParseAuri(s string) (core.Auri, error) {
 	case 3:
 		return core.Auri{}, fmt.Errorf("unimplemented")
 	case 2:
-		auri, err := Resolve(ss[1])
-		if err != nil {
-			return core.Auri{}, err
-		}
-		return *auri, nil
+		return fromAlias(ss[1])
 	case 1:
-		auri, err := Resolve(ss[0])
-		if err != nil {
-			return core.Auri{}, err
-		}
-		return *auri, nil
+		return fromAlias(ss[0])
 	default:
 		return core.Auri{}, fmt.Errorf("auri needs to have either 5, 2, or 1 fields, "+
 			"given %d in %s; each field starts with a '/' except for single "+
 			"name on default namespace", len(ss)-1, s)
 	}
 
-	ss = strings.Split(other, fmt.Sprintf("%c", core.AttrPathSeparator))
+	ss = splitAttr(other)
 	if len(ss) > 1 {
 		n = ss[0]
 		path = strings.Join(ss[1:], fmt.Sprintf("%c", core.AttrPathSeparator))
@@ -131,7 +140,3 @@ func ParseAuri(s string) (core.Auri, error) {
 		Path:      path,
 	}, nil
 }
-
-// XXX add auri inference rules, e.g., if only the name is given, lookup local config for
-// the auri string; use the auri string to access the model; if error, ask the user to
-// provide the full auri

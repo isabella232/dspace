@@ -1,0 +1,7 @@
+Unstaged changes after reset:
+M	client/client.go
+M	client/pipe.go
+M	client/resolve.go
+M	cmd/dq/dq.go
+D	runtime/sync/deploy/mocks/crs/digi.dev_syncs_cr.yaml
+M	runtime/sync/deploy/mocks/crs/mock_sync.yaml
