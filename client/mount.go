@@ -2,7 +2,7 @@ package client
 
 import (
 	"fmt"
-	"log"
+	_ "log"
 	"strings"
 
 	"github.com/tidwall/sjson"
@@ -10,9 +10,16 @@ import (
 	"digi.dev/digivice/pkg/core"
 )
 
+const (
+	MOUNT = iota
+	UNMOUNT
+	YIELD
+)
+
 // Mounter contains methods to perform a mount
 type Mounter struct {
 	core.Mount
+	Op int
 }
 
 func NewMounter(s, t, mode string) (*Mounter, error) {
@@ -28,19 +35,16 @@ func NewMounter(s, t, mode string) (*Mounter, error) {
 
 	return &Mounter{
 		Mount:
-			core.Mount{
-				Source: si,
-				Target: ti,
-				Mode:   mode,
-				Status: core.MountActiveStatus,
-			},
+		core.Mount{
+			Source: si,
+			Target: ti,
+			Mode:   mode,
+			Status: core.MountActiveStatus,
+		},
 	}, nil
 }
 
-// DoMount updates the target digivice's model with a mount reference to the source digivice;
-// a mount is successful iff 1. source and target are compatible; 2. caller has sufficient
-// access rights.
-func (m *Mounter) DoMount() error {
+func (m *Mounter) Do() error {
 	c, err := NewClient()
 	if err != nil {
 		return fmt.Errorf("unable to create k8s client: %v", err)
@@ -57,44 +61,40 @@ func (m *Mounter) DoMount() error {
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
-	//log.Printf("%s\n%s", sj, tj)
 
-	doMount := func() error {
-		log.Println("mount: do", m.Mode)
+	pathPrefix := fmt.Sprintf("%s%c%s%c%s", strings.TrimLeft(core.MountAttrPath, "."), '.', m.Source.Kind.Name, '.', m.Source.SpacedName().String())
 
-		// add the mount reference (Kind.SpacedName) to the target
-		//path := strings.Join([]string{common.MountRefPrefix, m.Source.Kind.Name, m.Source.SpacedName()}, ".")
-		pathPrefix := []string{core.MountRefPrefix, m.Source.Kind.Plural(), m.Source.SpacedName().String()}
+	switch m.Op {
+	case MOUNT:
+		// updates the target digivice's model with a mount reference to the source digivice;
+		// a mount is successful iff 1. source and target are compatible; 2. caller has sufficient
+		// access rights.
+		var modePath, statusPath string
+		modePath = pathPrefix + core.MountModeAttrPath
+		statusPath = pathPrefix + core.MountStatusAttrPath
 
-		// set mode
-		modePath := strings.Join(append(pathPrefix, "mode"), ".")
+		// set mode and status
 		tj, err := sjson.SetRaw(tj, modePath, "\""+m.Mode+"\"")
 		if err != nil {
 			return fmt.Errorf("unable to merge json: %v", err)
 		}
 
-		// set status
-		statusPath := strings.Join(append(pathPrefix, "status"), ".")
 		tj, err = sjson.SetRaw(tj, statusPath, "\""+m.Status+"\"")
 		if err != nil {
 			return fmt.Errorf("unable to merge json: %v", err)
 		}
+		//log.Printf("mount: %v", tj)
 
-		log.Printf("mount: %v", tj)
-
-		// update the target
-		return c.UpdateFromJson(tj, m.Target.Namespace)
+		return c.UpdateFromJson(tj)
+	case UNMOUNT:
+		tj, err := sjson.Delete(tj, pathPrefix)
+		if err != nil {
+			return err
+		}
+		return c.UpdateFromJson(tj)
+	case YIELD:
+	default:
+		return fmt.Errorf("unrecognized mount mode: %s", m.Op)
 	}
-
-	return doMount()
-}
-
-func (m *Mounter) DoUnmount() error {
-	// TODO
-	return nil
-}
-
-func (m *Mounter) Yield() error {
-	// TODO
 	return nil
 }

@@ -47,7 +47,7 @@ func (c *Client) GetResourceJson(ar *core.Auri) (string, error) {
 
 // UpdateFromJson updates the API resource on the apiserver specified in the given json string.
 // It uses the resource discovery and dynamic client to avoid unmarshalling into a concrete type.
-func (c *Client) UpdateFromJson(j, namespace string) error {
+func (c *Client) UpdateFromJson(j string) error {
 	var obj *unstructured.Unstructured
 	if err := json.Unmarshal([]byte(j), &obj); err != nil {
 		return fmt.Errorf("unable to unmarshall %s: %v", j, err)
@@ -71,7 +71,7 @@ func (c *Client) UpdateFromJson(j, namespace string) error {
 		return fmt.Errorf("unable to map resource: %v", err)
 	}
 
-	_, err = c.k.DynamicClient.Resource(mapping.Resource).Namespace(namespace).Update(context.TODO(), obj, metav1.UpdateOptions{})
+	_, err = c.k.DynamicClient.Resource(mapping.Resource).Namespace(obj.GetNamespace()).Update(context.TODO(), obj, metav1.UpdateOptions{})
 	return err
 }
 

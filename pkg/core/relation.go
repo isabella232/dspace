@@ -1,23 +1,24 @@
 package core
 
 const (
-	MountRefPrefix      = "mounts"
-	DefaultMountMode    = "expose"
-
-	MountActiveStatus   = "active"
-	MountInactiveStatus = "inactive"
-
 	MountAttrPath = ".spec.mounts"
+
+	MountModeAttrPath = ".mode"
+	DefaultMountMode   = "expose"
+
+	MountStatusAttrPath = ".status"
+	MountActiveStatus    = "active"
+	MountInactiveStatus  = "inactive"
 )
 
 var (
 	MountAttrPathSlice = AttrPathSlice(MountAttrPath)
-	_ = MountAttrPathSlice
+	_                  = MountAttrPathSlice
 )
 
 type Mount struct {
-	Source Auri   `json:"source,omitempty"`
-	Target Auri   `json:"target,omitempty"`
+	Source Auri `json:"source,omitempty"`
+	Target Auri `json:"target,omitempty"`
 
 	Mode   string `json:"mode,omitempty"`
 	Status string `json:"status,omitempty"`

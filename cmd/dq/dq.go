@@ -40,11 +40,12 @@ var mountCmd = &cobra.Command{
 
 		fmt.Printf("source: %s, target: %s\n", mt.Source, mt.Target)
 
-		f := mt.DoMount
+		mt.Op = client.MOUNT
 		if d, _ := cmd.Flags().GetBool("delete"); d {
-			f = mt.DoUnmount
+			mt.Op = client.UNMOUNT
 		}
-		if err = f(); err != nil {
+
+		if err = mt.Do(); err != nil {
 			fmt.Printf("failed: %v\n", err)
 			os.Exit(1)
 		}
