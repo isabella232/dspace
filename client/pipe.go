@@ -21,6 +21,10 @@ type Piper struct {
 	Target core.Auri `json:"target,omitempty"`
 }
 
+type ChainPiper struct {
+	Chain []*Piper
+}
+
 func NewPiper(s, t string) (*Piper, error) {
 	si, err := ParseAuri(s)
 	if err != nil {
@@ -36,6 +40,11 @@ func NewPiper(s, t string) (*Piper, error) {
 		Source: si,
 		Target: ti,
 	}, nil
+}
+
+func NewChainPiperFromStr(s string) (*Piper, error) {
+	// XXX
+	return &Piper{}, fmt.Errorf("unimplemented")
 }
 
 // Pipe creates a kind:Match sync binding between the source and target
@@ -69,7 +78,7 @@ func (p *Piper) deleteSyncBinding() error {
 
 func (p *Piper) syncBindingName() string {
 	var bdName string
-	bdName = p.Source.SpacedName().String() + "-match-" + p.Target.SpacedName().String()
+	bdName = fmt.Sprintf("%s-%s-match-%s-%s", p.Source.SpacedName(), p.Source.Path, p.Target.Path, p.Target.SpacedName())
 	return strings.ReplaceAll(bdName, "/", "-")
 }
 

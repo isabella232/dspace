@@ -16,6 +16,7 @@ const (
 	MOUNT = iota
 	UNMOUNT
 	YIELD
+	UNYIELD
 )
 
 // Mounter contains methods to perform a mount
@@ -64,7 +65,7 @@ func (m *Mounter) Do() error {
 		return fmt.Errorf("%v", err)
 	}
 
-	pathPrefix := fmt.Sprintf("%s%c%s%c%s", strings.TrimLeft(core.MountAttrPath, "."), '.', m.Source.Kind.Name, '.', m.Source.SpacedName().String())
+	pathPrefix := fmt.Sprintf("%s%c%s%c%s", strings.TrimLeft(core.MountAttrPath, "."), '.', m.Source.Kind.Plural(), '.', m.Source.SpacedName().String())
 
 	switch m.Op {
 	case MOUNT:
@@ -127,6 +128,8 @@ func (m *Mounter) Do() error {
 			return fmt.Errorf("unable to merge json: %v", err)
 		}
 		return c.UpdateFromJson(tj)
+	case UNYIELD:
+
 	default:
 		return fmt.Errorf("unrecognized mount mode")
 	}

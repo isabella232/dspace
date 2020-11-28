@@ -58,11 +58,19 @@ var mountCmd = &cobra.Command{
 }
 
 var pipeCmd = &cobra.Command{
-	Use:   "pipe SRC TARGET",
+	Use:   "pipe [SRC TARGET] [\"d1 | d2 | ..\"]",
 	Short: "Pipe a model.input.X to a model.output.Y",
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		pp, err := client.NewPiper(args[0], args[1])
+		var pp *client.Piper
+		var err error
+
+		if len(args) == 1 {
+			pp, err = client.NewChainPiperFromStr(args[0])
+		} else {
+			pp, err = client.NewPiper(args[0], args[1])
+		}
+
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -86,7 +94,7 @@ var pipeCmd = &cobra.Command{
 //	Short: "create a model",
 //	Args:  cobra.MinimumNArgs(2),
 //	Run: func(cmd *cobra.Command, args []string) {
-//		// TODO
+//		// TODO invoke kubectl cli
 //	},
 //}
 //
