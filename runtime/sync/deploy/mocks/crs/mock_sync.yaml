@@ -1,7 +1,22 @@
-Unstaged changes after reset:
-M	client/client.go
-M	client/pipe.go
-M	client/resolve.go
-M	cmd/dq/dq.go
-D	runtime/sync/deploy/mocks/crs/digi.dev_syncs_cr.yaml
-M	runtime/sync/deploy/mocks/crs/mock_sync.yaml
+apiVersion: digi.dev/v1
+kind: Sync
+metadata:
+  name: sync-test
+spec:
+  mode: match
+  source:
+    kind:
+      group: digi.dev
+      version: v1
+      name: MockLamp
+    name: mock-lamp-1
+    namespace: default
+    path: .spec.power
+  target:
+    kind:
+      group: digi.dev
+      version: v1
+      name: MockLamp
+    name: mock-lamp-2
+    namespace: default
+    path: .spec.power
