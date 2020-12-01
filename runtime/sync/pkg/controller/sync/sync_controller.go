@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -327,13 +326,14 @@ func (r *ReconcileSync) doEnforce(request reconcile.Request) (reconcile.Result, 
 
 func (r *ReconcileSync) matchAttr(src *unstructured.Unstructured, srcPath string, target *unstructured.Unstructured, targetPath string) error {
 	srcAttr, err := helper.GetAttr(src, srcPath)
+	//log.Println("DEBUG:", "src:", src, "srcPath:", srcPath, "srcAttr:", srcAttr)
 	if err != nil {
 		log.Println("unable to get source attr from:", src, "path:", srcPath)
 		return err
 	}
 
-	err = unstructured.SetNestedField(target.Object, srcAttr, strings.Split(targetPath, ".")...)
-	//log.Println("DEBUG: target", target.Object)
+	err = unstructured.SetNestedField(target.Object, srcAttr, core.AttrPathSlice(targetPath)...)
+	//log.Println("DEBUG:", "targetPath:", targetPath, "target:", target.Object)
 	if err != nil {
 		log.Println("unable to set target attribute")
 		return err
