@@ -1,0 +1,9 @@
+apiVersion: digi.dev/v1
+kind: Imitate
+metadata:
+  name: mock-imitate
+spec:
+  obs:
+    - /MockLamp/mock-lamp-1.power
+  action:
+    - /MockLamp/mock-lamp-2.spec.power
