@@ -39,6 +39,7 @@ spec:
           secret:
             secretName: dspace-webhook-certs
         # update this for non-minikube deployment
+        # XXX use a service account instead
         - name: minikube
           hostPath:
             path: /var/lib/minikube/
