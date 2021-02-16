@@ -52,8 +52,7 @@ func (k *Kind) String() string {
 	return fmt.Sprintf("%c%s%c%s%c%s", UriSeparator, k.Group, UriSeparator, k.Version, UriSeparator, k.Name)
 }
 
-// Auri identifies a set of attributes belonging to a model on the semantic message bus
-// E.g., /digi.dev/v1/Roomba/default/roomba-foo.power
+// Auri identifies a model or its attributes when a path is given
 type Auri struct {
 	// model schema
 	Kind Kind `json:"kind,omitempty"`

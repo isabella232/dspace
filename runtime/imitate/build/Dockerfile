@@ -1,5 +1,7 @@
 FROM python:3.7
-COPY *.py /src/
-RUN pip install kopf
+WORKDIR /src/
+COPY *.py ./
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
 #CMD sleep 3600 # debug
-CMD kopf run /src/handlers.py --verbose
+CMD python3 handler.py

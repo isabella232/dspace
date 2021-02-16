@@ -3,7 +3,8 @@ kind: Imitate
 metadata:
   name: mock-imitate
 spec:
+  strategy: naive
   obs:
-    - /MockLamp/mock-lamp-1.power
+    - /MockLamp/mock-lamp-1.spec.powe
   action:
     - /MockLamp/mock-lamp-2.spec.power

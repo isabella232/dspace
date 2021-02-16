@@ -1,4 +1,4 @@
-kopf
+kopf==0.28.03
 kubernetes
-pykube-ng
 pyyaml
+inflection

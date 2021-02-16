@@ -5,4 +5,15 @@ The `imitator` meta actor implements logic to learn how a driver/app. actors mak
 * _Behavior cloning_: TBD 
 * _Advanced RL_: TBD
 
+An imitate model looks like:
+
+`
+XXX
+`
+
+Despite the name, The goal is not to learn to imitate the user; The goal is to learn a "policy" that interacts effectively with the user, making them happy.
+
+
 The imitator is implemented in [kopf](https://github.com/nolar/kopf).
+
+

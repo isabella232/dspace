@@ -37,8 +37,18 @@ spec:
                   items:
                     type: string
               type: object
+              x-kubernetes-preserve-unknown-fields: true
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
           type: object
       served: true
       storage: true
       subresources:
         status: {}
+      additionalPrinterColumns:
+        - name: Message
+          type: string
+          priority: 0
+          jsonPath: .status.update_imt.message
+          description: As returned from the handler (sometimes).

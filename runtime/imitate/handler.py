@@ -1,14 +1,20 @@
-from typing import Dict, List
-from collections import defaultdict
+from typing import Dict
 
 import kopf
 import util
-from util import Auri, Attr, KopfRegistry
+from util import KopfRegistry
+from imitator import Imitator, get_builder
 
 _init_registry = KopfRegistry()
-_imitators: Dict[BaseImitator] = dict()
+_imitators: Dict[str, Imitator] = dict()
 
-""" init actor handlers """
+""" 
+Init actor handlers. 
+
+Imitators are created as child actors; each has
+its own handlers registered in a separate kopf operator.
+"""
+
 _init_config = {
     "group": "digi.dev",
     "version": "v1",
@@ -53,11 +59,8 @@ def new(name, namespace, spec, **kwargs) -> str:
 
         act_attrs.append(au)
 
-    sgy = spec.get("strategy", "naive")  # default to naive
-    imt_build = {
-        "naive": NaiveImitator,
-        # ..other strategies
-    }.get(sgy)
+    sgy = spec.get("strategy", "naive")
+    imt_build = get_builder(sgy)
     if imt_build is None:
         return f"invalid strategy {sgy}"
 
@@ -65,100 +68,21 @@ def new(name, namespace, spec, **kwargs) -> str:
     imt = imt_build(name=sn)
     imt.spawn(obs_attrs, act_attrs)
     imt.start()
+
     _imitators[sn] = imt
 
-    return f"start imitator {sn}"
+    return f"started imitator {sn}"
 
 
 def delete(name, namespace, **kwargs):
+    _ = kwargs
+
     sn = util.spaced_name(name, namespace)
     imt = _imitators.get(sn)
     if imt is not None:
-        imt.
-    return ""
-
-
-""" imitators of different strategies """
-
-
-class BaseImitator:
-    def __init__(self, name):
-        self.name = name
-        self.registry = None
-        self.ready_flag = None
-        self.stop_flag = None
-
-    def spawn(self, obs_attrs: List[Auri], act_attrs: List[Auri]):
-        """Register handler in a new registry."""
-        self.registry = KopfRegistry()
-
-        # register handlers
-        for au in obs_attrs:
-            # TBD auri existence check
-            gvr = (au.group, au.version, au.resource)
-
-            @kopf.on.create(*gvr, registry=self.registry)
-            def create_fn(name, spec, status, **kwargs):
-                print(f"$debug$: create_fn in {name}")
-                return {"message": f"update {au.resource}"}
-
-            @kopf.on.update(*gvr, registry=self.registry)
-            def update_fn(name, spec, status, **kwargs):
-                print(f"$debug$: update_fn in {name}")
-                return {"message": f"update {au.resource}"}
-
-            @kopf.on.delete(*gvr, registry=self.registry, optional=True)
-            def create_fn(name, spec, status, **kwargs):
-                print(f"$debug$: delete_fn in {name}")
-                return {"message": f"update {au.resource}"}
-
-        for au in act_attrs:
-            gvr = (au.group, au.version, au.resource)
-
-            @kopf.on.create(*gvr, registry=self.registry)
-            def create_fn(name, spec, status, **kwargs):
-                print(f"$debug$: create_fn in {name}")
-                return {"message": f"update {au.resource}"}
-
-            @kopf.on.update(*gvr, registry=self.registry)
-            def update_fn(name, spec, status, **kwargs):
-                print(f"$debug$: update_fn in {name}")
-                return {"message": f"update {au.resource}"}
-
-            @kopf.on.delete(*gvr, registry=self.registry, optional=True)
-            def create_fn(name, spec, status, **kwargs):
-                print(f"$debug$: delete_fn in {name}")
-                return {"message": f"update {au.resource}"}
-
-    def start(self):
-        assert self.registry is not None
-
-        self.ready_flag, self.stop_flag = util.run_operator(self.registry)
-
-    def stop(self):
-        assert self.stop_flag is not None
-        self.stop_flag.set()
-
-
-class NaiveImitator(BaseImitator):
-    def __init__(self, *args, **kwargs):
-        # when the imitator starts to report action
-        self.thresh = 3
-        # obs and actions are stored as tuples
-        self.obs_action_freq = defaultdict(lambda: defaultdict(int))
-        super().__init__(*args, **kwargs)
-
-    def get_action(self, obs: dict) -> dict:
-        action_freq = sorted(self.obs_action_freq[obs].items(),
-                             key=lambda x: x[1],
-                             reverse=True)
-        top_action, freq = action_freq[0]
-
-        if freq > self.thresh:
-            return top_action
-
-    def update_obs(self, obs: dict, action: dict):
-        self.obs_action_freq[obs][action] += 1
+        imt.stop()
+        _imitators.pop(sn, None)
+    return f"deleted imitator {sn}"
 
 
 def main():
