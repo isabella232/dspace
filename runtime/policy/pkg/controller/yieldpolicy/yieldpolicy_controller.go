@@ -60,7 +60,7 @@ type PolicyCache struct {
 func (pc *PolicyCache) Add(p *Policy) error {
 	pc.mu.Lock()
 	defer pc.mu.Unlock()
-
+	
 	pc.policies[p.name] = p
 
 	var srcKind, targetKind string

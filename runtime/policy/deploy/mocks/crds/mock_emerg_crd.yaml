@@ -35,7 +35,6 @@ spec:
                   properties:
                     mocklamps:
                       additionalProperties:
-                        description: 'XXX: synced from digi.dev'
                         properties:
                           mode:
                             type: string
