@@ -1,0 +1,37 @@
+apiVersion: digi.dev/v1
+kind: MockRoom
+metadata:
+  name: mock-room
+spec:
+  control:
+    mode:
+      intent: work
+      status:
+    brightness:
+      intent: 0.8
+      status:
+  obs:
+    objects:
+      - human:
+        x: 1299
+        y: 210
+        w: 303
+        h: 607
+  mount:
+    mocklamps:
+      default/mock-lamp:
+        mode: replace
+        status: active
+    mockMotionDetectors:
+      default/mock-md:
+        last_triggered_time: 2020-12-15T02:59:43.1Z
+  reflex:
+    "r1":
+      type: jq
+      condition: "if (.mount.mocklamps)"
+      action: ""
+    "mode":
+      configmap:
+    "brightness":
+      priority: 1
+
