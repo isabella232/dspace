@@ -1,0 +1,27 @@
+apiVersion: mock.digi.dev/v1
+kind: Room
+metadata:
+  name: room-mock
+spec:
+  control:
+    mode:
+      intent: work
+    brightness:
+      intent: 0.8
+  mount:
+    mock.digi.dev/v1/lamps:
+      lamp-mock:
+        mode: replace
+        status: active
+#    mockMotionDetectors:
+#      default/mock-md:
+#        last_triggered_time: 2020-12-15T02:59:43.1Z
+#  reflex:
+#    "r1":
+#      type: jq
+#      condition: "if (.mount.mocklamps)"
+#      action: ""
+#    "mode":
+#      configmap:
+#    "brightness":
+#      priority: 1
