@@ -1,0 +1,11 @@
+### Sample model
+group: mock.digi.dev
+version: v1
+kind: SampleDigilake
+data:
+  input:
+    url: string
+  output:
+    occupied: boolean
+obs:
+  reason: string

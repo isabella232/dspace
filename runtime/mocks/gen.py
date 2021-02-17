@@ -51,7 +51,6 @@ control:
   properties: 
   type: object
 """
-
 _control_attr = """
 properties:
   intent:
@@ -64,17 +63,20 @@ type: object
 _data = """
 data:
   properties:
-    input:
-      properties:
-      type: object
-    output:
-      properties:
-      type: object
   type: object
 """
-
+_data_input = """
+input:
+  properties:
+  type: object
+"""
+_data_output = """
+output:
+  properties:
+  type: object
+"""
 _data_attr = """
-    TBD
+type: {datatype}
 """
 
 _obs = """
@@ -82,7 +84,6 @@ obs:
   properties:
   type: object
 """
-
 _obs_attr = """
 type: {datatype}
 """
@@ -92,7 +93,6 @@ mount:
   properties:
   type: object
 """
-
 _mount_attr = """
 additionalProperties:
   properties:
@@ -123,26 +123,36 @@ def gen(name):
                                 singular=model["kind"].lower())
         header = yaml.load(header, Loader=yaml.FullLoader)
 
-        # attributes
-        def make_root_attr(name, _attr_tpl, _main_tpl):
+        # fill in attributes
+        def make_attr(_name, _attr_tpl, _main_tpl, src_attrs):
             attrs, result = dict(), dict()
-            for _n, t in model.get(name, {}).items():
+            for _n, t in src_attrs.items():
                 if type(t) is not str:
                     assert type(t) is dict and "openapi" in t
                     attrs[_n] = t["openapi"]
                 else:
-                    attrs[_n] = yaml.load(_attr_tpl.format(name=_n, datatype=t), Loader=yaml.FullLoader)
+                    attrs[_n] = yaml.load(_attr_tpl.format(name=_n, datatype=t),
+                                          Loader=yaml.FullLoader)
             if len(attrs) > 0:
                 result = yaml.load(_main_tpl, Loader=yaml.FullLoader)
-                result[name]["properties"] = attrs
+                result[_name]["properties"] = attrs
             return result
 
-        control = make_root_attr("control", _control_attr, _control)
-        data = make_root_attr("data", _data_attr, _data)
-        obs = make_root_attr("obs", _obs_attr, _obs)
-        mount = make_root_attr("mount", _mount_attr, _mount)
+        def make_data_attr():
+            _input = make_attr("input", _data_attr, _data_input, src_attrs=model.get("data", {}).get("input", {}))
+            _output = make_attr("output", _data_attr, _data_output, src_attrs=model.get("data", {}).get("output", {}))
+            result = yaml.load(_data, Loader=yaml.FullLoader)
+            result["data"]["properties"] = dict()
+            result["data"]["properties"].update(_input)
+            result["data"]["properties"].update(_output)
+            return result
 
-        # assert not (len(control) > 0 and len(data) > 0)
+        control = make_attr("control", _control_attr, _control, src_attrs=model.get("control", {}))
+        data = make_data_attr()
+        obs = make_attr("obs", _obs_attr, _obs, src_attrs=model.get("obs", {}))
+        mount = make_attr("mount", _mount_attr, _mount, src_attrs=model.get("mount", {}))
+
+        assert not (len(control) > 0 and len(data) > 0), "cannot have both control and data attrs!"
 
         # version
         version = _version_spec.format(version=model["version"])
@@ -160,8 +170,14 @@ def gen(name):
 
         crd = header
 
-        with open(os.path.join(_dir_path, "crd.yaml"), "w") as f:
-            yaml.dump(crd, f)
+        with open(os.path.join(_dir_path, "crd.yaml"), "w") as f_:
+            yaml.dump(crd, f_)
+
+        # if os.environ.get("CR", False):
+        # cr =
+
+        # with open(os.path.join(_dir_path, "cr.yaml"), "w") as f_:
+        #     yaml.dump(cr, f_)
 
 
 if __name__ == '__main__':

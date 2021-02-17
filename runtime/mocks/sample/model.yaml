@@ -1,3 +1,4 @@
+### Sample model
 group: mock.digi.dev
 version: v1
 kind: Sample
@@ -5,11 +6,6 @@ control:
   power: string
   mode: string
   volume: number
-#data:
-#  input:
-#    url: string
-#  output:
-#    objects:
 obs:
   reason: string
   objects:
