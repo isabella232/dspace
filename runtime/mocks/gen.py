@@ -1,96 +1,171 @@
-"""
-Go through all CRDs in current directory and patch each with the corresponding mounts.
+#!/usr/bin/env python3
 
-Work with OpenAPIV3 only.
-"""
-
-import yaml
 import os
-import pprint as pp
-from collections import defaultdict
+import sys
+import yaml
+import inflection
 
-_dir_path = os.path.dirname(os.path.realpath(__file__))
+"""
+Generate dSpace CRD from templates and configuration file (model.yaml).
+
+TBD: a principled version from k8s code generators.
+"""
+
+_header = """
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: {name}
+spec:
+  group: {group}
+  names:
+    kind: {kind}
+    listKind: {kind}List
+    plural: {plural}
+    singular: {singular}
+  scope: Namespaced
+  versions:
+"""
+
+_version_spec = """
+name: {version}
+schema:
+  openAPIV3Schema:
+    properties:
+      apiVersion:
+        type: string
+      kind:
+        type: string
+      metadata:
+        type: object
+      spec:
+        properties: 
+        type: object
+    type: object
+served: true
+storage: true
+"""
+
+_control = """
+control:
+  properties: 
+  type: object
+"""
+
+_control_attr = """
+properties:
+  intent:
+    type: {datatype} 
+  status:
+    type: {datatype}
+type: object
+"""
+
+_data = """
+data:
+  properties:
+    input:
+      properties:
+      type: object
+    output:
+      properties:
+      type: object
+  type: object
+"""
+
+_data_attr = """
+    TBD
+"""
+
+_obs = """
+obs:
+  properties:
+  type: object
+"""
+
+_obs_attr = """
+type: {datatype}
+"""
+
+_mount = """
+mount:
+  properties:
+  type: object
+"""
+
+_mount_attr = """
+additionalProperties:
+  properties:
+    mode:
+      type: string
+    status:
+      type: string
+  type: object
+type: object
+"""
 
 
-def gvr(g, v, r):
-    return g + "/" + v + "/" + r
+def plural(model):
+    return inflection.pluralize(model["kind"]).lower()
 
 
-def patch_mount(_gvr, crd, parent_gvr, parent_crd):
-    # get child's spec
-    _v = _gvr.split("/")[1]
-    spec, result = None, None
-    for v in crd["spec"]["versions"]:
-        if v["name"] == _v:
-            spec = v["schema"]["openAPIV3Schema"]["properties"]["spec"]
-    assert spec
+def gen(name):
+    _dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), name)
 
-    # patch the parent
-    _parent_v = parent_gvr.split("/")[1]
-    for v in parent_crd["spec"]["versions"]:
-        if v["name"] == _parent_v:
-            parent_spec = v["schema"]["openAPIV3Schema"]["properties"]["spec"]["properties"]
-            assert "mount" in parent_spec
-            mount = parent_spec["mount"]["properties"]
-            assert _gvr in mount
-            mount[_gvr]["additionalProperties"]["properties"]["spec"] = spec
+    with open(os.path.join(_dir_path, "model.yaml")) as f:
+        model = yaml.load(f, Loader=yaml.FullLoader)
 
+        # assemble the crd
+        header = _header.format(name=plural(model) + "." + model["group"],
+                                group=model["group"],
+                                kind=model["kind"],
+                                plural=plural(model),
+                                singular=model["kind"].lower())
+        header = yaml.load(header, Loader=yaml.FullLoader)
 
-def main():
-    # XXX multiple version might fail
+        # attributes
+        def make_root_attr(name, _attr_tpl, _main_tpl):
+            attrs, result = dict(), dict()
+            for _n, t in model.get(name, {}).items():
+                if type(t) is not str:
+                    assert type(t) is dict and "openapi" in t
+                    attrs[_n] = t["openapi"]
+                else:
+                    attrs[_n] = yaml.load(_attr_tpl.format(name=_n, datatype=t), Loader=yaml.FullLoader)
+            if len(attrs) > 0:
+                result = yaml.load(_main_tpl, Loader=yaml.FullLoader)
+                result[name]["properties"] = attrs
+            return result
 
-    # crd yamls
-    f_crds = dict()
+        control = make_root_attr("control", _control_attr, _control)
+        data = make_root_attr("data", _data_attr, _data)
+        obs = make_root_attr("obs", _obs_attr, _obs)
+        mount = make_root_attr("mount", _mount_attr, _mount)
 
-    # crd json keyed by pluralized model id (gvr), e.g., mock.digi.dev/v1/lamps
-    crds = dict()
+        # assert not (len(control) > 0 and len(data) > 0)
 
-    # crd dependencies, tracked by the mounting model
-    crd_deps = defaultdict(set)
+        # version
+        version = _version_spec.format(version=model["version"])
+        version = yaml.load(version, Loader=yaml.FullLoader)
+        spec = version["schema"]["openAPIV3Schema"]["properties"]["spec"]
+        spec["properties"] = dict()
+        spec["properties"].update(control)
+        spec["properties"].update(data)
+        spec["properties"].update(obs)
+        spec["properties"].update(mount)
 
-    # load crds
-    model_dirs = filter(os.path.isdir, os.listdir(_dir_path))
-    for md in model_dirs:
-        f_crd = os.path.join(_dir_path, md, "crd.yaml")
-        with open(f_crd) as f:
-            crd = yaml.load(f, Loader=yaml.FullLoader)
-            if crd is None:
-                continue
+        # main TBD: multiple version or incremental versions
+        header["spec"]["versions"] = list()
+        header["spec"]["versions"].append(version)
 
-            group = crd["spec"]["group"]
-            plural = crd["spec"]["names"]["plural"]
-            for v in crd["spec"]["versions"]:
-                _gvr = gvr(group, v["name"], plural)
-                crds[_gvr] = crd
-                f_crds[_gvr] = f_crd
+        crd = header
 
-                # find deps
-                spec = v["schema"]["openAPIV3Schema"]["properties"]["spec"]["properties"]
-                if "mount" not in spec:
-                    continue
-
-                for m_gvr, _ in spec["mount"]["properties"].items():
-                    crd_deps[_gvr].add(m_gvr)
-
-    # fix the mounts, starting from the dependency-free crds
-    while len(crds) > 0:
-        _gvr = None
-        for _gvr, crd in crds.items():
-            if _gvr in crd_deps:
-                continue
-            break
-        assert _gvr
-
-        for parent_gvr, parent_deps in crd_deps.items():
-            if _gvr in parent_deps:
-                patch_mount(_gvr, crds[_gvr], parent_gvr, crds[parent_gvr])
-                parent_deps.remove(_gvr)
-        crd = crds.pop(_gvr)
-
-        # write out the crd
-        with open(f_crds[_gvr], "w") as f:
+        with open(os.path.join(_dir_path, "crd.yaml"), "w") as f:
             yaml.dump(crd, f)
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1:
+        gen(sys.argv[1])
+    else:
+        gen("sample")

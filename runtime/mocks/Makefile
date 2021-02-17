@@ -1,9 +1,14 @@
-.PHONY: lamp print
+.PHONY: gen patch run all print
 kc := kubectl
 
-lamp:
-	cd ./mock_lamp; $(kc) apply -f crd.yaml; $(kc) apply -f cr.yaml
-room:
-	cd ./mock_room; $(kc) apply -f crd.yaml; $(kc) apply -f cr.yaml
+gen:
+	python gen.py $(NAME)
+patch:
+	python patch.py $(NAME)
+run:
+	cd ./$(NAME); $(kc) apply -f crd.yaml; $(kc) apply -f cr.yaml
+all: | gen patch run
+	$(info all)
+
 print:
 	$(kc) get mocklamps mock-lamp-1 -oyaml | $(kc) neat

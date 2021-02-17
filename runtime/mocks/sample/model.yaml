@@ -1,0 +1,32 @@
+group: mock.digi.dev
+version: v1
+kind: Sample
+control:
+  power: string
+  mode: string
+  volume: number
+#data:
+#  input:
+#    url: string
+#  output:
+#    objects:
+obs:
+  reason: string
+  objects:
+    openapi:
+      items:
+        additionalProperties:
+          properties:
+            h:
+              type: number
+            w:
+              type: number
+            x:
+              type: number
+            y:
+              type: number
+          type: object
+        type: object
+      type: array
+mount:
+  mock.digi.dev/v1/lamps: object

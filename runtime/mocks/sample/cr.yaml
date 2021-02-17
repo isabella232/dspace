@@ -1,10 +1,10 @@
 apiVersion: mock.digi.dev/v1
-kind: Lamp
+kind: Sample
 metadata:
-  name: lamp-mock
+  name: sample
 spec:
   control:
     power:
       intent: "on"
-    brightness:
-      intent: 0.8
+    mode:
+      intent: "on"
