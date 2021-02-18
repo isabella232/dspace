@@ -47,22 +47,9 @@ spec:
                         type: number
                     type: object
                 type: object
-              data:
-                properties:
-                  input:
-                    properties:
-                      url:
-                        type: string
-                    type: object
-                  output:
-                    properties:
-                      occupied:
-                        type: boolean
-                    type: object
-                type: object
               mount:
                 properties:
-                  mock.digi.dev/v1/lamps:
+                  mock.digi.dev/v1/sampledigilakes:
                     additionalProperties:
                       properties:
                         mode:

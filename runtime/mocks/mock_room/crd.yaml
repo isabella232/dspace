@@ -14,13 +14,10 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Room is the Schema for the rooms API
         properties:
           apiVersion:
-            description: ''
             type: string
           kind:
-            description: ''
             type: string
           metadata:
             type: object
@@ -50,32 +47,6 @@ spec:
                       properties:
                         mode:
                           type: string
-                        spec:
-                          description: Schema of the lamp model
-                          properties:
-                            control:
-                              properties:
-                                brightness:
-                                  properties:
-                                    intent:
-                                      type: number
-                                    status:
-                                      type: number
-                                  type: object
-                                power:
-                                  properties:
-                                    intent:
-                                      type: string
-                                    status:
-                                      type: string
-                                  type: object
-                              type: object
-                            obs:
-                              properties:
-                                reason:
-                                  type: string
-                              type: object
-                          type: object
                         status:
                           type: string
                       type: object
@@ -105,5 +76,3 @@ spec:
         type: object
     served: true
     storage: true
-    subresources:
-      status: {}

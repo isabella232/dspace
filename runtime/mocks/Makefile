@@ -1,4 +1,4 @@
-.PHONY: gen patch run all print
+.PHONY: gen patch run all delete print
 kc := kubectl
 
 gen:
@@ -7,6 +7,7 @@ patch:
 	python patch.py $(NAME)
 run:
 	cd ./$(NAME); $(kc) apply -f crd.yaml; $(kc) apply -f cr.yaml
+#delete:
 all: | gen patch run
 	$(info all)
 

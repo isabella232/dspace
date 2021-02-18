@@ -1,0 +1,12 @@
+apiVersion: mock.digi.dev/v1
+kind: SampleDigilake
+metadata:
+  name: sampledigilake-2507
+spec:
+  data:
+    input:
+      url: http
+    output:
+      occupied: false
+  obs:
+    reason: ""

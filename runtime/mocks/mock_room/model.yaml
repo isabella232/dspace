@@ -1,11 +1,9 @@
-### Sample model
 group: mock.digi.dev
 version: v1
-kind: Sample
+kind: Room
 control:
-  power: string
+  brightness: number
   mode: string
-  volume: number
 obs:
   reason: string
   objects:
@@ -25,4 +23,4 @@ obs:
         type: object
       type: array
 mount:
-  mock.digi.dev/v1/sampledigilakes: object
+  mock.digi.dev/v1/lamps: object

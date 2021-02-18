@@ -4,6 +4,7 @@ import os
 import sys
 import yaml
 import inflection
+import uuid
 
 """
 Generate dSpace CRD from templates and configuration file (model.yaml).
@@ -104,6 +105,13 @@ additionalProperties:
 type: object
 """
 
+_cr = """
+apiVersion: {groupVersion}
+kind: {kind}
+metadata:
+  name: {name}
+"""
+
 
 def plural(model):
     return inflection.pluralize(model["kind"]).lower()
@@ -141,6 +149,8 @@ def gen(name):
         def make_data_attr():
             _input = make_attr("input", _data_attr, _data_input, src_attrs=model.get("data", {}).get("input", {}))
             _output = make_attr("output", _data_attr, _data_output, src_attrs=model.get("data", {}).get("output", {}))
+            if len(_input) + len(_output) == 0:
+                return {}
             result = yaml.load(_data, Loader=yaml.FullLoader)
             result["data"]["properties"] = dict()
             result["data"]["properties"].update(_input)
@@ -173,11 +183,27 @@ def gen(name):
         with open(os.path.join(_dir_path, "crd.yaml"), "w") as f_:
             yaml.dump(crd, f_)
 
-        # if os.environ.get("CR", False):
-        # cr =
+        # generate a CR if missing
+        cr_file = os.path.join(_dir_path, "cr.yaml")
+        if not os.path.exists(cr_file):
+            cr = _cr.format(groupVersion=model["group"] + "/" + model["version"],
+                            kind=model["kind"],
+                            name=model["kind"].lower() + "-" + str(uuid.uuid4())[:4],
+                            )
+            cr = yaml.load(cr, Loader=yaml.FullLoader)
+            cr["spec"] = dict()
 
-        # with open(os.path.join(_dir_path, "cr.yaml"), "w") as f_:
-        #     yaml.dump(cr, f_)
+            for _name in ["control", "data", "obs", "mount"]:
+                attrs = model.get(_name, {})
+                if len(attrs) == 0:
+                    continue
+                if _name not in cr["spec"]:
+                    cr["spec"][_name] = dict()
+                for a, _ in attrs.items():
+                    cr["spec"][_name].update({a: -1})
+
+            with open(cr_file, "w") as f_:
+                yaml.dump(cr, f_)
 
 
 if __name__ == '__main__':
