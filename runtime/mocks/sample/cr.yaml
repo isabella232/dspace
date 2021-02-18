@@ -1,7 +1,7 @@
 apiVersion: mock.digi.dev/v1
 kind: Sample
 metadata:
-  name: sample-db5f
+  name: sample
 spec:
   control:
     mode:
@@ -12,6 +12,6 @@ spec:
       intent: 0.8
   mount:
     mock.digi.dev/v1/sampledigilakes:
-      sampledigilake-2507:
+      sampledigilake:
         mode: expose
         status: active

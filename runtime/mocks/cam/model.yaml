@@ -1,10 +1,9 @@
 group: mock.digi.dev
 version: v1
-kind: Sample
+kind: Cam
 control:
-  power: string
-  mode: string
-  volume: number
+  endpoint: string
+  sensitivity: number
 obs:
   reason: string
   objects:
@@ -23,5 +22,3 @@ obs:
           type: object
         type: object
       type: array
-mount:
-  mock.digi.dev/v1/sampledigilakes: object

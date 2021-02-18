@@ -7,9 +7,9 @@ patch:
 	python patch.py $(NAME)
 run:
 	cd ./$(NAME); $(kc) apply -f crd.yaml; $(kc) apply -f cr.yaml
-#delete:
 all: | gen patch run
 	$(info all)
+#delete:
 
 print:
-	$(kc) get mocklamps mock-lamp-1 -oyaml | $(kc) neat
+	$(kc) get samples sample -oyaml | $(kc) neat

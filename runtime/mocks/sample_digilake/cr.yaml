@@ -1,7 +1,7 @@
 apiVersion: mock.digi.dev/v1
 kind: SampleDigilake
 metadata:
-  name: sampledigilake-2507
+  name: sampledigilake
 spec:
   data:
     input:
