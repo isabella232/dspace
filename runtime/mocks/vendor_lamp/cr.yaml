@@ -1,0 +1,18 @@
+apiVersion: mock.digi.dev/v1
+kind: VendorLamp
+metadata:
+  name: vendorlamp-foo
+spec:
+  control:
+    power:
+      intent: "on"
+    brightness:
+      intent: 128
+    hue:
+      intent: 128
+    kelvin:
+      intent: 128
+    saturation:
+      intent: 128
+  obs:
+    reason: ""

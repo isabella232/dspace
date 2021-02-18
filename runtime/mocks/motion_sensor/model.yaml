@@ -1,8 +1,8 @@
 group: mock.digi.dev
 version: v1
-kind: Cam
+kind: MotionSensor
 control:
-  endpoint: string
   sensitivity: number
 obs:
+  last_triggered_time: string
   reason: string

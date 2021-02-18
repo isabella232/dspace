@@ -1,0 +1,11 @@
+group: mock.digi.dev
+version: v1
+kind: VendorLamp
+control:
+  power: string
+  hue: number
+  saturation: number
+  brightness: number
+  kelvin: number
+obs:
+  reason: string

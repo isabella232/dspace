@@ -1,0 +1,25 @@
+group: mock.digi.dev
+version: v1
+kind: Home
+control:
+  mode: string
+obs:
+  reason: string
+  objects:
+    openapi:
+      items:
+        additionalProperties:
+          properties:
+            h:
+              type: number
+            w:
+              type: number
+            x:
+              type: number
+            y:
+              type: number
+          type: object
+        type: object
+      type: array
+mount:
+  mock.digi.dev/v1/rooms: object

@@ -1,7 +1,7 @@
 apiVersion: mock.digi.dev/v1
 kind: Room
 metadata:
-  name: room-mock
+  name: room-foo
 spec:
   control:
     mode:
@@ -10,7 +10,7 @@ spec:
       intent: 0.8
   mount:
     mock.digi.dev/v1/lamps:
-      lamp-mock:
+      lamp-foo:
         mode: replace
         status: active
 #    mockMotionDetectors:

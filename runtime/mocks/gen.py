@@ -193,6 +193,7 @@ def gen(name):
             cr = yaml.load(cr, Loader=yaml.FullLoader)
             cr["spec"] = dict()
 
+            # XXX improve CR generation
             for _name in ["control", "data", "obs", "mount"]:
                 attrs = model.get(_name, {})
                 if len(attrs) == 0:

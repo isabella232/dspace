@@ -1,12 +1,11 @@
 apiVersion: mock.digi.dev/v1
-kind: Cam
+kind: MotionSensor
 metadata:
-  name: cam
+  name: motionsensor-foo
 spec:
   control:
-    endpoint:
-      intent: ""
     sensitivity:
       intent: 0.1
   obs:
-    reason:
+    last_triggered_time: ""
+    reason: ""
