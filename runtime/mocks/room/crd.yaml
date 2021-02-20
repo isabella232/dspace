@@ -47,6 +47,31 @@ spec:
                       properties:
                         mode:
                           type: string
+                        spec:
+                          properties:
+                            control:
+                              properties:
+                                brightness:
+                                  properties:
+                                    intent:
+                                      type: number
+                                    status:
+                                      type: number
+                                  type: object
+                                power:
+                                  properties:
+                                    intent:
+                                      type: string
+                                    status:
+                                      type: string
+                                  type: object
+                              type: object
+                            obs:
+                              properties:
+                                reason:
+                                  type: string
+                              type: object
+                          type: object
                         status:
                           type: string
                       type: object

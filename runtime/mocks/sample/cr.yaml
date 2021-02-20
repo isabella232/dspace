@@ -7,7 +7,7 @@ spec:
     mode:
       intent: "on"
     power:
-      intent: "on"
+      intent: "off"
     volume:
       intent: 0.8
   mount:

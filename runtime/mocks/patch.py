@@ -39,8 +39,10 @@ def patch_mount(_gvr, crd, parent_gvr, parent_crd):
             mount[_gvr]["additionalProperties"]["properties"]["spec"] = spec
 
 
-def patch(model_dirs=filter(os.path.isdir, os.listdir(_dir_path))):
+def patch():
     # XXX multiple versions might fail
+
+    model_dirs = filter(os.path.isdir, os.listdir(_dir_path))
 
     # crd yamls
     f_crds = dict()
@@ -95,7 +97,4 @@ def patch(model_dirs=filter(os.path.isdir, os.listdir(_dir_path))):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        patch([sys.argv[1]])
-    else:
-        patch()
+    patch()
