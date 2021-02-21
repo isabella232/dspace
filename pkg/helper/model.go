@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"digi.dev/digivice/pkg/core"
+	"digi.dev/dspace/pkg/core"
 )
 
 func GetMounts(o *unstructured.Unstructured) (map[string]core.MountRefs, error) {

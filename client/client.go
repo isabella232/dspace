@@ -11,8 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/restmapper"
 
-	"digi.dev/digivice/client/k8s"
-	"digi.dev/digivice/pkg/core"
+	"digi.dev/dspace/client/k8s"
+	"digi.dev/dspace/pkg/core"
 )
 
 

@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"digi.dev/digivice/runtime/policy/pkg/controller/yieldpolicy"
+	"digi.dev/dspace/runtime/policy/pkg/controller/yieldpolicy"
 )
 
 func init() {

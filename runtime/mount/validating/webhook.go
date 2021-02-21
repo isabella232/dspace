@@ -9,7 +9,7 @@ import (
 	adv1beta1 "k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"digi.dev/digivice/runtime/mount/util"
+	"digi.dev/dspace/runtime/mount/util"
 )
 
 // WebhookConfig is the Validating webhook configuration.

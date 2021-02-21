@@ -17,9 +17,9 @@ import (
 
 	"github.com/itchyny/gojq"
 
-	"digi.dev/digivice/pkg/core"
-	"digi.dev/digivice/pkg/helper"
-	digiv1 "digi.dev/digivice/runtime/policy/pkg/apis/digi/v1"
+	"digi.dev/dspace/pkg/core"
+	"digi.dev/dspace/pkg/helper"
+	digiv1 "digi.dev/dspace/runtime/policy/pkg/apis/digi/v1"
 )
 
 const (

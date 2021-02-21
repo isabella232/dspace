@@ -22,11 +22,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 
-	"digi.dev/digivice/pkg/core"
-	"digi.dev/digivice/runtime/graph"
-	whhttp "digi.dev/digivice/runtime/mount/http"
-	"digi.dev/digivice/runtime/mount/util"
-	vlwh "digi.dev/digivice/runtime/mount/validating"
+	"digi.dev/dspace/pkg/core"
+	"digi.dev/dspace/runtime/graph"
+	whhttp "digi.dev/dspace/runtime/mount/http"
+	"digi.dev/dspace/runtime/mount/util"
+	vlwh "digi.dev/dspace/runtime/mount/validating"
 )
 
 type Validator struct {

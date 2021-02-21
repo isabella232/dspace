@@ -8,7 +8,7 @@ import (
 
 	"github.com/tidwall/sjson"
 
-	"digi.dev/digivice/pkg/core"
+	"digi.dev/dspace/pkg/core"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

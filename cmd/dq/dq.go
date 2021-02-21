@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"digi.dev/digivice/client"
-	"digi.dev/digivice/pkg/core"
+	"digi.dev/dspace/client"
+	"digi.dev/dspace/pkg/core"
 )
 
 // root command

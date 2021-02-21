@@ -18,9 +18,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 
-	"digi.dev/digivice/runtime/sync/pkg/apis"
-	"digi.dev/digivice/runtime/sync/pkg/controller"
-	"digi.dev/digivice/runtime/sync/version"
+	"digi.dev/dspace/runtime/sync/pkg/apis"
+	"digi.dev/dspace/runtime/sync/pkg/controller"
+	"digi.dev/dspace/runtime/sync/version"
 )
 
 // Change below variables to serve metrics on different host or port.

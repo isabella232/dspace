@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 
-	"digi.dev/digivice/client/config"
-	"digi.dev/digivice/pkg/core"
+	"digi.dev/dspace/client/config"
+	"digi.dev/dspace/pkg/core"
 )
 
 type Alias struct {

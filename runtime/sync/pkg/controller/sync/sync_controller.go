@@ -17,9 +17,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"digi.dev/digivice/pkg/core"
-	"digi.dev/digivice/pkg/helper"
-	digiv1 "digi.dev/digivice/runtime/sync/pkg/apis/digi/v1"
+	"digi.dev/dspace/pkg/core"
+	"digi.dev/dspace/pkg/helper"
+	digiv1 "digi.dev/dspace/runtime/sync/pkg/apis/digi/v1"
 )
 
 const (

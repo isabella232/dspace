@@ -1,7 +1,7 @@
 package apis
 
 import (
-	v1 "digi.dev/digivice/runtime/sync/pkg/apis/digi/v1"
+	v1 "digi.dev/dspace/runtime/sync/pkg/apis/digi/v1"
 )
 
 func init() {

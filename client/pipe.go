@@ -11,8 +11,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 
-	"digi.dev/digivice/pkg/core"
-	syncv1 "digi.dev/digivice/runtime/sync/pkg/apis/digi/v1"
+	"digi.dev/dspace/pkg/core"
+	syncv1 "digi.dev/dspace/runtime/sync/pkg/apis/digi/v1"
 )
 
 // XXX Move to core
