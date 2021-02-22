@@ -117,12 +117,7 @@ class Attr:
         pass
 
 
-def parse_attr(obj, path: str):
-    # TBD
-    pass
-
-
-def spaced_name(n, ns):
+def spaced_name(n, ns) -> str:
     return f"{ns}/{n}"
 
 
@@ -130,14 +125,13 @@ def trim_default_space(s):
     return s.lstrip("default/")
 
 
-def attr_updated(diff: Tuple, path: str):
-    for _, f, _, _ in diff:
-        if f[:len(path)] == tuple(path.lstrip("/").split("/")):
-            return True
-    return False
+def gvr_from_body(b):
+    g, v = tuple(b["apiVersion"].split("/"))
+    r = inflection.pluralize(b["kind"].lower())
+    return g, v, r
 
 
-def parse_spaced_name(nsn):
+def parse_spaced_name(nsn) -> Tuple[str, str]:
     parsed = nsn.split("/")
     if len(parsed) < 2:
         return parsed[0], "default"
@@ -146,13 +140,26 @@ def parse_spaced_name(nsn):
 
 
 def parse_gvr(gvr: str) -> Tuple[str, ...]:
-    parsed = tuple(gvr.split("/"))
-    assert len(parsed) == 3, f"unrecognized {gvr}, should be in form of '/group/version/plural'"
+    parsed = tuple(gvr.lstrip("/").split("/"))
+    # XXX better error handling
+    assert len(parsed) == 3, f"unrecognized {gvr}, should be in form of '[/]group/version/plural'"
     return parsed
 
 
-def model_id(g, v, r, n, ns):
+def model_id(g, v, r, n, ns) -> str:
     return f"{g}/{v}/{r}/{spaced_name(n, ns)}"
+
+
+def gvr(g, v, r) -> str:
+    return f"{g}/{v}/{r}"
+
+
+def parse_model_id(s) -> Tuple[str, str, str, str, str]:
+    ps = s.lstrip("/").split("/")
+    assert len(ps) in {4, 5}
+    if len(ps) == 4:
+        return ps[0], ps[1], ps[2], ps[3], "default"
+    return ps[0], ps[1], ps[2], ps[4], ps[3]
 
 
 def get_spec(g, v, r, n, ns):
