@@ -12,6 +12,6 @@ spec:
       intent: 0.8
   mount:
     mock.digi.dev/v1/sampledigilakes:
-      sampledigilake:
+      default/sampledigilake:
         mode: expose
         status: active

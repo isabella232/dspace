@@ -169,6 +169,10 @@ class Mounter:
 
             # add watches
             for gvr_str, models in mounts.items():
+                # TBD child's gvr, which can omit the group and version
+                # for which we use the parent's g and v instead
+                # gvr = parse_gvr(gvr_str, g=g, v=v)
+
                 gvr = parse_gvr(gvr_str)  # child's gvr
 
                 for nsn_str, m in models.items():

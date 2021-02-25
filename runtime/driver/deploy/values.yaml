@@ -1,0 +1,15 @@
+#name: "0"
+#namespace: "0"
+#group: "0"
+#version: "0"
+#plural: "0"
+#
+#image: "0"
+
+name: sample
+namespace: default
+group: mock.digi.dev
+version: v1
+plural: samples
+
+image: silveryfu/sample:latest

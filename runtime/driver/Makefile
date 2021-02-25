@@ -1,4 +1,4 @@
-.PHONY: test
+.PHONY: test build deploy
 g:="mock.digi.dev"
 v:="v1"
 r:="samples"
@@ -7,3 +7,13 @@ ns:="default"
 
 test:
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) python driver.py
+build:
+	docker build -t silveryfu/sample:latest -f deploy/image/Dockerfile .
+	docker push silveryfu/sample:latest
+deploy:
+	cd deploy; helm install -f values.yaml $(n) .
+template:
+	cd deploy; helm template . 
+all: | build deploy
+	$(info build and deploy)
+

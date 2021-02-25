@@ -10,7 +10,7 @@ spec:
       intent: 0.8
   mount:
     mock.digi.dev/v1/lamps:
-      lamp-foo:
+      default/lamp-foo:
         mode: replace
         status: active
 #    mockMotionDetectors:

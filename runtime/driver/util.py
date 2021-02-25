@@ -12,7 +12,7 @@ from kubernetes.client.rest import ApiException
 import kopf
 from kopf.reactor.registries import SmartOperatorRegistry as KopfRegistry
 
-config.load_kube_config()
+config.load_incluster_config()
 
 KopfRegistry = KopfRegistry
 
@@ -139,10 +139,12 @@ def parse_spaced_name(nsn) -> Tuple[str, str]:
     return parsed[1], parsed[0]
 
 
-def parse_gvr(gvr: str) -> Tuple[str, ...]:
+def parse_gvr(gvr: str, g="", v="") -> Tuple[str, ...]:
     parsed = tuple(gvr.lstrip("/").split("/"))
-    # XXX better error handling
-    assert len(parsed) == 3, f"unrecognized {gvr}, should be in form of '[/]group/version/plural'"
+    assert len(parsed) == 3, f"{gvr} not in form of '[/]group/version/plural'"
+    # if len(parsed) != 3:
+    #     assert g != "" and v != "", "provide group and version to complete the gvr"
+    #     return g, v, parsed[-1]
     return parsed
 
 

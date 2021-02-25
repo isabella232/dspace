@@ -76,6 +76,8 @@ def _attr(fn, path=".", priority=0):
             _path = ["mount", gvr] + ps_gvr[2].split(".")[1:]
     else:
         _path = path.split(".")
+    # XXX assume default gv in gvr until fix dot in path literal;
+    # _path = path.split(".")
     _path = tuple(_path)
 
     def has_diff(_, diff, *args, **kwargs) -> bool:
