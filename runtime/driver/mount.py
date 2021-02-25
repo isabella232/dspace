@@ -247,7 +247,7 @@ class Mounter:
                                    create_fn=on_parent_create,
                                    resume_fn=on_parent_create,
                                    field_fn=on_mount_attr_update, field="spec.mount",
-                                   delete_fn=on_parent_delete)
+                                   delete_fn=on_parent_delete, delete_optional=True)
 
         # subscribe to the events of the child models;
         # keyed by the gvr and then spaced name

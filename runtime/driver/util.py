@@ -154,6 +154,19 @@ def gvr(g, v, r) -> str:
     return f"{g}/{v}/{r}"
 
 
+def is_gvr(s: str) -> bool:
+    return len(s.split("/")) == 3
+
+
+def normalized_gvr(s, g, v) -> str:
+    r = s.split("/")[-1]
+    return f"{g}/{v}/{r}"
+
+
+def safe_attr(s):
+    return s.replace(".", "-")
+
+
 def parse_model_id(s) -> Tuple[str, str, str, str, str]:
     ps = s.lstrip("/").split("/")
     assert len(ps) in {4, 5}
