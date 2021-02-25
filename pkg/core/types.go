@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/jinzhu/inflection"
@@ -50,6 +51,18 @@ func (k *Kind) Gvr() schema.GroupVersionResource {
 
 func (k *Kind) String() string {
 	return fmt.Sprintf("%c%s%c%s%c%s", UriSeparator, k.Group, UriSeparator, k.Version, UriSeparator, k.Name)
+}
+
+func (k *Kind) EscapedString() string {
+	return fmt.Sprintf("%s%c%s%c%s", regexp.QuoteMeta(k.Group), UriSeparator, regexp.QuoteMeta(k.Version), UriSeparator, k.Name)
+}
+
+func (k *Kind) GvrString() string {
+	return fmt.Sprintf("%s%c%s%c%s", k.Group, UriSeparator, k.Version, UriSeparator, k.Plural())
+}
+
+func (k *Kind) EscapedGvrString() string {
+	return regexp.QuoteMeta(k.GvrString())
 }
 
 // Auri identifies a model or its attributes when a path is given

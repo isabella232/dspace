@@ -1,9 +1,16 @@
-# tbd: digi.dev/dac
-IMAGE="silveryfu/dac"
 NAME="dspace"
+
+.PHONY: cli dq
+dq: 
+	cd cmd/dq/; go install .
+cli: | dq
+	$(done)
+
+
+# Build dAC
+IMAGE="silveryfu/dac"
 DAC="./runtime/admission"
 
-# Build the development docker image
 .PHONY: dac-build
 dac-build:
 	docker build -t $(IMAGE) -f $(DAC)/Dockerfile ./

@@ -68,6 +68,7 @@ func GetObj(c client.Client, ar *core.Auri) (*unstructured.Unstructured, error) 
 }
 
 func GetAttr(obj *unstructured.Unstructured, path string) (interface{}, error) {
+	// XXX check support for dot in the key
 	objAttr, ok, err := unstructured.NestedFieldCopy(obj.Object, core.AttrPathSlice(path)...)
 	if err != nil {
 		return nil, err

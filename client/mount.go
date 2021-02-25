@@ -65,7 +65,19 @@ func (m *Mounter) Do() error {
 		return fmt.Errorf("%v", err)
 	}
 
-	pathPrefix := fmt.Sprintf("%s%c%s%c%s", strings.TrimLeft(core.MountAttrPath, "."), '.', m.Source.Kind.Plural(), '.', m.Source.SpacedName().String())
+
+	var pathPrefix []string
+	pathPrefix = append(core.MountAttrPathSlice, []string{
+		m.Source.Kind.GvrString(),
+		m.Source.SpacedName().String(),
+	}...)
+
+	// XXX use the path slice and unstructured in lieu of sjson
+	var pathPrefixStr string
+	pathPrefixStr = fmt.Sprintf("%s%c%s%c%s",
+		strings.TrimLeft(core.MountAttrPath, "."),
+		'.', m.Source.Kind.EscapedGvrString(),
+		'.', m.Source.SpacedName().String())
 
 	switch m.Op {
 	case MOUNT:
@@ -73,8 +85,8 @@ func (m *Mounter) Do() error {
 		// a mount is successful iff 1. source and target are compatible; 2. caller has sufficient
 		// access rights.
 		var modePath, statusPath string
-		modePath = pathPrefix + core.MountModeAttrPath
-		statusPath = pathPrefix + core.MountStatusAttrPath
+		modePath = pathPrefixStr + core.MountModeAttrPath
+		statusPath = pathPrefixStr + core.MountStatusAttrPath
 
 		// set mode and status
 		// XXX replace sjson with unstructured.unstructured
@@ -97,7 +109,7 @@ func (m *Mounter) Do() error {
 		}
 
 		// now remove it
-		tj, err := sjson.Delete(tj, pathPrefix)
+		tj, err := sjson.Delete(tj, pathPrefixStr)
 		if err != nil {
 			return err
 		}
@@ -110,7 +122,7 @@ func (m *Mounter) Do() error {
 
 		// update its status
 		var statusPath string
-		statusPath = pathPrefix + core.MountStatusAttrPath
+		statusPath = pathPrefixStr + core.MountStatusAttrPath
 
 		m.Status = core.MountInactiveStatus
 		tj, err = sjson.SetRaw(tj, statusPath, "\""+m.Status+"\"")
@@ -124,7 +136,7 @@ func (m *Mounter) Do() error {
 			return fmt.Errorf("unable to find mount %s in %s: %v", pathPrefix, m.Target.SpacedName(), err)
 		}
 
-		statusPath := pathPrefix + core.MountStatusAttrPath
+		statusPath := pathPrefixStr + core.MountStatusAttrPath
 
 		m.Status = core.MountActiveStatus
 		tj, err = sjson.SetRaw(tj, statusPath, "\""+m.Status+"\"")
@@ -138,14 +150,14 @@ func (m *Mounter) Do() error {
 	}
 }
 
-func (m *Mounter) mountExists(j, path string) (bool, error) {
+func (m *Mounter) mountExists(j string, path []string) (bool, error) {
 	var obj map[string]interface{}
 	if err := json.Unmarshal([]byte(j), &obj); err != nil {
 		return false, err
 	}
 
 	// TBD leaf attr throws an error
-	_, ok, err := unstructured.NestedMap(obj, strings.Split(path, ".")...)
+	_, ok, err := unstructured.NestedMap(obj, path...)
 	if err != nil {
 		return false, err
 	}
