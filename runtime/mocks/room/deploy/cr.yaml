@@ -1,0 +1,10 @@
+apiVersion: mock.digi.dev/v1
+kind: Room
+metadata:
+  name: {{ .Values.name }}
+spec:
+  control:
+    mode:
+      intent: idle
+    brightness:
+      intent: 0.0
