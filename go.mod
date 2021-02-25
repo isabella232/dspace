@@ -1,4 +1,4 @@
-module digi.dev/digivice
+module digi.dev/dspace
 
 go 1.15
 

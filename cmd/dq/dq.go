@@ -15,7 +15,7 @@ var RootCmd = &cobra.Command{
 	Use:   "dq [command]",
 	Short: "command line dSpace client",
 	Long: `
-dq is a command-line tool for managing digivices.
+Command-line tool for managing digivice/lakes.
 `,
 }
 

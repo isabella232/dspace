@@ -1,10 +1,10 @@
 package core
 
 const (
-	MountAttrPath = ".spec.mounts"
+	MountAttrPath = ".spec.mount"
 
 	MountModeAttrPath = ".mode"
-	DefaultMountMode   = "expose"
+	DefaultMountMode   = "hide"
 
 	MountStatusAttrPath = ".status"
 	MountActiveStatus    = "active"

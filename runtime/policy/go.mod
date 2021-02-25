@@ -1,9 +1,9 @@
-module digi.dev/digivice/runtime/policy
+module digi.dev/dspace/runtime/policy
 
 go 1.15
 
 require (
-	digi.dev/digivice v0.0.0
+	digi.dev/dspace v0.0.0
 	github.com/itchyny/gojq v0.11.2
 	github.com/operator-framework/operator-sdk v0.18.0
 	github.com/spf13/pflag v1.0.5
@@ -14,7 +14,7 @@ require (
 )
 
 replace (
-	digi.dev/digivice v0.0.0 => ../../
+	digi.dev/dspace v0.0.0 => ../../
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
 	k8s.io/client-go => k8s.io/client-go v0.18.2 // Required by prometheus-operator
 )
