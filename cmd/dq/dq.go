@@ -112,7 +112,7 @@ var runCmd = &cobra.Command{
 		)
 
 		if err := cmd_.Run(); err != nil {
-			log.Fatalf("error: %v: %s", err, out.String())
+			log.Fatalf("error: %v", err)
 		}
 	},
 }
@@ -134,7 +134,7 @@ var stopCmd = &cobra.Command{
 		)
 
 		if err := cmd_.Run(); err != nil {
-			log.Fatalf("error: %v: %s", err, out.String())
+			log.Fatalf("error: %v", err)
 		}
 	},
 }

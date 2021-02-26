@@ -71,7 +71,7 @@ func (p *Piper) createSyncBinding() error {
 func (p *Piper) deleteSyncBinding() error {
 	c, err := newClientForSyncBinding()
 	if err != nil {
-		return fmt.Errorf("unable to delete sync binding: %v", err)
+		return fmt.Errorf("unable to create api client for sync binding: %v", err)
 	}
 	return c.Delete(context.TODO(), p.newSyncBinding())
 }
