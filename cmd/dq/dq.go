@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 
 	"github.com/spf13/cobra"
 
@@ -93,19 +96,53 @@ var pipeCmd = &cobra.Command{
 	},
 }
 
-//var createCmd = &cobra.Command{
-//	Use:   "creat -f ",
-//	Short: "create a model",
-//	Args:  cobra.MinimumNArgs(2),
-//	Run: func(cmd *cobra.Command, args []string) {
-//		// TODO invoke kubectl cli
-//	},
-//}
-//
+var runCmd = &cobra.Command{
+	Use:   "run KIND NAME",
+	Short: "run a digivice/lake",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// XXX replace the make
+		var out bytes.Buffer
+		cmd_ := exec.Command("make", "run")
+		cmd_.Stdout = &out
+
+		cmd_.Env = append(os.Environ(),
+			"KIND=" + args[0],
+			"NAME=" + args[1],
+		)
+
+		if err := cmd_.Run(); err != nil {
+			log.Fatalf("error: %v: %s", err, out.String())
+		}
+	},
+}
+
+
+var stopCmd = &cobra.Command{
+	Use:   "stop KIND NAME",
+	Short: "stop a digivice/lake",
+	Args:  cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// XXX replace the make
+		var out bytes.Buffer
+		cmd_ := exec.Command("make", "stop")
+		cmd_.Stdout = &out
+
+		cmd_.Env = append(os.Environ(),
+			"KIND=" + args[0],
+			"NAME=" + args[1],
+		)
+
+		if err := cmd_.Run(); err != nil {
+			log.Fatalf("error: %v: %s", err, out.String())
+		}
+	},
+}
+
 
 var (
 	aliasCmd = &cobra.Command{
-		Use:   "alias [ AURI ALIAS ]",
+		Use:   "alias [AURI ALIAS]",
 		Short: "create a model alias",
 		Args:  cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -166,6 +203,9 @@ var (
 
 // add subcommands here
 func Execute() {
+	RootCmd.AddCommand(runCmd)
+	RootCmd.AddCommand(stopCmd)
+
 	RootCmd.AddCommand(mountCmd)
 	mountCmd.Flags().BoolP("delete", "d", false, "Unmount")
 	mountCmd.Flags().BoolP("yield", "y", false, "Yield")
