@@ -1,6 +1,6 @@
 group: mock.digi.dev
 version: v1
-kind: SampleDigilake
+kind: SampleLake
 data:
   input:
     url: string

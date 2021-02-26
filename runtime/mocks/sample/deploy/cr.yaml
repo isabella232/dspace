@@ -1,0 +1,12 @@
+apiVersion: mock.digi.dev/v1
+kind: Sample
+metadata:
+  name: {{ .Values.name }}
+spec:
+  control:
+    power:
+      intent: "off"
+    volume:
+      intent: 0.0
+    mode:
+      intent: "idle"

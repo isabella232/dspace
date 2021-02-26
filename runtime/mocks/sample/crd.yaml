@@ -49,11 +49,32 @@ spec:
                 type: object
               mount:
                 properties:
-                  mock.digi.dev/v1/sampledigilakes:
+                  mock.digi.dev/v1/samplelakes:
                     additionalProperties:
                       properties:
                         mode:
                           type: string
+                        spec:
+                          properties:
+                            data:
+                              properties:
+                                input:
+                                  properties:
+                                    url:
+                                      type: string
+                                  type: object
+                                output:
+                                  properties:
+                                    occupied:
+                                      type: boolean
+                                  type: object
+                              type: object
+                            obs:
+                              properties:
+                                reason:
+                                  type: string
+                              type: object
+                          type: object
                         status:
                           type: string
                       type: object

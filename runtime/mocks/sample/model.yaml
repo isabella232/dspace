@@ -24,4 +24,4 @@ obs:
         type: object
       type: array
 mount:
-  mock.digi.dev/v1/sampledigilakes: object
+  mock.digi.dev/v1/samplelakes: object

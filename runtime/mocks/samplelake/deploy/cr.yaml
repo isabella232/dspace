@@ -1,0 +1,11 @@
+apiVersion: mock.digi.dev/v1
+kind: SampleLake
+metadata:
+  name: {{ .Values.name }}
+spec:
+  data:
+    input:
+      url: ""
+    output:
+      occupied: False
+
