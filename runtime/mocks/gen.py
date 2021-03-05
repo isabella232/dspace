@@ -184,7 +184,10 @@ def gen(name):
             yaml.dump(crd, f_)
 
         # generate a CR if missing
-        cr_file = os.path.join(_dir_path, "cr.yaml")
+        if not os.path.exists(os.path.join(_dir_path, "deploy")):
+            os.makedirs(os.path.join(_dir_path, "deploy"))
+
+        cr_file = os.path.join(_dir_path, "deploy", "cr.yaml")
         if not os.path.exists(cr_file):
             cr = _cr.format(groupVersion=model["group"] + "/" + model["version"],
                             kind=model["kind"],
