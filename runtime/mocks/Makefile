@@ -30,7 +30,7 @@ test: | model-all
 	cd ./$(KIND)/test; $(kc) apply -f cr.yaml
 	cp ./$(KIND)/driver/handler.py $(driver_templates); \
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) \
-	python $(driver_templates)/handler.py
+	python $(driver_templates)/driver.py
 
 # driver
 .PHONY: build
