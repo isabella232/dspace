@@ -11,7 +11,10 @@ def control(*args, **kwargs):
         return _attr(path="control", *args, **kwargs)
 
     def decorator(fn):
-        _attr(fn, path="control", *args, **kwargs)
+        if len(args) >= 1:
+            _attr(fn, path="control." + args[0], *args[1:], **kwargs)
+        elif "path" in kwargs:
+            _attr(fn, path="control." + kwargs.pop("path"), *args, **kwargs)
 
     return decorator
 
@@ -21,7 +24,10 @@ def data(*args, **kwargs):
         return _attr(path="data", *args, **kwargs)
 
     def decorator(fn):
-        _attr(fn, path="data", *args, **kwargs)
+        if len(args) >= 1:
+            _attr(fn, path="data." + args[0], *args[1:], **kwargs)
+        elif "path" in kwargs:
+            _attr(fn, path="data." + kwargs.pop("path"), *args, **kwargs)
 
     return decorator
 
@@ -31,8 +37,10 @@ def obs(*args, **kwargs):
         return _attr(path="obs", *args, **kwargs)
 
     def decorator(fn):
-        _attr(fn, path="obs", *args, **kwargs)
-
+        if len(args) >= 1:
+            _attr(fn, path="obs." + args[0], *args[1:], **kwargs)
+        elif "path" in kwargs:
+            _attr(fn, path="obs." + kwargs.pop("path"), *args, **kwargs)
     return decorator
 
 
@@ -49,6 +57,7 @@ def mount(*args, **kwargs):
     return decorator
 
 
+# XXX test path
 def attr(*args, **kwargs):
     def decorator(fn):
         _attr(fn, *args, **kwargs)

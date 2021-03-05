@@ -112,7 +112,7 @@ class Mounter:
             # unless the parent does not have the .spec (e.g., at creation);
             # filter to only the status/output updates
             for _, f, _, new in diff:
-                if f[0] == "spec":
+                if len(f) > 0 and f[0] == "spec":
                     fs = set(f)
                     # XXX fix the false positives
                     if (("control" in fs and "intent" in fs) or

@@ -18,7 +18,7 @@ var RootCmd = &cobra.Command{
 	Use:   "dq [command]",
 	Short: "command line dSpace client",
 	Long: `
-Command-line tool for managing digivice/lakes.
+Command-line dSpace manager.
 `,
 }
 
@@ -98,7 +98,7 @@ var pipeCmd = &cobra.Command{
 
 var runCmd = &cobra.Command{
 	Use:   "run KIND NAME",
-	Short: "run a digivice/lake",
+	Short: "Run a digivice or digilake",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// XXX replace the make
@@ -120,7 +120,7 @@ var runCmd = &cobra.Command{
 
 var stopCmd = &cobra.Command{
 	Use:   "stop KIND NAME",
-	Short: "stop a digivice/lake",
+	Short: "Stop a digivice or digilake",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// XXX replace the make
@@ -143,7 +143,7 @@ var stopCmd = &cobra.Command{
 var (
 	aliasCmd = &cobra.Command{
 		Use:   "alias [AURI ALIAS]",
-		Short: "create a model alias",
+		Short: "Create a model alias",
 		Args:  cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {

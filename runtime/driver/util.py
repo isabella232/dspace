@@ -12,7 +12,12 @@ from kubernetes.client.rest import ApiException
 import kopf
 from kopf.reactor.registries import SmartOperatorRegistry as KopfRegistry
 
-config.load_incluster_config()
+try:
+    # deployed with service config
+    config.load_incluster_config()
+except:
+    # deployed with kubeconfig
+    config.load_kube_config()
 
 KopfRegistry = KopfRegistry
 
