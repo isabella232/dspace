@@ -1,0 +1,7 @@
+name: lamp
+namespace: default
+group: mock.digi.dev
+version: v1
+plural: lamps
+
+image: silveryfu/lamp:latest

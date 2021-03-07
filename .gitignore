@@ -238,4 +238,4 @@ BenchmarkDotNet.Artifacts/
 # examples
 examples/kome
 
-./runtime/driver/handler.py
+runtime/driver/handler.py
