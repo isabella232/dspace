@@ -59,6 +59,9 @@ def mount(*args, **kwargs):
 
 # XXX test path
 def attr(*args, **kwargs):
+    if len(args) >= 1 and callable(args[0]):
+        return _attr(path=".", *args, **kwargs)
+
     def decorator(fn):
         _attr(fn, *args, **kwargs)
 
@@ -70,7 +73,9 @@ def _attr(fn, path=".", priority=0):
     _path = list()
     ps = path.split(".")
 
-    if ps[0] == "mount":
+    if path == ".":
+        _path = ["."]
+    elif ps[0] == "mount":
         # XXX better . operator handling; use regex
         ps_gvr = path.split("/")
         assert len(ps_gvr) == 1 or len(ps_gvr) == 3
@@ -84,9 +89,11 @@ def _attr(fn, path=".", priority=0):
                            ps_gvr[2].split(".")[0])
             _path = ["mount", gvr] + ps_gvr[2].split(".")[1:]
     else:
-        _path = path.split(".")
+        _path = ps
     # XXX assume default gv in gvr until fix dot in path literal;
     # _path = path.split(".")
+
+    # TBD: join multiple path to allow multiple decorators per handler
     _path = tuple(_path)
 
     def has_diff(_, diff, *args, **kwargs) -> bool:

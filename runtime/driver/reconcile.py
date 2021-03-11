@@ -48,6 +48,9 @@ class __Reconciler:
 
 
 def safe_lookup(d: dict, path: tuple):
+    if path == (".",):
+        return d
+
     for k in path:
         d = d.get(k, {})
     return d
