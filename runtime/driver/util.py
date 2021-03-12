@@ -198,6 +198,14 @@ def get_spec(g, v, r, n, ns):
     return o.get("spec", {})
 
 
+# TBD: honor resource version
+# def get_model():
+#     pass
+
+# def update_model():
+#     pass
+
+
 def patch_spec(g, v, r, n, ns, spec: dict):
     api = kubernetes.client.CustomObjectsApi()
 

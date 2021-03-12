@@ -27,7 +27,8 @@ class Watch:
                  create_fn=None,
                  resume_fn=None,
                  update_fn=None,
-                 delete_fn=None, delete_optional=False,
+                 # TBD enable finalizer but avoid looping with multiple children
+                 delete_fn=None, delete_optional=True,
                  field_fn=None, field=""):
         self._registry = util.KopfRegistry()
         _args = (g, v, r)
@@ -64,6 +65,7 @@ class Mounter:
     """Implements the mount semantics for a given (parent) digivice"""
 
     def __init__(self, g, v, r, n, ns="default"):
+
         # children events handlers
         def on_child_create(body, *args, **kwargs):
             _, _ = args, kwargs
@@ -91,21 +93,22 @@ class Mounter:
             parent = util.get_spec(g, v, r, n, ns)
 
             # delete from parent
-            patch = _gen_parent_patch(parent, {}, group, version, plural,
-                                      name, namespace)
-            if patch is None:
+            ps = _gen_parent_spec(parent, None, group, version, plural,
+                                  name, namespace)
+            if ps is None:
                 return
-            util.patch_spec(g, v, r, n, ns, patch)
+            util.patch_spec(g, v, r, n, ns, ps)
 
         def _sync_to_parent(group, version, plural, name, namespace,
                             spec, diff, *args, **kwargs):
             _, _ = args, kwargs
 
             parent = util.get_spec(g, v, r, n, ns)
-            patch = _gen_parent_patch(parent, spec,  # new spec
-                                      group, version, plural,
-                                      name, namespace)
-            if patch is None:
+
+            parent_spec = _gen_parent_spec(parent, spec,
+                                           group, version, plural,
+                                           name, namespace)
+            if parent_spec is None:
                 return
 
             # use the diff to filter to only the status/output/obs updates
@@ -117,18 +120,20 @@ class Mounter:
                     # XXX fix the false positives
                     if (("control" in fs and "intent" in fs) or
                             ("data" in fs and "input" in fs)):
-                        print(f"parent updates should not contain changes to"
+                        # XXX allow intent back-propagation
+                        print(f"updates to parent should not contain changes to"
                               f"intent or input attributes, skip {namespace}/{name} "
                               f"for {ns}/{ns}")
                         return
 
             # push to parent models
-            util.patch_spec(g, v, r, n, ns, patch)
+            util.patch_spec(g, v, r, n, ns, parent_spec)
 
-        def _gen_parent_patch(parent, child_spec, g_, v_, r_, n_, ns_):
+        def _gen_parent_spec(parent, child_spec, g_, v_, r_, n_, ns_):
             mounts = parent.get("mount", {})
             gvr_str = util.gvr(g_, v_, r_)
             nsn_str = util.spaced_name(n_, ns_)
+            child_spec = dict(child_spec)
 
             if (gvr_str not in mounts or
                     (nsn_str not in mounts[gvr_str] and
@@ -137,20 +142,25 @@ class Mounter:
                 return None
 
             models = mounts[gvr_str]
+            n_ = n_ if n_ in models else nsn_str
 
-            patch = {
-                "mount": {
-                    gvr_str: {
-                        n_ if n_ in models else nsn_str: {
-                            "spec": dict(child_spec),
-                        }
-                    }
-                }}
+            if child_spec is None:
+                models.pop(n_, {})
+                return parent
 
-            return patch
+            # XXX remove when admission controller in
+            if type(models[n_]) != dict:
+                models[n_] = dict()
+
+            models[n_]["spec"] = child_spec
+
+            if models[n_].get("mode", "hide"):
+                models[n_]["spec"].pop("mount", {})
+
+            return parent
 
         # parent event handlers
-        def on_parent_create(spec, *args, **kwargs):
+        def on_parent_create(spec, diff, *args, **kwargs):
             _, _ = args, kwargs
             _update_children_watches(spec)
 
@@ -206,12 +216,16 @@ class Mounter:
                         w.stop()
                         del model_watches[nsn_str]
 
-        def _get_child_spec(parent_spec, gvr_str, nsn_str):
-            return parent_spec\
-                .get("mount", {})\
-                .get(gvr_str, {})\
-                .get(nsn_str, {})\
-                .get("spec", {})
+        def _gen_child_spec(parent_spec, gvr_str, nsn_str):
+            mount_entry = parent_spec \
+                .get("mount", {}) \
+                .get(gvr_str, {}) \
+                .get(nsn_str, {})
+            if mount_entry.get("mode", "hide") == "hide":
+                mount_entry.get("spec", {}).pop("mount", {})
+            if mount_entry.get("status", "inactive") == "active":
+                return mount_entry.get("spec", None)
+            return None
 
         def _sync_to_children(parent_spec, diff):
             # sort the diff by the attribute path (in tuple)
@@ -220,7 +234,7 @@ class Mounter:
             # filter to only the intent/input updates
             to_sync, to_filter = dict(), dict()
             for _, f, _, _ in diff:
-                if len(f) >= 3 and f[2] == "spec":
+                if len(f) >= 3:
                     gvr_str, nsn_str = f[0], f[1]
                     model_id = util.model_id(*parse_gvr(gvr_str),
                                              *parse_spaced_name(nsn_str))
@@ -229,12 +243,15 @@ class Mounter:
                     # XXX fix the false negatives (and false positives for the
                     # to-filter), or reserve e.g. intent as key word;
                     if (model_id not in to_sync and
-                            (("control" in fs and "intent" in fs) or
+                            (f[2] in {"mode", "status"} or
+                             ("control" in fs and "intent" in fs) or
                              ("data" in fs and "input" in fs))):
-                        to_sync[model_id] = _get_child_spec(parent_spec, gvr_str, nsn_str)
+                        cs = _gen_child_spec(parent_spec, gvr_str, nsn_str)
+                        if cs is not None:
+                            to_sync[model_id] = cs
 
-                    if (("control" in fs and "status" in fs) or
-                            ("data" in fs and "output" in fs)):
+                    if (f[1] == "obs" or ("control" in fs and "status" in fs)
+                            or ("data" in fs and "output" in fs)):
                         print(f"children updates should not contain status "
                               f"or output attribute, skip {model_id}")
                         to_filter[model_id] = True
