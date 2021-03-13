@@ -101,6 +101,8 @@ additionalProperties:
       type: string
     status:
       type: string
+    version:
+      type: string
   type: object
 type: object
 """
