@@ -45,6 +45,8 @@ spec:
                   mock.digi.dev/v1/lamps:
                     additionalProperties:
                       properties:
+                        generation:
+                          type: number
                         mode:
                           type: string
                         spec:
@@ -73,6 +75,8 @@ spec:
                               type: object
                           type: object
                         status:
+                          type: string
+                        version:
                           type: string
                       type: object
                     type: object

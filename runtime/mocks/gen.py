@@ -103,6 +103,8 @@ additionalProperties:
       type: string
     version:
       type: string
+    generation:
+      type: number
   type: object
 type: object
 """

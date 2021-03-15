@@ -35,14 +35,26 @@ def main():
     @kopf.on.create(**_model, **_kwargs)
     @kopf.on.resume(**_model, **_kwargs)
     @kopf.on.update(**_model, **_kwargs)
-    def reconcile(*args, **kwargs):
+    def reconcile(meta, *args, **kwargs):
+        rv, gn = meta["resourceVersion"], meta["generation"]
+        # skip the last self-write
+        # TBD for parallel reconciliation may need to lock rc.gen before patch
+        if rc.gen == gn + 1:
+            return
+
         spec = rc.run(*args, **kwargs)
-        util.patch_spec(g, v, r, n, ns, spec)
+        e = util.patch_spec(g, v, r, n, ns, spec, rv=rv)
+        if e is not None:
+            # retry s.t. the diff object contains the past changes
+            raise kopf.TemporaryError(e, delay=1)
+
+        rc.gen = gn
 
     @kopf.on.delete(**_model, **_kwargs, optional=True)
     def on_delete(*args, **kwargs):
         _, _ = args, kwargs
-        _stop.set()
+        # use dq to remove the driver
+        # _stop.set()
 
     _ready, _stop = util.run_operator(_registry)
 

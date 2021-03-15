@@ -136,6 +136,35 @@ def gvr_from_body(b):
     return g, v, r
 
 
+def trim_attr(spec: dict, attrs: set) -> dict:
+    # BFS
+    to_visit = [spec]
+    for n in to_visit:
+        to_trim = list()
+        if type(n) is not dict:
+            continue
+        for k, v in n.items():
+            if k not in attrs:
+                to_visit.append(v)
+            else:
+                to_trim.append(k)
+        for k in to_trim:
+            n.pop(k, {})
+    return spec
+
+
+def apply_diff(model: dict, diff: list) -> dict:
+    for op, fs, old, new in diff:
+        if op in {"add", "change"}:
+            n = model
+            for f in fs[:-1]:
+                if f not in n:
+                    n[f] = dict()
+                n = n[f]
+            n[fs[-1]] = new
+    return model
+
+
 def parse_spaced_name(nsn) -> Tuple[str, str]:
     parsed = nsn.split("/")
     if len(parsed) < 2:
@@ -182,7 +211,7 @@ def parse_model_id(s) -> Tuple[str, str, str, str, str]:
     return ps[0], ps[1], ps[2], ps[4], ps[3]
 
 
-def get_spec(g, v, r, n, ns):
+def get_spec(g, v, r, n, ns) -> (dict, str, int):
     api = kubernetes.client.CustomObjectsApi()
 
     try:
@@ -195,18 +224,12 @@ def get_spec(g, v, r, n, ns):
     except ApiException as e:
         print(f"k8s: unable to update model {model_id(g, v, r, n, ns)}:", e)
         return None
-    return o.get("spec", {})
+    return o.get("spec", {}), \
+           o["metadata"]["resourceVersion"], \
+           o["metadata"]["generation"]
 
 
-# TBD: honor resource version
-# def get_model():
-#     pass
-
-# def update_model():
-#     pass
-
-
-def patch_spec(g, v, r, n, ns, spec: dict):
+def patch_spec(g, v, r, n, ns, spec: dict, rv=None):
     api = kubernetes.client.CustomObjectsApi()
 
     try:
@@ -216,14 +239,38 @@ def patch_spec(g, v, r, n, ns, spec: dict):
                                            name=n,
                                            plural=r,
                                            body={
+                                               "metadata": {} if rv is None else {
+                                                   "resourceVersion": rv,
+                                               },
                                                "spec": spec,
                                            },
                                            )
     except ApiException as e:
-        print(f"k8s: unable to update model {model_id(g, v, r, n, ns)}:", e)
+        return f"k8s: unable to update model {model_id(g, v, r, n, ns)}: {e}"
 
 
 if __name__ == "__main__":
-    import pprint as pp
+    import json
 
-    pp.pprint(parse_auri("/MockLamp/mock-lamp-2.spec.power"))
+    print(parse_auri("/MockLamp/mock-lamp-2.spec.power"))
+
+    A = {"control": {"power": {"intent": "off", "status": "on",
+                               "room": {"mode": {"intent": "on",
+                                                 "status": "off"}}}},
+         "data": {"input": {"url": "http://"}, "output": {"objects": "human"}}}
+    print("before:")
+
+
+    def pprint(s):
+        print(json.dumps(A, indent=2))
+
+
+    pprint(A)
+    for t in ["intent", "status", "output"]:
+        print(f"after trimming {t}")
+        pprint(trim_attr(A, {t}))
+
+    diff = [('add', ('spec', 'labels', 'label1'), None, 'new-value'),
+            ('change', ('spec', 'size'), '1G', '2G')]
+    A = {"spec": {"size": "1G"}}
+    print(apply_diff(A, diff))

@@ -1,8 +1,6 @@
 import kopf
-import time
-import threading
-import copy
 from collections import defaultdict
+import time
 
 import util
 from util import parse_gvr, spaced_name, parse_spaced_name
@@ -66,23 +64,39 @@ class Mounter:
 
     def __init__(self, g, v, r, n, ns="default"):
 
-        # children events handlers
+        """ children event handlers """
+
         def on_child_create(body, *args, **kwargs):
             _, _ = args, kwargs
-            return _sync_to_parent(*util.gvr_from_body(body), **kwargs)
+            _g, _v, _r = util.gvr_from_body(body)
+            _sync_from_parent(_g, _v, _r,
+                              attrs_to_trim={"status", "output", "obs"},
+                              *args, **kwargs)
+            _sync_to_parent(_g, _v, _r,
+                            attrs_to_trim={"intent", "input"},
+                            *args, **kwargs)
 
-        def on_child_update(body, *args, **kwargs):
+        def on_child_update(body, meta, name, namespace,
+                            *args, **kwargs):
             _, _ = args, kwargs
-            return _sync_to_parent(*util.gvr_from_body(body), **kwargs)
+
+            _g, _v, _r = util.gvr_from_body(body)
+            _id = util.model_id(_g, _v, _r, name, namespace)
+
+            if meta["generation"] == self._children_gen[_id] + 1:
+                return
+
+            return _sync_to_parent(_g, _v, _r, name, namespace, meta,
+                                   *args, **kwargs)
 
         def on_child_delete(body, name, namespace,
                             *args, **kwargs):
             _, _ = args, kwargs
 
-            group, version, plural = util.gvr_from_body(body)
+            _g, _v, _r = util.gvr_from_body(body)
 
             # remove watch
-            gvr_str = util.gvr(group, version, plural)
+            gvr_str = util.gvr(_g, _v, _r)
             nsn_str = util.spaced_name(name, namespace)
 
             w = self._children_watches.get(gvr_str, {}).get(nsn_str, None)
@@ -90,82 +104,123 @@ class Mounter:
                 w.stop()
                 self._children_watches[gvr_str].pop(nsn_str, "")
 
-            parent = util.get_spec(g, v, r, n, ns)
+            # will delete from parent
+            _sync_to_parent(_g, _v, _r, name, namespace, spec=None,
+                            *args, **kwargs)
 
-            # delete from parent
-            ps = _gen_parent_spec(parent, None, group, version, plural,
-                                  name, namespace)
-            if ps is None:
-                return
-            util.patch_spec(g, v, r, n, ns, ps)
-
-        def _sync_to_parent(group, version, plural, name, namespace,
-                            spec, diff, *args, **kwargs):
+        def _sync_from_parent(group, version, plural, name, namespace, meta,
+                              attrs_to_trim=None, *args, **kwargs):
             _, _ = args, kwargs
 
-            parent = util.get_spec(g, v, r, n, ns)
+            parent, prv, pgn = util.get_spec(g, v, r, n, ns)
 
-            parent_spec = _gen_parent_spec(parent, spec,
-                                           group, version, plural,
-                                           name, namespace)
-            if parent_spec is None:
-                return
-
-            # use the diff to filter to only the status/output/obs updates
-            # unless the parent does not have the .spec (e.g., at creation);
-            # filter to only the status/output updates
-            for _, f, _, new in diff:
-                if len(f) > 0 and f[0] == "spec":
-                    fs = set(f)
-                    # XXX fix the false positives
-                    if (("control" in fs and "intent" in fs) or
-                            ("data" in fs and "input" in fs)):
-                        # XXX allow intent back-propagation
-                        print(f"updates to parent should not contain changes to"
-                              f"intent or input attributes, skip {namespace}/{name} "
-                              f"for {ns}/{ns}")
-                        return
-
-            # push to parent models
-            util.patch_spec(g, v, r, n, ns, parent_spec)
-
-        def _gen_parent_spec(parent, child_spec, g_, v_, r_, n_, ns_):
+            # check if child exists
             mounts = parent.get("mount", {})
-            gvr_str = util.gvr(g_, v_, r_)
-            nsn_str = util.spaced_name(n_, ns_)
-            child_spec = dict(child_spec)
+            gvr_str = util.gvr(group, version, plural)
+            nsn_str = util.spaced_name(name, namespace)
 
             if (gvr_str not in mounts or
                     (nsn_str not in mounts[gvr_str] and
-                     n_ not in mounts[gvr_str])):
-                print(f"unable to find the {nsn_str} or {n_} in the {parent}")
-                return None
+                     name not in mounts[gvr_str])):
+                print(f"unable to find the {nsn_str} or {name} in the {parent}")
+                return
 
             models = mounts[gvr_str]
-            n_ = n_ if n_ in models else nsn_str
+            n_ = name if name in models else nsn_str
 
-            if child_spec is None:
-                models.pop(n_, {})
-                return parent
+            patch = models[n_]
+            if attrs_to_trim is not None:
+                patch = util.trim_attr(patch, attrs_to_trim)
 
-            # XXX remove when admission controller in
-            if type(models[n_]) != dict:
-                models[n_] = dict()
+            e = util.patch_spec(group, version, plural, name, namespace, patch,
+                                rv=models[n_].get("version", meta["resourceVersion"]))
 
-            models[n_]["spec"] = child_spec
+            if e is not None:
+                print(f"mounter: unable to sync from parent due to {e}")
+            else:
+                self._children_gen[util.model_id(group, version, plural,
+                                                 name, namespace)] = meta["generation"]
 
-            if models[n_].get("mode", "hide"):
-                models[n_]["spec"].pop("mount", {})
+        def _sync_to_parent(group, version, plural, name, namespace, meta,
+                            spec, diff, attrs_to_trim=None, *args, **kwargs):
+            _, _ = args, kwargs
 
-            return parent
+            # propagation from child retries until succeed
+            while True:
+                parent, prv, pgn = util.get_spec(g, v, r, n, ns)
 
-        # parent event handlers
+                # check if child exists
+                mounts = parent.get("mount", {})
+                gvr_str = util.gvr(group, version, plural)
+                nsn_str = util.spaced_name(name, namespace)
+
+                if (gvr_str not in mounts or
+                        (nsn_str not in mounts[gvr_str] and
+                         name not in mounts[gvr_str])):
+                    print(f"unable to find the {nsn_str} or {name} in the {parent}")
+                    return
+
+                models = mounts[gvr_str]
+                n_ = name if name in models else nsn_str
+
+                if spec is None:
+                    parent_patch = None  # will convert to json null
+                else:
+                    if models[n_].get("mode", "hide") == "hide":
+                        if attrs_to_trim is None:
+                            attrs_to_trim = set()
+                        attrs_to_trim.add("mount")
+
+                    parent_patch = _gen_parent_patch(spec, diff, attrs_to_trim)
+
+                parent_patch = {
+                    "mount": {
+                        gvr_str: {
+                            n_: None if parent_patch is None else {
+                                "spec": parent_patch,
+                                "version": meta["resourceVersion"],
+                                "generation": meta["generation"],
+                            }
+                        }
+                    }}
+
+                # maybe rejected if parent has been updated;
+                # continue to try until succeed
+                e = util.patch_spec(g, v, r, n, ns, parent_patch, rv=prv)
+                if e is not None:
+                    print(f"mounter: failed to sync to parent due to {e}")
+                    time.sleep(1)
+                else:
+                    self._parent_gen = pgn
+                    break
+
+        def _gen_parent_patch(child_spec, diff, attrs_to_trim=None):
+            child_spec = dict(child_spec)
+
+            if attrs_to_trim is not None:
+                child_spec = util.trim_attr(child_spec, attrs_to_trim)
+
+            if diff is not None:
+                child_spec = util.apply_diff({"spec": child_spec}, diff)["spec"]
+
+            return child_spec
+
+        """ parent event handlers """
+
         def on_parent_create(spec, diff, *args, **kwargs):
             _, _ = args, kwargs
             _update_children_watches(spec)
+            # no need to sync from the children as the child
+            # handlers will sync updates from/to the parent
+            # ...
+            # _sync_to_children(spec, diff)
 
-        def on_mount_attr_update(spec, diff, *args, **kwargs):
+        def on_mount_attr_update(spec, meta, diff, *args, **kwargs):
             _, _ = args, kwargs
+
+            if meta["generation"] == self._parent_gen + 1:
+                return
+
             _update_children_watches(spec)
             _sync_to_children(spec, diff)
 
@@ -179,10 +234,6 @@ class Mounter:
 
             # add watches
             for gvr_str, models in mounts.items():
-                # TBD child's gvr, which can omit the group and version
-                # for which we use the parent's g and v instead
-                # gvr = parse_gvr(gvr_str, g=g, v=v)
-
                 gvr = parse_gvr(gvr_str)  # child's gvr
 
                 for nsn_str, m in models.items():
@@ -216,52 +267,67 @@ class Mounter:
                         w.stop()
                         del model_watches[nsn_str]
 
-        def _gen_child_spec(parent_spec, gvr_str, nsn_str):
+        def _gen_child_patch(parent_spec, gvr_str, nsn_str):
             mount_entry = parent_spec \
                 .get("mount", {}) \
                 .get(gvr_str, {}) \
                 .get(nsn_str, {})
             if mount_entry.get("mode", "hide") == "hide":
                 mount_entry.get("spec", {}).pop("mount", {})
+
             if mount_entry.get("status", "inactive") == "active":
-                return mount_entry.get("spec", None)
-            return None
+                spec = mount_entry.get("spec", None)
+                if spec is not None:
+                    spec = util.trim_attr(spec, {"status", "output", "obs"})
+
+                version = mount_entry.get("version", None)
+                gen = mount_entry.get("generation", None)
+                return spec, version, gen
+
+            return None, None, None
 
         def _sync_to_children(parent_spec, diff):
             # sort the diff by the attribute path (in tuple)
             diff = sorted(diff, key=lambda x: x[1])
 
             # filter to only the intent/input updates
-            to_sync, to_filter = dict(), dict()
+            to_sync = dict()
             for _, f, _, _ in diff:
-                if len(f) >= 3:
-                    gvr_str, nsn_str = f[0], f[1]
-                    model_id = util.model_id(*parse_gvr(gvr_str),
-                                             *parse_spaced_name(nsn_str))
+                # skip non children update
+                if len(f) < 3:
+                    continue
 
-                    fs = set(f)
-                    # XXX fix the false negatives (and false positives for the
-                    # to-filter), or reserve e.g. intent as key word;
-                    if (model_id not in to_sync and
-                            (f[2] in {"mode", "status"} or
-                             ("control" in fs and "intent" in fs) or
-                             ("data" in fs and "input" in fs))):
-                        cs = _gen_child_spec(parent_spec, gvr_str, nsn_str)
+                gvr_str, nsn_str = f[0], f[1]
+                model_id = util.model_id(*parse_gvr(gvr_str),
+                                         *parse_spaced_name(nsn_str))
+
+                if model_id not in to_sync:
+                    cs, rv, gen = _gen_child_patch(parent_spec, gvr_str, nsn_str)
+                    if not (cs is None or rv is None or gen is None):
+                        to_sync[model_id] = cs, rv, gen
+
+            # sync all, e.g., on parent resume and creation
+            if len(diff) == 0:
+                for gvr_str, ms in parent_spec.get("mount", {}).items():
+                    for nsn_str, m in ms.items():
+                        model_id = util.model_id(*parse_gvr(gvr_str),
+                                                 *parse_spaced_name(nsn_str))
+                        cs, rv, gen = _gen_child_patch(parent_spec, gvr_str, nsn_str)
+                        # both rv and gen can be none as during the initial sync
+                        # the parent may overwrite
                         if cs is not None:
-                            to_sync[model_id] = cs
-
-                    if (f[1] == "obs" or ("control" in fs and "status" in fs)
-                            or ("data" in fs and "output" in fs)):
-                        print(f"children updates should not contain status "
-                              f"or output attribute, skip {model_id}")
-                        to_filter[model_id] = True
-
-            for k, _ in to_filter.items():
-                to_sync.pop(k, "")
+                            to_sync[model_id] = cs, rv, gen
 
             # push to children models
-            for model_id, child_spec in to_sync.items():
-                util.patch_spec(*util.parse_model_id(model_id), child_spec)
+            # TBD: transactional update
+            for model_id, (cs, rv, gen) in to_sync.items():
+                e = util.patch_spec(*util.parse_model_id(model_id),
+                                    spec=cs,
+                                    rv=rv)
+                if e is not None:
+                    print(f"mounter: unable to sync to children due to {e}")
+                elif gen is not None:
+                    self._children_gen[model_id] = gen
 
         # subscribe to the events of the parent model
         self._parent_watch = Watch(g, v, r, n, ns,
@@ -273,6 +339,11 @@ class Mounter:
         # subscribe to the events of the child models;
         # keyed by the gvr and then spaced name
         self._children_watches = defaultdict(dict)
+
+        # last handled generation of a child, keyed by nsn;
+        # used to filter last self-write on the child
+        self._children_gen = dict()
+        self._parent_gen = -1
 
     def start(self):
         self._parent_watch.start()
