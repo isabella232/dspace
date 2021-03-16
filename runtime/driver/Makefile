@@ -1,4 +1,4 @@
-.PHONY: test build deploy
+.PHONY: test build deploy template all
 g:="mock.digi.dev"
 v:="v1"
 r:="samples"
@@ -17,3 +17,6 @@ template:
 all: | build deploy
 	$(info build and deploy)
 
+.PHONY: test_mt
+test_mt:
+	python mount_test.py
