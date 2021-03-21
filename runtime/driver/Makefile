@@ -17,6 +17,6 @@ template:
 all: | build deploy
 	$(info build and deploy)
 
-.PHONY: test_mt
+.PHONY: test_mt clean
 test_mt:
 	python mount_test.py

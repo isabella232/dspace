@@ -260,7 +260,6 @@ if __name__ == "__main__":
          "data": {"input": {"url": "http://"}, "output": {"objects": "human"}}}
     print("before:")
 
-
     def pprint(s):
         print(json.dumps(A, indent=2))
 

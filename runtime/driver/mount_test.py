@@ -1,23 +1,19 @@
 import os
 import sys
 import subprocess
+import time
 import yaml
 import inflection
-
-from kubernetes import client, config
-from kubernetes.client.rest import ApiException
-
-import util
-
-config.load_kube_config()
 
 _dir = os.path.dirname(os.path.realpath(__file__))
 _mock_dir = os.path.join(_dir, "..", "mocks")
 _parent_cr = os.path.join(_mock_dir, "room", "test", "cr.yaml")
 _child_cr = os.path.join(_mock_dir, "lamp", "test", "cr.yaml")
 
-# seconds to wait for event propagation
-_wait = 0.5
+
+def _wait(t=0.5):
+    time.sleep(t)
+
 
 """
 Mount tests:
@@ -49,49 +45,39 @@ Update events:
     - parent.mount.child.status matches
 6. update child.intent
     - parent.mount.child.intent matches
-
-Intent/status/data propagation in digi-graph:
-- Each digivice/lake driver writes to its own model;
-- The runtime (mounter) propagates updates by writing what's in the source model 
-to the target model; this includes intent/status/input/output/obs attributes.
-- The runtime (apiserver) implements optimistic concurrency to achieve model-level 
-atomic RMW. Each write request carries a version number; upon receiving the 
-request, the runtime checks if the version number matches the current version 
-number of the model and accepts the request only if so. The version number is 
-changed upon each model update -- typically incremented to a larger value.
-- Besides version number, each model has a generation number. The 
-number is incremented by one upon changes;
-
-When a child model is mounted to a parent model, the parent keeps a copy of 
-the child's model under its mount attribute. Synced by the mounter, this copy 
-is eventually consistent with the child's model.
-- When the parent 
-
 """
 
 
-def test_mount():
-    _setup()
-    _make_cr(_parent_cr)
-    _make_cr(_child_cr)
+def test_mount(parent, child):
+    _make_cr(parent)
+    _show(parent)
+
+    _make_cr(child)
+    _show(child)
+
+    _wait()
+    _mount(child, parent)
+
+    _wait()
+    _show(parent)
+    _wait(t=10)
 
 
-def test_bp():
+def test_prop(parent, child):
     pass
 
 
-# XXX move to pytest
+# TBD move to pytest
 def test_all():
-    _setup()
-    test_mount()
+    with _Setup() as s:
+        test_mount(s.parent, s.child)
+
+    with _Setup() as s:
+        test_prop(s.parent, s.child)
 
 
-def _show(model, neat=True):
-    _cmd(f"kubectl get {model['k']} {model['n']} "
-         f"-oyaml {'| kubectl neat' if neat else ''}")
-
-
-def _setup():
+class _Setup:
+    @staticmethod
     def _parse(cr):
         with open(cr) as f:
             model = yaml.load(f, Loader=yaml.SafeLoader)
@@ -109,25 +95,54 @@ def _setup():
                 "ns": meta.get("namespace", "default"),
                 "r": inflection.pluralize(model["kind"]).lower(),
                 "alias": meta["name"],
+                "cr_file": cr,
             }
 
-    parent = _parse(_parent_cr)
-    child = _parse(_child_cr)
+    def __enter__(self):
+        self.parent = self._parse(_parent_cr)
+        self.child = self._parse(_child_cr)
 
-    _cmd(f"dq alias {parent['auri']} {parent['alias']}")
-    _cmd(f"dq alias {child['auri']} {child['alias']}")
+        _make_cr(self.parent, delete=True)
+        _make_cr(self.child, delete=True)
+
+        _cmd(f"dq alias {self.parent['auri']} {self.parent['alias']}")
+        _cmd(f"dq alias {self.child['auri']} {self.child['alias']}")
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        _make_cr(self.parent, delete=True)
+        _make_cr(self.child, delete=True)
 
 
-def _mount(child_alias, parent_alias, unmount=False):
-    _cmd(f"dq mount {'-d ' if unmount else ''}{child_alias} {parent_alias}")
+def _mount(child, parent, unmount=False):
+    _cmd(f"dq mount {'-d ' if unmount else ''}"
+         f"{child['alias']} {parent['alias']}",
+         show_cmd=True)
 
 
-def _make_cr(path, delete=False):
-    _cmd(f"kubectl {'delete' if delete else 'apply'} -f {path}")
+def _make_driver(kind):
+    _cmd(f"cd {_mock_dir}; KIND={kind} make test")
 
 
-def _cmd(cmd, quiet=False):
-    """Executes a subprocess running a shell command and returns the output."""
+def _make_cr(model, delete=False):
+    _cmd(f"kubectl {'delete' if delete else 'apply'} "
+         f"-f {model['cr_file']} "
+         f"{'> /dev/null 2>&1 | true' if delete else ''}")
+
+
+def _show(model, neat=True):
+    print("---")
+    _cmd(f"kubectl get {model['k']} {model['n']} "
+         f"-oyaml {'| kubectl neat' if neat else ''}")
+
+
+def _cmd(cmd, show_cmd=False, quiet=False):
+    """Executes a subprocess running a shell command and
+    returns the output."""
+    if show_cmd:
+        print()
+        print("$", cmd)
+
     if quiet:
         proc = subprocess.Popen(
             cmd,
@@ -136,14 +151,16 @@ def _cmd(cmd, quiet=False):
             shell=True,
             executable='/bin/bash')
     else:
-        proc = subprocess.Popen(cmd, shell=True, executable='/bin/bash')
+        proc = subprocess.Popen(cmd, shell=True,
+                                executable='/bin/bash')
 
     out, _ = proc.communicate()
 
     if proc.returncode:
         if quiet:
             print('Log:\n', out, file=sys.stderr)
-        print('Error has occurred running command: %s' % cmd, file=sys.stderr)
+        print('Error has occurred running command: %s' % cmd,
+              file=sys.stderr)
         sys.exit(proc.returncode)
     return out
 
