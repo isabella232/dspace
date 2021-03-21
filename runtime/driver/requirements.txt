@@ -1,4 +1,4 @@
-kopf==0.28.03
+#kopf==0.28.03
 kubernetes
 pyyaml
 inflection
