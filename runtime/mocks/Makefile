@@ -1,4 +1,4 @@
-.PHONY: gen patch model model-all delete test
+.PHONY: gen patch model model-all delete
 
 kc := kubectl
 registry := silveryfu
@@ -7,13 +7,6 @@ deploy_templates := ../driver/deploy
 driver_handler := ./$(KIND)/driver/*.py
 digivice_config := ./$(KIND)/deploy/*.yaml
 build_dir := /tmp/dspace-build-$(KIND)
-
-# test configs
-g := mock.digi.dev
-v := v1
-r := $(KIND)s
-n := $(KIND)-test
-ns := default
 
 # model
 gen:
@@ -26,10 +19,20 @@ model-all: | gen patch model
 	$(info model)
 delete:
 	cd ./$(KIND); $(kc) delete -f crd.yaml
+
+.PHONY: test
+
+# test configs
+g := mock.digi.dev
+v := v1
+r := $(KIND)s
+n := $(KIND)-test
+ns := default
+
 test: | model-all
 	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
 	cp ./$(KIND)/driver/handler.py $(driver_templates); \
-	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) \
+	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \
 	python $(driver_templates)/driver.py
 
 # driver

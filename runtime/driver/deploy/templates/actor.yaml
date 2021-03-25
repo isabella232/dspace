@@ -29,5 +29,7 @@ spec:
             value: {{ .Values.name }}
           - name: NAMESPACE
             value: {{ .Values.namespace }}
+          - name: MOUNTER
+            value: {{ .Values.mounter }}
 
 

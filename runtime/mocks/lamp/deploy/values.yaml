@@ -3,5 +3,6 @@ namespace: default
 group: mock.digi.dev
 version: v1
 plural: lamps
+mounter: false
 
 image: silveryfu/lamp:latest
