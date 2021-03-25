@@ -101,7 +101,8 @@ def _attr(fn, path=".", priority=0):
         diff_attrs = {(".",): True}
         for op, fs, old, new in diff:
             diff_attrs.update({
-                fs[:i + 1]: True
+                # Skip "spec" in diff
+                fs[1:i + 1]: True
                 for i in range(len(fs))
             })
         if _path in diff_attrs or len(diff) == 0:
