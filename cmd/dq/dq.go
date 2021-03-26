@@ -41,7 +41,7 @@ var mountCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("source: %s, target: %s\n", mt.Source, mt.Target)
+		//fmt.Printf("mount %s -> %s\n", mt.Source.Name, mt.Target.Name)
 
 		mt.Op = client.MOUNT
 
@@ -83,7 +83,7 @@ var pipeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("source: %s, target: %s\n", pp.Source, pp.Target)
+		//fmt.Printf("pipe %s -> %s\n", pp.Source.Name, pp.Target.Name)
 
 		f := pp.Pipe
 		if d, _ := cmd.Flags().GetBool("delete"); d {
