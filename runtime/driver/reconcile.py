@@ -27,13 +27,14 @@ class __Reconciler:
 
     def run(self, spec, old, *args, **kwargs):
         spec = dict(spec)
+        proc_spec = dict(spec)
         for fn, cond, path, _ in self.handlers:
             if cond(spec, *args, **kwargs):
-                sub_spec = safe_lookup(spec, path)
-                assert type(sub_spec) is dict
+                sub_spec = safe_lookup(proc_spec, path)
                 # handler edits the spec object
-                fn(subview=sub_spec, view=spec, old_view=old)
-        return spec
+                fn(subview=sub_spec, proc_view=proc_spec,
+                   view=spec, old_view=old)
+        return proc_spec
 
     def add(self, handler: typing.Callable,
             condition: typing.Callable,

@@ -145,6 +145,11 @@ def _attr(fn, path=".", priority=0):
             kwarg_filter.update({"subview": p})
             args[p] = None
 
+    for p in ["proc_view", "pv"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"proc_view": p})
+            args[p] = None
+
     for p in ["view", "v"]:
         if p in sig.parameters:
             kwarg_filter.update({"view": p})
@@ -161,15 +166,18 @@ def _attr(fn, path=".", priority=0):
         if i == 0:
             kwarg_filter["subview"] = k
         elif i == 1:
-            kwarg_filter["view"] = k
+            kwarg_filter["proc_view"] = k
         elif i == 2:
+            kwarg_filter["view"] = k
+        elif i == 3:
             kwarg_filter["old_view"] = k
         else:
             break
 
-    def wrapper_fn(subview, view, old_view):
+    def wrapper_fn(subview, proc_view, view, old_view):
         kwargs = dict()
         for _k, v in [("subview", subview),
+                      ("proc_view", proc_view),
                       ("view", view),
                       ("old_view", old_view)]:
             if _k in kwarg_filter:
