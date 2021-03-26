@@ -25,20 +25,21 @@ class __Reconciler:
         # TBD use bisect if no other purpose
         self._prio_handler = defaultdict(list)
 
-    def run(self, spec, *args, **kwargs):
+    def run(self, spec, old, *args, **kwargs):
         spec = dict(spec)
         for fn, cond, path, _ in self.handlers:
             if cond(spec, *args, **kwargs):
                 sub_spec = safe_lookup(spec, path)
                 assert type(sub_spec) is dict
                 # handler edits the spec object
-                fn(sub_spec)
+                fn(subview=sub_spec, view=spec, old_view=old)
         return spec
 
     def add(self, handler: typing.Callable,
             condition: typing.Callable,
             priority: int,
             path: tuple = ()):
+
         # XXX support reflex API and dynamically add handler
         self._prio_handler[priority].append((handler, condition, path, priority))
         for p in sorted(self._prio_handler.keys()):

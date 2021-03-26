@@ -1,4 +1,6 @@
-import os
+import inspect
+from collections import OrderedDict
+
 import util
 from reconcile import rc
 
@@ -41,6 +43,7 @@ def obs(*args, **kwargs):
             _attr(fn, path="obs." + args[0], *args[1:], **kwargs)
         elif "path" in kwargs:
             _attr(fn, path="obs." + kwargs.pop("path"), *args, **kwargs)
+
     return decorator
 
 
@@ -101,7 +104,8 @@ def _attr(fn, path=".", priority=0):
         _, _ = args, kwargs
         changed_paths = {(".",): True}
         for op, fs, old, new in diff:
-            if old is None:
+            # on create
+            if old is None and len(fs) == 0:
                 changed_paths.update(_from_model(new))
             else:
                 changed_paths.update(_from_path_tuple(fs))
@@ -116,8 +120,8 @@ def _attr(fn, path=".", priority=0):
             result[tuple(prefix)] = True
             if type(n) is not dict:
                 continue
-            for k, v in n.items():
-                to_visit.append([v, prefix + [k]])
+            for _k, v in n.items():
+                to_visit.append([v, prefix + [_k]])
         return result
 
     def _from_path_tuple(p: tuple):
@@ -128,9 +132,51 @@ def _attr(fn, path=".", priority=0):
             for i in range(len(p))
         }
 
+    sig = inspect.signature(fn)
 
+    # allow the handler declaration to omit arguments
+    # the handler takes in argument in form of [subview, view, old_view]
+    kwarg_filter = dict()
+    args = OrderedDict(sig.parameters)
 
-    rc.add(handler=fn,
+    # allow aliases
+    for p in ["subview", "sv"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"subview": p})
+            args[p] = None
+
+    for p in ["view", "v"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"view": p})
+            args[p] = None
+
+    for p in ["old_view", "ov", "o"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"old_view": p})
+            args[p] = None
+
+    for i, k in enumerate(args.keys()):
+        if k is None:
+            continue
+        if i == 0:
+            kwarg_filter["subview"] = k
+        elif i == 1:
+            kwarg_filter["view"] = k
+        elif i == 2:
+            kwarg_filter["old_view"] = k
+        else:
+            break
+
+    def wrapper_fn(subview, view, old_view):
+        kwargs = dict()
+        for _k, v in [("subview", subview),
+                      ("view", view),
+                      ("old_view", old_view)]:
+            if _k in kwarg_filter:
+                kwargs[kwarg_filter[_k]] = v
+        fn(**kwargs)
+
+    rc.add(handler=wrapper_fn,
            priority=priority,
            condition=has_diff,
            path=_path)

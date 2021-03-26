@@ -114,6 +114,17 @@ metadata:
   name: {name}
 """
 
+_helm_values = """
+name: {name}
+namespace: {namespace} 
+group: {group}
+version: {version}
+plural: {plural}
+mounter: {mounter}
+
+image: silveryfu/{image}:latest
+"""
+
 
 def plural(model):
     return inflection.pluralize(model["kind"]).lower()
@@ -186,30 +197,52 @@ def gen(name):
             yaml.dump(crd, f_)
 
         # generate a CR if missing
-        if not os.path.exists(os.path.join(_dir_path, "deploy")):
-            os.makedirs(os.path.join(_dir_path, "deploy"))
+        def _gen_cr(parent_dir, name_=model["kind"].lower()):
+            if not os.path.exists(os.path.join(_dir_path, parent_dir)):
+                os.makedirs(os.path.join(_dir_path, parent_dir))
+            cr_file = os.path.join(_dir_path, parent_dir, "cr.yaml")
+            if not os.path.exists(cr_file):
+                cr = _cr.format(groupVersion=model["group"] + "/" + model["version"],
+                                kind=model["kind"],
+                                name=name_,
+                                )
+                cr = yaml.load(cr, Loader=yaml.FullLoader)
+                cr["spec"] = dict()
 
-        cr_file = os.path.join(_dir_path, "deploy", "cr.yaml")
-        if not os.path.exists(cr_file):
-            cr = _cr.format(groupVersion=model["group"] + "/" + model["version"],
-                            kind=model["kind"],
-                            name=model["kind"].lower() + "-" + str(uuid.uuid4())[:4],
-                            )
-            cr = yaml.load(cr, Loader=yaml.FullLoader)
-            cr["spec"] = dict()
+                # XXX improve CR generation
+                for _name in ["control", "data", "mount"]:
+                    attrs = model.get(_name, {})
+                    if len(attrs) == 0:
+                        continue
+                    if _name not in cr["spec"]:
+                        cr["spec"][_name] = dict()
+                    for a, _ in attrs.items():
+                        cr["spec"][_name].update({a: -1})
 
-            # XXX improve CR generation
-            for _name in ["control", "data", "obs", "mount"]:
-                attrs = model.get(_name, {})
-                if len(attrs) == 0:
-                    continue
-                if _name not in cr["spec"]:
-                    cr["spec"][_name] = dict()
-                for a, _ in attrs.items():
-                    cr["spec"][_name].update({a: -1})
+                with open(cr_file, "w") as f_:
+                    yaml.dump(cr, f_)
 
-            with open(cr_file, "w") as f_:
-                yaml.dump(cr, f_)
+        # deployment cr
+        _gen_cr("deploy")
+
+        # testing cr
+        _gen_cr("test", name_=model["kind"].lower() + "-test")
+
+        # generate a helm values.yaml if missing
+        values_file = os.path.join(_dir_path, "deploy", "values.yaml")
+        if not os.path.exists(values_file):
+            values = _helm_values.format(group=model["group"],
+                                         version=model["version"],
+                                         plural=inflection.pluralize(model["kind"]).lower(),
+                                         name=model["kind"].lower(),
+                                         namespace=model.get("namespace", "default"),
+                                         mounter="true" if "mount" in model else "false",
+                                         image=model["kind"].lower()
+                                         )
+            values = yaml.load(values, Loader=yaml.FullLoader)
+
+            with open(values_file, "w") as f_:
+                yaml.dump(values, f_)
 
 
 if __name__ == '__main__':
