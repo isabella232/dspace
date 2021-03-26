@@ -96,18 +96,39 @@ def _attr(fn, path=".", priority=0):
     # TBD: join multiple path to allow multiple decorators per handler
     _path = tuple(_path)
 
+    # TBD: add shared diff for all handlers
     def has_diff(_, diff, *args, **kwargs) -> bool:
         _, _ = args, kwargs
-        diff_attrs = {(".",): True}
+        changed_paths = {(".",): True}
         for op, fs, old, new in diff:
-            diff_attrs.update({
-                # Skip "spec" in diff
-                fs[1:i + 1]: True
-                for i in range(len(fs))
-            })
-        if _path in diff_attrs or len(diff) == 0:
+            if old is None:
+                changed_paths.update(_from_model(new))
+            else:
+                changed_paths.update(_from_path_tuple(fs))
+        if _path in changed_paths or len(diff) == 0:
             return True
         return False
+
+    def _from_model(d: dict):
+        result = dict()
+        to_visit = [[d.get("spec", {}), []]]
+        for n, prefix in to_visit:
+            result[tuple(prefix)] = True
+            if type(n) is not dict:
+                continue
+            for k, v in n.items():
+                to_visit.append([v, prefix + [k]])
+        return result
+
+    def _from_path_tuple(p: tuple):
+        # expand a path tuple to dict of paths
+        return {
+            # skip "spec"
+            p[1:i + 1]: True
+            for i in range(len(p))
+        }
+
+
 
     rc.add(handler=fn,
            priority=priority,

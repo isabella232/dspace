@@ -4,11 +4,16 @@ import subprocess
 import time
 import yaml
 import inflection
+import util
 
 _dir = os.path.dirname(os.path.realpath(__file__))
 _mock_dir = os.path.join(_dir, "..", "mocks")
-_parent_cr = os.path.join(_mock_dir, "room", "test", "cr.yaml")
-_child_cr = os.path.join(_mock_dir, "lamp", "test", "cr.yaml")
+_parent = os.path.join(_mock_dir, "room")
+_child = os.path.join(_mock_dir, "lamp")
+_parent_cr = os.path.join(_parent, "test", "cr.yaml")
+_child_cr = os.path.join(_child, "test", "cr.yaml")
+_parent_crd = os.path.join(_parent, "crd.yaml")
+_child_crd = os.path.join(_child, "crd.yaml")
 
 
 def _wait(t=0.5):
@@ -31,8 +36,6 @@ Create/resume/delete events:
     - parent.mount.child is gone 
 6. create child model; neat display parent and child
     - same as 3.
-7. delete child model
-    - same as 5.
 
 Update events:
 1. create parent and child model
@@ -50,21 +53,49 @@ Update events:
 
 def test_mount(parent, child):
     _make_cr(parent)
-    _show(parent)
+    _show(parent, msg="created parent")
 
     _make_cr(child)
-    _show(child)
+    _show(child, msg="created child")
 
     _wait()
     _mount(child, parent)
 
     _wait()
-    _show(parent)
-    _wait(t=10)
+    _show(parent, msg="mounted child to parent")
+
+    _wait(60)
+    _mount(child, parent, unmount=True)
+    _show(parent, msg="unmounted child")
+
+    _wait(5)
+    _mount(child, parent)
+    _wait()
+    _make_cr(child, delete=True)
+    _show(parent, msg="mount child but delete it after")
+
+    _wait()
+    _make_cr(child)
+    _show(parent, msg="create child again")
 
 
 def test_prop(parent, child):
-    pass
+    _make_cr(parent)
+    _show(parent, msg="created parent")
+
+    _make_cr(child)
+    _show(child, msg="created child")
+
+    _wait()
+    _mount(child, parent)
+
+    _wait()
+    _show(parent, msg="mounted child to parent")
+
+    ps, cs = _get_spec(parent), _get_spec(child)
+    for _, ms in ps["spec"]["mount"].items():
+        for _, m in ms.items():
+            print(m)
 
 
 # TBD move to pytest
@@ -72,8 +103,14 @@ def test_all():
     with _Setup() as s:
         test_mount(s.parent, s.child)
 
-    with _Setup() as s:
-        test_prop(s.parent, s.child)
+    # with _Setup() as s:
+    #     ...
+    # test_prop(s.parent, s.child)
+
+
+def _get_spec(m):
+    return util.get_spec(m["g"], m["v"], m["r"],
+                         m["n"], m["ns"])
 
 
 class _Setup:
@@ -90,7 +127,7 @@ class _Setup:
                 "auri": auri,
                 "g": g,
                 "v": v,
-                "k": model["kind"],
+                "k": model["kind"].lower(),
                 "n": meta["name"],
                 "ns": meta.get("namespace", "default"),
                 "r": inflection.pluralize(model["kind"]).lower(),
@@ -99,7 +136,9 @@ class _Setup:
             }
 
     def __enter__(self):
+        _apply(_parent_crd)
         self.parent = self._parse(_parent_cr)
+        _apply(_child_crd)
         self.child = self._parse(_child_cr)
 
         _make_cr(self.parent, delete=True)
@@ -107,11 +146,22 @@ class _Setup:
 
         _cmd(f"dq alias {self.parent['auri']} {self.parent['alias']}")
         _cmd(f"dq alias {self.child['auri']} {self.child['alias']}")
+
+        _make_driver(self.parent["k"], self.parent["n"], delete=True)
+        _make_driver(self.parent["k"], self.parent["n"])
+
+        print("waiting for driver ready...")
+        _wait(5)
         return self
 
     def __exit__(self, *args, **kwargs):
+        _make_driver(self.parent["k"], self.parent["n"], delete=True)
+
         _make_cr(self.parent, delete=True)
+        _apply(_parent_crd, delete=True)
+
         _make_cr(self.child, delete=True)
+        _apply(_child_crd, delete=True)
 
 
 def _mount(child, parent, unmount=False):
@@ -120,18 +170,22 @@ def _mount(child, parent, unmount=False):
          show_cmd=True)
 
 
-def _make_driver(kind):
-    _cmd(f"cd {_mock_dir}; KIND={kind} make test")
+def _make_driver(kind, name, delete=False):
+    _cmd(f"cd {_mock_dir}; "
+         f"dq {'stop' if delete else 'run'} {kind} {name} | true")
 
 
 def _make_cr(model, delete=False):
+    _apply(model["cr_file"], delete=delete)
+
+
+def _apply(f, delete=False):
     _cmd(f"kubectl {'delete' if delete else 'apply'} "
-         f"-f {model['cr_file']} "
-         f"{'> /dev/null 2>&1 | true' if delete else ''}")
+         f"-f {f} {'> /dev/null 2>&1 | true' if delete else ''}")
 
 
-def _show(model, neat=True):
-    print("---")
+def _show(model, neat=True, msg=""):
+    print("\n---" + msg)
     _cmd(f"kubectl get {model['k']} {model['n']} "
          f"-oyaml {'| kubectl neat' if neat else ''}")
 

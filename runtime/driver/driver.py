@@ -12,7 +12,7 @@ def main():
     n = os.environ["NAME"]
     ns = os.environ.get("NAMESPACE", "default")
 
-    if os.environ.get("MOUNTER", True):
+    if os.environ.get("MOUNTER", "true") != "false":
         Mounter(g, v, r, n, ns).start()
 
     _model = {
@@ -30,25 +30,28 @@ def main():
     import handler  # decorate the handlers
     _ = handler
 
+    @kopf.on.startup(registry=_registry)
+    def configure(settings: kopf.OperatorSettings, **_):
+        settings.persistence.progress_storage = kopf.AnnotationsProgressStorage()
+
     from reconcile import rc
 
     @kopf.on.create(**_model, **_kwargs)
     @kopf.on.resume(**_model, **_kwargs)
     @kopf.on.update(**_model, **_kwargs)
     def reconcile(meta, *args, **kwargs):
-        rv, gn = meta["resourceVersion"], meta["generation"]
+        gen = meta["generation"]
         # skip the last self-write
         # TBD for parallel reconciliation may need to lock rc.gen before patch
-        if rc.gen == gn + 1:
+        if gen == rc.gen:
             return
 
         spec = rc.run(*args, **kwargs)
-        e = util.patch_spec(g, v, r, n, ns, spec, rv=rv)
+        e = util.check_gen_and_patch_spec(g, v, r, n, ns, spec, gen=gen)
         if e is not None:
             # retry s.t. the diff object contains the past changes
-            raise kopf.TemporaryError(e, delay=1)
-
-        rc.gen = gn
+            raise kopf.TemporaryError(e, delay=0)  # TBD(@kopf) non-zero delay fix
+        rc.gen = gen + 1
 
     @kopf.on.delete(**_model, **_kwargs, optional=True)
     def on_delete(*args, **kwargs):

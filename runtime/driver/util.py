@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import threading
 import inflection
-from typing import Tuple
+from typing import Tuple, Callable
 
 import kubernetes
 from kubernetes.client.rest import ApiException
@@ -155,6 +155,8 @@ def trim_attr(spec: dict, attrs: set) -> dict:
 
 def apply_diff(model: dict, diff: list) -> dict:
     for op, fs, old, new in diff:
+        if len(fs) == 0:
+            continue
         if op in {"add", "change"}:
             n = model
             for f in fs[:-1]:
@@ -245,8 +247,23 @@ def patch_spec(g, v, r, n, ns, spec: dict, rv=None):
                                                "spec": spec,
                                            },
                                            )
+        return
     except ApiException as e:
         return f"k8s: unable to update model {model_id(g, v, r, n, ns)}: {e}"
+
+
+def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
+    # patch the spec atomically if the current gen is
+    # less than the given spec
+    while True:
+        _, rv, cur_gen = get_spec(g, v, r, n, ns)
+        if gen < cur_gen:
+            return f"generation outdated"
+
+        e = patch_spec(g, v, r, n, ns, spec, rv=rv)
+        if e is None:
+            return None
+        print(f"unable to patch model: {e}; retry")
 
 
 if __name__ == "__main__":
@@ -263,7 +280,6 @@ if __name__ == "__main__":
     def pprint(s):
         print(json.dumps(A, indent=2))
 
-
     pprint(A)
     for t in ["intent", "status", "output"]:
         print(f"after trimming {t}")
@@ -272,4 +288,5 @@ if __name__ == "__main__":
     diff = [('add', ('spec', 'labels', 'label1'), None, 'new-value'),
             ('change', ('spec', 'size'), '1G', '2G')]
     A = {"spec": {"size": "1G"}}
-    print(apply_diff(A, diff))
+    print("after applying diff")
+    pprint(apply_diff(A, diff))
