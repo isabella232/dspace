@@ -43,15 +43,19 @@ def main():
         gen = meta["generation"]
         # skip the last self-write
         # TBD for parallel reconciliation may need to lock rc.gen before patch
-        if gen == rc.gen:
+        if gen == rc.gen + 1:
             return
 
         spec = rc.run(*args, **kwargs)
-        e = util.check_gen_and_patch_spec(g, v, r, n, ns, spec, gen=gen)
+        _, e = util.check_gen_and_patch_spec(g, v, r, n, ns, spec, gen=gen)
         if e is not None:
             # retry s.t. the diff object contains the past changes
             raise kopf.TemporaryError(e, delay=0)  # TBD(@kopf) non-zero delay fix
-        rc.gen = gen + 1
+
+        # if the model didn't get updated do not
+        # increment the counter
+        _, _, new_gen = util.get_spec(g, v, r, n, ns)
+        rc.gen = rc.gen if gen == new_gen else gen
 
     @kopf.on.delete(**_model, **_kwargs, optional=True)
     def on_delete(*args, **kwargs):

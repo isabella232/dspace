@@ -10,52 +10,60 @@ from reconcile import rc
 def control(*args, **kwargs):
     # if decorator not parameterized
     if len(args) >= 1 and callable(args[0]):
-        return _attr(path="control", *args, **kwargs)
+        _attr(path="control", *args, **kwargs)
+        return args[0]
 
     def decorator(fn):
         if len(args) >= 1:
             _attr(fn, path="control." + args[0], *args[1:], **kwargs)
         elif "path" in kwargs:
             _attr(fn, path="control." + kwargs.pop("path"), *args, **kwargs)
+            return fn
 
     return decorator
 
 
 def data(*args, **kwargs):
     if len(args) >= 1 and callable(args[0]):
-        return _attr(path="data", *args, **kwargs)
+        _attr(path="data", *args, **kwargs)
+        return args[0]
 
     def decorator(fn):
         if len(args) >= 1:
             _attr(fn, path="data." + args[0], *args[1:], **kwargs)
         elif "path" in kwargs:
             _attr(fn, path="data." + kwargs.pop("path"), *args, **kwargs)
+        return fn
 
     return decorator
 
 
 def obs(*args, **kwargs):
     if len(args) >= 1 and callable(args[0]):
-        return _attr(path="obs", *args, **kwargs)
+        _attr(path="obs", *args, **kwargs)
+        return args[0]
 
     def decorator(fn):
         if len(args) >= 1:
             _attr(fn, path="obs." + args[0], *args[1:], **kwargs)
         elif "path" in kwargs:
             _attr(fn, path="obs." + kwargs.pop("path"), *args, **kwargs)
+        return fn
 
     return decorator
 
 
 def mount(*args, **kwargs):
     if len(args) >= 1 and callable(args[0]):
-        return _attr(path="mount", *args, **kwargs)
+        _attr(path="mount", *args, **kwargs)
+        return args[0]
 
     def decorator(fn):
         if len(args) >= 1:
             _attr(fn, path="mount." + args[0], *args[1:], **kwargs)
         elif "path" in kwargs:
             _attr(fn, path="mount." + kwargs.pop("path"), *args, **kwargs)
+        return fn
 
     return decorator
 
@@ -63,10 +71,12 @@ def mount(*args, **kwargs):
 # XXX test path
 def attr(*args, **kwargs):
     if len(args) >= 1 and callable(args[0]):
-        return _attr(path=".", *args, **kwargs)
+        _attr(path=".", *args, **kwargs)
+        return args[0]
 
     def decorator(fn):
         _attr(fn, *args, **kwargs)
+        return fn
 
     return decorator
 
@@ -82,7 +92,9 @@ def _attr(fn, path=".", priority=0):
         # XXX better . operator handling; use regex
         ps_gvr = path.split("/")
         assert len(ps_gvr) == 1 or len(ps_gvr) == 3
-        if len(ps_gvr) == 1:
+        if len(ps) == 1:
+            _path = ps
+        elif len(ps_gvr) == 1:
             # this gvr does not have group and version
             ps[1] = util.gvr(rc.g, rc.v, ps[1])
             _path = ps
@@ -109,6 +121,7 @@ def _attr(fn, path=".", priority=0):
                 changed_paths.update(_from_model(new))
             else:
                 changed_paths.update(_from_path_tuple(fs))
+        # print("debug:", _path, changed_paths, diff)
         if _path in changed_paths or len(diff) == 0:
             return True
         return False
@@ -145,7 +158,7 @@ def _attr(fn, path=".", priority=0):
             kwarg_filter.update({"subview": p})
             args[p] = None
 
-    for p in ["proc_view", "pv"]:
+    for p in ["proc_view", "pv", "cur", "parent"]:
         if p in sig.parameters:
             kwarg_filter.update({"proc_view": p})
             args[p] = None
@@ -160,8 +173,13 @@ def _attr(fn, path=".", priority=0):
             kwarg_filter.update({"old_view": p})
             args[p] = None
 
-    for i, k in enumerate(args.keys()):
-        if k is None:
+    for p in ["mount", "mt", "child", "children"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"mount": p})
+            args[p] = None
+
+    for i, (k, v) in enumerate(args.items()):
+        if v is None:
             continue
         if i == 0:
             kwarg_filter["subview"] = k
@@ -171,17 +189,20 @@ def _attr(fn, path=".", priority=0):
             kwarg_filter["view"] = k
         elif i == 3:
             kwarg_filter["old_view"] = k
+        elif i == 4:
+            kwarg_filter["mount"] = k
         else:
             break
 
-    def wrapper_fn(subview, proc_view, view, old_view):
+    def wrapper_fn(subview, proc_view, view, old_view, mount):
         kwargs = dict()
-        for _k, v in [("subview", subview),
-                      ("proc_view", proc_view),
-                      ("view", view),
-                      ("old_view", old_view)]:
+        for _k, _v in [("subview", subview),
+                       ("proc_view", proc_view),
+                       ("view", view),
+                       ("old_view", old_view),
+                       ("mount", mount)]:
             if _k in kwarg_filter:
-                kwargs[kwarg_filter[_k]] = v
+                kwargs[kwarg_filter[_k]] = _v
         fn(**kwargs)
 
     rc.add(handler=wrapper_fn,

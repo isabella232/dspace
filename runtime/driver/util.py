@@ -258,11 +258,11 @@ def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
     while True:
         _, rv, cur_gen = get_spec(g, v, r, n, ns)
         if gen < cur_gen:
-            return f"generation outdated"
+            return cur_gen, f"generation outdated"
 
         e = patch_spec(g, v, r, n, ns, spec, rv=rv)
         if e is None:
-            return None
+            return cur_gen, None
         print(f"unable to patch model: {e}; retry")
 
 

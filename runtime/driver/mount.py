@@ -1,4 +1,5 @@
 import kopf
+import sys
 from collections import defaultdict
 import time
 
@@ -88,7 +89,7 @@ class Mounter:
             _g, _v, _r = util.gvr_from_body(body)
             _id = util.model_id(_g, _v, _r, name, namespace)
 
-            if meta["generation"] == self._children_gen[_id]:
+            if meta["generation"] == self._children_gen.get(_id, -1) + 1:
                 return
 
             return _sync_to_parent(_g, _v, _r, name, namespace, meta,
@@ -137,7 +138,7 @@ class Mounter:
             if attrs_to_trim is not None:
                 patch = util.trim_attr(patch, attrs_to_trim)
 
-            e = util.check_gen_and_patch_spec(
+            _, e = util.check_gen_and_patch_spec(
                 group, version, plural,
                 name, namespace,
                 patch, gen=meta["generation"]
@@ -146,9 +147,12 @@ class Mounter:
             if e is not None:
                 print(f"mounter: unable to sync from parent due to {e}")
             else:
-                self._children_gen[
-                    util.model_id(group, version, plural,
-                                  name, namespace)] = meta["generation"] + 1
+                _, _, gen = util.get_spec(group, version, plural,
+                                          name, namespace)
+                if gen != meta["generation"]:
+                    self._children_gen[
+                        util.model_id(group, version, plural,
+                                      name, namespace)] = meta["generation"]
 
         def _sync_to_parent(group, version, plural, name, namespace, meta,
                             spec, diff, attrs_to_trim=None, *args, **kwargs):
@@ -180,17 +184,36 @@ class Mounter:
                             attrs_to_trim = set()
                         attrs_to_trim.add("mount")
 
+                    # TBD rename to _gen_parent_spec
                     parent_patch = _gen_parent_patch(spec, diff, attrs_to_trim)
 
-                parent_patch = {
-                    "mount": {
-                        gvr_str: {
-                            n_: None if parent_patch is None else {
-                                "spec": parent_patch,
-                                "generation": meta["generation"],
+                # add roots
+                if parent_patch is None:
+                    # only child
+                    if len(mounts[gvr_str]) == 1:
+                        parent_patch = {
+                            "mount": {
+                                gvr_str: None
                             }
                         }
-                    }}
+                    else:
+                        parent_patch = {
+                            "mount": {
+                                gvr_str: {
+                                    n_: None
+                                }
+                            }
+                        }
+                else:
+                    parent_patch = {
+                        "mount": {
+                            gvr_str: {
+                                n_: {
+                                    "spec": parent_patch,
+                                    "generation": meta["generation"],
+                                }
+                            }
+                        }}
 
                 # maybe rejected if parent has been updated;
                 # continue to try until succeed
@@ -199,7 +222,9 @@ class Mounter:
                     print(f"mounter: failed to sync to parent due to {e}")
                     # time.sleep(1)
                 else:
-                    self._parent_gen = pgn
+                    _, _, gen = util.get_spec(g, v, r, n, ns)
+                    if pgn != gen:
+                        self._parent_gen = pgn
                     break
 
         def _gen_parent_patch(child_spec, diff, attrs_to_trim=None):
@@ -217,11 +242,8 @@ class Mounter:
 
         def on_parent_create(spec, diff, *args, **kwargs):
             _, _ = args, kwargs
-            _update_children_watches(spec)
-            # no need to sync from the children as the child
-            # handlers will sync updates from/to the parent
-            # ...
-            # _sync_to_children(spec, diff)
+            _update_children_watches(spec.get("mount", {}))
+            _sync_to_children(spec, diff)
 
         def on_mount_attr_update(spec, meta, diff, *args, **kwargs):
             _, _ = args, kwargs
@@ -229,17 +251,41 @@ class Mounter:
             if meta["generation"] == self._parent_gen + 1:
                 return
 
-            _update_children_watches(spec)
+            mounts = spec.get("mount", {})
+
+            _update_children_watches(mounts)
             _sync_to_children(spec, diff)
+            _prune_mounts(mounts, meta)
+
+        def _prune_mounts(mounts, meta):
+            rv = meta["resourceVersion"]
+            while True:
+                to_prune = list()
+                for gvr_str, models in mounts.items():
+                    if len(models) == 0:
+                        to_prune.append(gvr_str)
+                if len(to_prune) == 0:
+                    return
+                patch = {
+                    "mounts": {
+                       gvr_str: None for gvr_str in to_prune
+                    }
+                }
+                e = util.patch_spec(g, v, r, n, ns, patch, rv=rv)
+                if e is None:
+                    print(f"prune: {patch}")
+                    return
+
+                print(f"prune will retry due to: {e}")
+                spec, rv, _ = util.get_spec(g, v, r, n, ns)
+                mounts = spec.get("mount", {})
 
         def on_parent_delete(*args, **kwargs):
             _, _ = args, kwargs
             self.stop()
 
-        def _update_children_watches(spec: dict):
+        def _update_children_watches(mounts: dict):
             # iterate over mounts and add/trim child event watches
-            mounts = spec.get("mount", {})
-
             # add watches
             for gvr_str, models in mounts.items():
                 gvr = parse_gvr(gvr_str)  # child's gvr
@@ -287,7 +333,7 @@ class Mounter:
                 if spec is not None:
                     spec = util.trim_attr(spec, {"status", "output", "obs"})
 
-                gen = mount_entry.get("generation", None)
+                gen = mount_entry.get("generation", sys.maxsize)
                 return spec, gen
 
             return None, None
@@ -309,7 +355,7 @@ class Mounter:
 
                 if model_id not in to_sync:
                     cs, gen = _gen_child_patch(parent_spec, gvr_str, nsn_str)
-                    if not (cs is None or gen is None):
+                    if cs is not None:
                         to_sync[model_id] = cs, gen
 
             # sync all, e.g., on parent resume and creation
@@ -321,19 +367,21 @@ class Mounter:
                         cs, gen = _gen_child_patch(parent_spec, gvr_str, nsn_str)
                         # both rv and gen can be none as during the initial sync
                         # the parent may overwrite
-                        if not (cs is None or gen is None):
+                        if cs is not None:
                             to_sync[model_id] = cs, gen
 
             # push to children models
             # TBD: transactional update
             for model_id, (cs, gen) in to_sync.items():
-                e = util.check_gen_and_patch_spec(
+                cur_gen, e = util.check_gen_and_patch_spec(
                     *util.parse_model_id(model_id),
                     spec=cs,
                     gen=max(gen, self._children_gen.get(model_id, -1)))
                 if e is not None:
                     print(f"mounter: unable to sync to children due to {e}")
-                self._children_gen[model_id] = gen + 1
+                _, _, gen = util.get_spec(*util.parse_model_id(model_id))
+                if gen != cur_gen:
+                    self._children_gen[model_id] = cur_gen
 
         # subscribe to the events of the parent model
         self._parent_watch = Watch(g, v, r, n, ns,

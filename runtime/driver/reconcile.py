@@ -29,11 +29,16 @@ class __Reconciler:
         spec = dict(spec)
         proc_spec = dict(spec)
         for fn, cond, path, _ in self.handlers:
-            if cond(spec, *args, **kwargs):
+            if cond(proc_spec, *args, **kwargs):
                 sub_spec = safe_lookup(proc_spec, path)
                 # handler edits the spec object
-                fn(subview=sub_spec, proc_view=proc_spec,
-                   view=spec, old_view=old)
+                try:
+                    fn(subview=sub_spec, proc_view=proc_spec,
+                       view=spec, old_view=old,
+                       mount=proc_spec.get("mount", {}))
+                except Exception as e:
+                    print(f"reconcile error: {e.with_traceback()}")
+                    return proc_spec
         return proc_spec
 
     def add(self, handler: typing.Callable,
