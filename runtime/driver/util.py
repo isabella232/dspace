@@ -266,6 +266,46 @@ def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
         print(f"unable to patch model: {e}; retry")
 
 
+# utils
+def put(path, src, target, transform=lambda x: x):
+    if type(target) is not dict:
+        return
+
+    ps = path.split(".")
+    for p in ps[:-1]:
+        if p not in target:
+            return
+        target = target[p]
+
+    if type(src) is not dict:
+        target[ps[-1]] = src
+        return
+
+    for p in ps[:-1]:
+        if p not in src:
+            return
+        src = src[p]
+    target[ps[-1]] = transform(src[ps[-1]])
+
+
+def first_attr(attr, d: dict):
+    if type(d) is not dict:
+        return None
+    if attr in d:
+        return d[attr]
+    for k, v in d.items():
+        v = first_attr(attr, v)
+        if v is not None:
+            return v
+    return None
+
+
+def first_type(mounts):
+    if type(mounts) is not dict or len(mounts) == 0:
+        return None
+    return list(mounts.keys())[0]
+
+
 if __name__ == "__main__":
     import json
 
@@ -277,8 +317,10 @@ if __name__ == "__main__":
          "data": {"input": {"url": "http://"}, "output": {"objects": "human"}}}
     print("before:")
 
+
     def pprint(s):
         print(json.dumps(A, indent=2))
+
 
     pprint(A)
     for t in ["intent", "status", "output"]:

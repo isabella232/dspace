@@ -1,34 +1,19 @@
 import on
 
+from util import put, first_type, first_attr
 
-@on.control("mode")
-def h1(view):
-    view["status"] = "idle"
+"""
+Room digivice:
+- Adjust lamp power and brightness based on the mode;
+- Adjust lamp brightness based on the (aggregate) brightness;
+"""
 
-# @on.mount("lamps")
-# @on.control("mode", priority=1)
-# def h1(view):
-#     if view["mode"]["intent"] == "sleep":
-#         for l in view["lamps"]:
-#             l["power"]["intent"] = "off"
-#     # set view["mode"]["status"]
-#     ...
-#
-# @on.mount("lamps")
-# @on.control("brightness", priority=0)
-# def h2(view):
-#     for l in view["lamps"]:
-#         l["power"]["intent"] = "on"
-#         l["brightness"]["intent"] \
-#             = view["brightness"]["intent"]
-#     ...
-#
-# @on.mount("lamps")
-# def handle_lamps(view):
-#     for n, l in view.items():
-#         if view["control"][""]
-#     ...
-#
-# @on.mount("speakers")
-# def handle_speakers(view):
-#     ...
+
+# validation
+
+# status
+@on.control("")
+def h():
+    pass
+
+# intent
