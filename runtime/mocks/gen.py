@@ -134,6 +134,18 @@ mounter: {mounter}
 image: silveryfu/{image}:latest
 """
 
+_handler = """import on
+
+# validation
+...
+
+# status
+...
+
+# intent
+...
+"""
+
 
 def plural(model):
     return inflection.pluralize(model["kind"]).lower()
@@ -254,6 +266,17 @@ def gen(name):
 
             with open(values_file, "w") as f_:
                 yaml.dump(values, f_)
+
+        # generate handlers if missing
+        handler_file = os.path.join(_dir_path, "driver", "handler.py")
+        if not os.path.exists(os.path.join(_dir_path, "driver")):
+            os.makedirs(os.path.join(_dir_path, "driver"))
+
+        if not os.path.exists(handler_file):
+            handler = _handler.format()
+
+            with open(handler_file, "w") as f_:
+                f_.write(handler)
 
 
 if __name__ == '__main__':
