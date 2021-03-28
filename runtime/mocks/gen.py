@@ -116,6 +116,22 @@ additionalProperties:
 type: object
 """
 
+_reflex = """
+reflex:
+  properties:
+  type: object
+"""
+_reflex_attr = """
+additionalProperties:
+  properties:
+    priority:
+      type: string
+    policy:
+      type: string
+  type: object
+type: object
+"""
+
 _cr = """
 apiVersion: {groupVersion}
 kind: {kind}
@@ -137,6 +153,9 @@ image: silveryfu/{image}:latest
 _handler = """import on
 
 # validation
+...
+
+# intent back-prop
 ...
 
 # status
@@ -196,6 +215,7 @@ def gen(name):
         data = make_data_attr()
         obs = make_attr("obs", _obs_attr, _obs, src_attrs=model.get("obs", {}))
         mount = make_attr("mount", _mount_attr, _mount, src_attrs=model.get("mount", {}))
+        reflex = make_attr("reflex", _reflex_attr, _reflex, src_attrs=model.get("reflex", {}))
 
         assert not (len(control) > 0 and len(data) > 0), "cannot have both control and data attrs!"
 
@@ -209,6 +229,7 @@ def gen(name):
         spec["properties"].update(data)
         spec["properties"].update(obs)
         spec["properties"].update(mount)
+        spec["properties"].update(reflex)
 
         # main TBD: multiple version or incremental versions
         header["spec"]["versions"] = list()
