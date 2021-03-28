@@ -1,0 +1,7 @@
+group: mock.digi.dev
+image: silveryfu/colorlamp:latest
+mounter: false
+name: colorlamp
+namespace: default
+plural: colorlamps
+version: v1

@@ -1,28 +1,15 @@
-import os, requests
 import on
 
-
-@on.control
-def h0(view):
-    print("ASDF:", view)
-    for k, v in view.items():
-        v["status"] = v["intent"]
+"""Mock lamp sets power and brightness to intents."""
 
 
-# @on.control
-# def h1(view):
-#     view["status"] = view["intent"]
+@on.control("power")
+def h0(p):
+    p["status"] = p.get("intent",
+                        p.get("status", "undef"))
 
-# @on.control("power", priority=1)
-# def h1(view):
-#     if view["intent"] == view["status"]:
-#         return  # skip
-#     requests.post(
-#         url=os.environ["ENDPOINT"],
-#         data={"power": view["intent"]}
-#     )
-#
-#
-# @on.control("brightness", priority=0)
-# def h2(view):
-#     ...
+
+@on.control("brightness")
+def h1(b):
+    b["status"] = b.get("intent",
+                        b.get("status", "-1"))

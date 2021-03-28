@@ -1,0 +1,10 @@
+group: mock.digi.dev
+version: v1
+kind: ColorLamp
+control:
+  power: number
+  hue: number
+  saturation: number
+  brightness: number
+obs:
+  reason: string

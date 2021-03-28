@@ -1,0 +1,14 @@
+apiVersion: mock.digi.dev/v1
+kind: ColorLamp
+metadata:
+  name: colorlamp-test
+spec:
+  control:
+    brightness:
+      intent: 255
+    hue:
+      intent: 128
+    power:
+      intent: 1
+    saturation:
+      intent: 128

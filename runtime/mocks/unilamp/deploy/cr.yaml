@@ -1,0 +1,10 @@
+apiVersion: mock.digi.dev/v1
+kind: UniLamp
+metadata:
+  name: unilamp-test
+spec:
+  control:
+    power:
+      intent: "on"
+    brightness:
+      intent: 0.8

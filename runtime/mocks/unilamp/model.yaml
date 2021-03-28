@@ -1,0 +1,11 @@
+group: mock.digi.dev
+version: v1
+kind: UniLamp
+control:
+  power: string
+  brightness: number
+obs:
+  reason: string
+mount:
+  mock.digi.dev/v1/lamps: object
+  mock.digi.dev/v1/colorlamps: object

@@ -1,0 +1,8 @@
+group: mock.digi.dev
+mounter: true
+name: unilamp
+namespace: default
+plural: unilamps
+version: v1
+
+image: silveryfu/unilamp:latest
