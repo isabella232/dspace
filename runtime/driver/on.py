@@ -7,8 +7,23 @@ from reconcile import rc
 """Filters."""
 
 
-def control(*args, **kwargs):
+def meta(*args, **kwargs):
     # if decorator not parameterized
+    if len(args) >= 1 and callable(args[0]):
+        _attr(path="meta", *args, **kwargs)
+        return args[0]
+
+    def decorator(fn):
+        if len(args) >= 1:
+            _attr(fn, path="meta." + args[0], *args[1:], **kwargs)
+        elif "path" in kwargs:
+            _attr(fn, path="meta." + kwargs.pop("path"), *args, **kwargs)
+            return fn
+
+    return decorator
+
+
+def control(*args, **kwargs):
     if len(args) >= 1 and callable(args[0]):
         _attr(path="control", *args, **kwargs)
         return args[0]

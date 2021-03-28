@@ -47,6 +47,15 @@ served: true
 storage: true
 """
 
+_meta = """
+meta:
+  properties: 
+  type: object
+"""
+_meta_attr = """
+type: {datatype}
+"""
+
 _control = """
 control:
   properties: 
@@ -170,6 +179,7 @@ def gen(name):
             result["data"]["properties"].update(_output)
             return result
 
+        meta = make_attr("meta", _meta_attr, _meta, src_attrs=model.get("meta", {}))
         control = make_attr("control", _control_attr, _control, src_attrs=model.get("control", {}))
         data = make_data_attr()
         obs = make_attr("obs", _obs_attr, _obs, src_attrs=model.get("obs", {}))
@@ -182,6 +192,7 @@ def gen(name):
         version = yaml.load(version, Loader=yaml.FullLoader)
         spec = version["schema"]["openAPIV3Schema"]["properties"]["spec"]
         spec["properties"] = dict()
+        spec["properties"].update(meta)
         spec["properties"].update(control)
         spec["properties"].update(data)
         spec["properties"].update(obs)
@@ -210,7 +221,7 @@ def gen(name):
                 cr["spec"] = dict()
 
                 # XXX improve CR generation
-                for _name in ["control", "data", "mount"]:
+                for _name in ["meta", "control", "data", "mount"]:
                     attrs = model.get(_name, {})
                     if len(attrs) == 0:
                         continue
