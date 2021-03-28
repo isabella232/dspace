@@ -1,3 +1,4 @@
+import os
 import asyncio
 import contextlib
 import threading
@@ -278,7 +279,10 @@ def put(path, src, target, transform=lambda x: x):
         target = target[p]
 
     if type(src) is not dict:
-        target[ps[-1]] = src
+        if src is None:
+            target[ps[-1]] = None
+        else:
+            target[ps[-1]] = transform(src)
         return
 
     for p in ps[:-1]:
@@ -304,6 +308,20 @@ def first_type(mounts):
     if type(mounts) is not dict or len(mounts) == 0:
         return None
     return list(mounts.keys())[0]
+
+
+def full_gvr(a: str) -> str:
+    # full gvr: group/version/plural
+    if len(a.split("/")) == 1:
+        return "/".join([os.environ["GROUP"],
+                         os.environ["VERSION"],
+                         a])
+    else:
+        return a
+
+
+def gvr_equal(a: str, b: str) -> bool:
+    return full_gvr(a) == full_gvr(b)
 
 
 if __name__ == "__main__":

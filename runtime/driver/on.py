@@ -96,10 +96,12 @@ def attr(*args, **kwargs):
     return decorator
 
 
-def _attr(fn, path=".", priority=0):
+def _attr(fn, path=".", prio=0):
     # preprocess the path str -> tuple of str
     _path = list()
     ps = path.split(".")
+
+    child_typ = None
 
     if path == ".":
         _path = ["."]
@@ -108,15 +110,18 @@ def _attr(fn, path=".", priority=0):
         ps_gvr = path.split("/")
         assert len(ps_gvr) == 1 or len(ps_gvr) == 3
         if len(ps) == 1:
+            # @mount w/o paramters
             _path = ps
         elif len(ps_gvr) == 1:
             # this gvr does not have group and version
-            ps[1] = util.gvr(rc.g, rc.v, ps[1])
+            gvr = util.gvr(rc.g, rc.v, ps[1])
+            ps[1], child_typ = gvr, gvr
             _path = ps
         elif len(ps_gvr) == 3:
             gvr = util.gvr(ps_gvr[0].replace("mount.", ""),
                            ps_gvr[1],
                            ps_gvr[2].split(".")[0])
+            child_typ = gvr
             _path = ["mount", gvr] + ps_gvr[2].split(".")[1:]
     else:
         _path = ps
@@ -130,12 +135,14 @@ def _attr(fn, path=".", priority=0):
     def has_diff(_, diff, *args, **kwargs) -> bool:
         _, _ = args, kwargs
         changed_paths = {(".",): True}
-        for op, fs, old, new in diff:
+        # TBD: add support for incremental diff
+
+        for op, path_, old, new in diff:
             # on create
-            if old is None and len(fs) == 0:
+            if old is None and len(path_) == 0:
                 changed_paths.update(_from_model(new))
             else:
-                changed_paths.update(_from_path_tuple(fs))
+                changed_paths.update(_from_path_tuple(path_))
         # print("debug:", _path, changed_paths, diff)
         if _path in changed_paths or len(diff) == 0:
             return True
@@ -148,16 +155,16 @@ def _attr(fn, path=".", priority=0):
             result[tuple(prefix)] = True
             if type(n) is not dict:
                 continue
-            for _k, v in n.items():
-                to_visit.append([v, prefix + [_k]])
+            for _k, _v in n.items():
+                to_visit.append([_v, prefix + [_k]])
         return result
 
     def _from_path_tuple(p: tuple):
         # expand a path tuple to dict of paths
         return {
             # skip "spec"
-            p[1:i + 1]: True
-            for i in range(len(p))
+            p[1:_i + 1]: True
+            for _i in range(len(p))
         }
 
     sig = inspect.signature(fn)
@@ -193,6 +200,21 @@ def _attr(fn, path=".", priority=0):
             kwarg_filter.update({"mount": p})
             args[p] = None
 
+    for p in ["back_prop", "bp"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"back_prop": p})
+            args[p] = None
+
+    for p in ["diff"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"diff": p})
+            args[p] = None
+
+    for p in ["typ", "child_typ"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"typ": p})
+            args[p] = None
+
     for i, (k, v) in enumerate(args.items()):
         if v is None:
             continue
@@ -206,21 +228,27 @@ def _attr(fn, path=".", priority=0):
             kwarg_filter["old_view"] = k
         elif i == 4:
             kwarg_filter["mount"] = k
+        elif i == 5:
+            kwarg_filter["diff"] = k
         else:
             break
 
-    def wrapper_fn(subview, proc_view, view, old_view, mount):
+    def wrapper_fn(subview, proc_view, view, old_view, mount, back_prop, diff):
         kwargs = dict()
         for _k, _v in [("subview", subview),
                        ("proc_view", proc_view),
                        ("view", view),
                        ("old_view", old_view),
-                       ("mount", mount)]:
+                       ("mount", mount),
+                       ("back_prop", back_prop),
+                       ("diff", diff),
+                       ("typ", child_typ),
+                       ]:
             if _k in kwarg_filter:
                 kwargs[kwarg_filter[_k]] = _v
         fn(**kwargs)
 
     rc.add(handler=wrapper_fn,
-           priority=priority,
+           priority=prio,
            condition=has_diff,
            path=_path)

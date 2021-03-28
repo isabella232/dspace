@@ -1,4 +1,5 @@
 import os
+import sys
 import typing
 
 from collections import defaultdict
@@ -25,20 +26,22 @@ class __Reconciler:
         # TBD use bisect if no other purpose
         self._prio_handler = defaultdict(list)
 
-    def run(self, spec, old, *args, **kwargs):
+    def run(self, spec, old, diff, *args, **kwargs):
         spec = dict(spec)
         proc_spec = dict(spec)
         for fn, cond, path, _ in self.handlers:
-            if cond(proc_spec, *args, **kwargs):
+            if cond(proc_spec, diff, *args, **kwargs):
                 sub_spec = safe_lookup(proc_spec, path)
                 # handler edits the spec object
                 try:
                     fn(subview=sub_spec, proc_view=proc_spec,
                        view=spec, old_view=old,
-                       mount=proc_spec.get("mount", {}))
+                       mount=proc_spec.get("mount", {}),
+                       back_prop=get_back_prop(diff), diff=diff)
                 except Exception as e:
-                    print(f"reconcile error: {e.with_traceback()}")
+                    print(f"reconcile error: {e.with_traceback(tb=sys.exc_info()[2])}")
                     return proc_spec
+                # TBD: detect changes and add to diff
         return proc_spec
 
     def add(self, handler: typing.Callable,
@@ -62,6 +65,22 @@ def safe_lookup(d: dict, path: tuple):
     for k in path:
         d = d.get(k, {})
     return d
+
+
+def get_back_prop(diff):
+    bp = list()
+    for op, path, old, new in diff:
+        if op != "change" and op != "add":
+            continue
+        if len(path) < 3 or path[0] != "spec" \
+                or path[1] != "mount":
+            continue
+
+        fs = set(path)
+        if "intent" not in fs and "input" not in fs:
+            continue
+        bp.append((op, path, old, new))
+    return bp
 
 
 rc = __Reconciler()
