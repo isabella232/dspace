@@ -1,12 +1,10 @@
-import os
-
 import on
+
 from util import put, first_attr, first_type
 
 """Universal lamp translates power and brightness 
 to vendor specific lamps."""
 
-# converters
 converters = {
     "mock.digi.dev/v1/lamps": {
         "power": {
