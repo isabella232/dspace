@@ -195,7 +195,8 @@ def _attr(fn, path=".", prio=0):
             kwarg_filter.update({"old_view": p})
             args[p] = None
 
-    for p in ["mount", "mt", "child", "children"]:
+    for p in ["mount", "mounts", "mt", "mts",
+              "child", "children"]:
         if p in sig.parameters:
             kwarg_filter.update({"mount": p})
             args[p] = None

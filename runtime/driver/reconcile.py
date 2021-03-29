@@ -50,6 +50,7 @@ class __Reconciler:
             path: tuple = ()):
 
         # XXX support reflex API and dynamically add handler
+        # XXX each handler should be registered only once but allow chained conditions
         self._prio_handler[priority].append((handler, condition, path, priority))
         for p in sorted(self._prio_handler.keys()):
             # skip negative priority
