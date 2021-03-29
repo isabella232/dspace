@@ -4,5 +4,7 @@ metadata:
   name: room-test
 spec:
   control:
+    brightness:
+      intent: 0.8
     mode:
       intent: idle

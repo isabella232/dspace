@@ -143,8 +143,8 @@ def _attr(fn, path=".", prio=0):
                 changed_paths.update(_from_model(new))
             else:
                 changed_paths.update(_from_path_tuple(path_))
+        # print("debug:", _path, changed_paths, diff)
         if _path in changed_paths or len(diff) == 0:
-            print("debug:", _path, changed_paths, diff)
             return True
         return False
 
