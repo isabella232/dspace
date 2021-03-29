@@ -44,6 +44,7 @@ def main():
         # skip the last self-write
         # TBD for parallel reconciliation may need to lock rc.gen before patch
         if gen == rc.gen + 1:
+            print(f"driver: skipped gen {gen}")
             return
 
         spec = rc.run(*args, **kwargs)
@@ -56,6 +57,7 @@ def main():
         # increment the counter
         _, _, new_gen = util.get_spec(g, v, r, n, ns)
         rc.gen = rc.gen if gen == new_gen else gen
+        print(f"driver: current gen {rc.gen}")
 
     @kopf.on.delete(**_model, **_kwargs, optional=True)
     def on_delete(*args, **kwargs):
