@@ -264,6 +264,7 @@ def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
         if gen < cur_gen:
             e = ApiException()
             e.status = GEN_OUTDATED
+            e.reason = f"generation outdated {gen} < {cur_gen}"
             return cur_gen, None, e
 
         resp, e = patch_spec(g, v, r, n, ns, spec, rv=rv)
