@@ -220,6 +220,8 @@ class Mounter:
                 resp, e = util.patch_spec(g, v, r, n, ns, parent_patch, rv=prv)
                 if e is not None:
                     print(f"mounter: failed to sync to parent due to {e}")
+                    if e.status != 409:
+                        return
                     # time.sleep(1)
                 else:
                     new_gen = resp["metadata"]["generation"]
@@ -271,12 +273,15 @@ class Mounter:
                         gvr_str: None for gvr_str in to_prune
                     }
                 }
-                e = util.patch_spec(g, v, r, n, ns, patch, rv=rv)
+                _, e = util.patch_spec(g, v, r, n, ns, patch, rv=rv)
                 if e is None:
-                    print(f"prune: {patch}")
+                    print(f"prune mount: {patch}")
+                    return
+                elif e.status != 409:
+                    print(f"prune mount failed due to {e}")
                     return
 
-                print(f"prune will retry due to: {e}")
+                print(f"prune mount will retry due to: {e}")
                 spec, rv, _ = util.get_spec(g, v, r, n, ns)
                 mounts = spec.get("mount", {})
 

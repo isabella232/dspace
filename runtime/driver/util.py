@@ -23,6 +23,8 @@ except:
 
 KopfRegistry = KopfRegistry
 
+GEN_OUTDATED = 41
+
 
 def run_operator(registry: KopfRegistry, verbose=True) -> (threading.Event, threading.Event):
     ready_flag = threading.Event()
@@ -251,7 +253,7 @@ def patch_spec(g, v, r, n, ns, spec: dict, rv=None):
                                                   )
         return resp, None
     except ApiException as e:
-        return None, f"k8s: unable to update model {model_id(g, v, r, n, ns)}: {e}"
+        return None, e
 
 
 def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
@@ -260,12 +262,18 @@ def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
     while True:
         _, rv, cur_gen = get_spec(g, v, r, n, ns)
         if gen < cur_gen:
-            return cur_gen, None, f"generation outdated"
+            e = ApiException()
+            e.status = GEN_OUTDATED
+            return cur_gen, None, e
 
         resp, e = patch_spec(g, v, r, n, ns, spec, rv=rv)
         if e is None:
             return cur_gen, resp, None
-        print(f"unable to patch model: {e}; retry")
+        if e.status == 409:
+            print(f"unable to patch model due to conflict; retry")
+        else:
+            print(f"patch error {e}")
+            return cur_gen, resp, e
 
 
 # utils
@@ -304,8 +312,6 @@ def deep_set(d: dict, path: str, val):
         if k not in d:
             return
         d = d[k]
-    if keys[-1] not in d:
-        return
     d[keys[-1]] = val
 
 

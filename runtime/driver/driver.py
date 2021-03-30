@@ -48,10 +48,15 @@ def main():
             return
 
         spec = rc.run(*args, **kwargs)
-        _, resp, e = util.check_gen_and_patch_spec(g, v, r, n, ns, spec, gen=gen)
+        _, resp, e = util.check_gen_and_patch_spec(g, v, r, n, ns,
+                                                   spec, gen=gen)
         if e is not None:
-            # retry s.t. the diff object contains the past changes
-            raise kopf.TemporaryError(e, delay=0)  # TBD(@kopf) non-zero delay fix
+            if e.status == util.GEN_OUTDATED:
+                # retry s.t. the diff object contains the past changes
+                # TBD(@kopf) non-zero delay fix
+                raise kopf.TemporaryError(e, delay=0)
+            else:
+                raise kopf.PermanentError(e.status)
 
         # if the model didn't get updated do not
         # increment the counter
