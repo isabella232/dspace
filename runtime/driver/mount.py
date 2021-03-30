@@ -89,7 +89,7 @@ class Mounter:
             _g, _v, _r = util.gvr_from_body(body)
             _id = util.model_id(_g, _v, _r, name, namespace)
 
-            if meta["generation"] == self._children_gen.get(_id, -1) + 1:
+            if meta["generation"] == self._children_skip_gen.get(_id, -1):
                 return
 
             return _sync_to_parent(_g, _v, _r, name, namespace, meta,
@@ -138,7 +138,7 @@ class Mounter:
             if attrs_to_trim is not None:
                 patch = util.trim_attr(patch, attrs_to_trim)
 
-            _, e = util.check_gen_and_patch_spec(
+            _, resp, e = util.check_gen_and_patch_spec(
                 group, version, plural,
                 name, namespace,
                 patch, gen=meta["generation"]
@@ -147,12 +147,12 @@ class Mounter:
             if e is not None:
                 print(f"mounter: unable to sync from parent due to {e}")
             else:
-                _, _, gen = util.get_spec(group, version, plural,
-                                          name, namespace)
-                if gen != meta["generation"]:
-                    self._children_gen[
-                        util.model_id(group, version, plural,
-                                      name, namespace)] = meta["generation"]
+                model_id = util.model_id(group, version, plural,
+                                      name, namespace)
+                new_gen = resp["metadata"]["generation"]
+                self._children_gen[model_id] = new_gen
+                if meta["generation"] + 1 == new_gen:
+                    self._children_skip_gen[model_id] = new_gen
 
         def _sync_to_parent(group, version, plural, name, namespace, meta,
                             spec, diff, attrs_to_trim=None, *args, **kwargs):
@@ -217,14 +217,14 @@ class Mounter:
 
                 # maybe rejected if parent has been updated;
                 # continue to try until succeed
-                e = util.patch_spec(g, v, r, n, ns, parent_patch, rv=prv)
+                resp, e = util.patch_spec(g, v, r, n, ns, parent_patch, rv=prv)
                 if e is not None:
                     print(f"mounter: failed to sync to parent due to {e}")
                     # time.sleep(1)
                 else:
-                    _, _, gen = util.get_spec(g, v, r, n, ns)
-                    if pgn != gen:
-                        self._parent_gen = pgn
+                    new_gen = resp["metadata"]["generation"]
+                    if pgn + 1 == new_gen:
+                        self._parent_skip_gen = new_gen
                     break
 
         def _gen_parent_patch(child_spec, diff, attrs_to_trim=None):
@@ -248,7 +248,7 @@ class Mounter:
         def on_mount_attr_update(spec, meta, diff, *args, **kwargs):
             _, _ = args, kwargs
 
-            if meta["generation"] == self._parent_gen + 1:
+            if meta["generation"] == self._parent_skip_gen:
                 return
 
             mounts = spec.get("mount", {})
@@ -268,7 +268,7 @@ class Mounter:
                     return
                 patch = {
                     "mounts": {
-                       gvr_str: None for gvr_str in to_prune
+                        gvr_str: None for gvr_str in to_prune
                     }
                 }
                 e = util.patch_spec(g, v, r, n, ns, patch, rv=rv)
@@ -373,15 +373,17 @@ class Mounter:
             # push to children models
             # TBD: transactional update
             for model_id, (cs, gen) in to_sync.items():
-                cur_gen, e = util.check_gen_and_patch_spec(
+                cur_gen, resp, e = util.check_gen_and_patch_spec(
                     *util.parse_model_id(model_id),
                     spec=cs,
                     gen=max(gen, self._children_gen.get(model_id, -1)))
                 if e is not None:
                     print(f"mounter: unable to sync to children due to {e}")
-                _, _, gen = util.get_spec(*util.parse_model_id(model_id))
-                if gen != cur_gen:
-                    self._children_gen[model_id] = cur_gen
+                else:
+                    new_gen = resp["metadata"]["generation"]
+                    self._children_gen[model_id] = new_gen
+                    if cur_gen + 1 == new_gen:
+                        self._children_skip_gen[model_id] = new_gen
 
         # subscribe to the events of the parent model
         self._parent_watch = Watch(g, v, r, n, ns,
@@ -395,11 +397,13 @@ class Mounter:
         self._children_watches = defaultdict(dict)
 
         # last handled generation of a child, keyed by model_id;
-        # used to filter last self-write on the child
-        # TBD: in non-embedded mounter, these should be in the apiserver
+        # used when update the children because the parent's copy
+        # might be out of date
         self._children_gen = dict()
 
-        self._parent_gen = -1
+        # used to filter last self-write on the child
+        self._children_skip_gen = dict()
+        self._parent_skip_gen = -1
 
     def start(self):
         self._parent_watch.start()

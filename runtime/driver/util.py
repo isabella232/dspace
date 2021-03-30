@@ -4,6 +4,7 @@ import contextlib
 import threading
 import inflection
 from typing import Tuple, Callable
+from functools import reduce
 
 import kubernetes
 from kubernetes.client.rest import ApiException
@@ -236,21 +237,21 @@ def patch_spec(g, v, r, n, ns, spec: dict, rv=None):
     api = kubernetes.client.CustomObjectsApi()
 
     try:
-        api.patch_namespaced_custom_object(group=g,
-                                           version=v,
-                                           namespace=ns,
-                                           name=n,
-                                           plural=r,
-                                           body={
-                                               "metadata": {} if rv is None else {
-                                                   "resourceVersion": rv,
-                                               },
-                                               "spec": spec,
-                                           },
-                                           )
-        return
+        resp = api.patch_namespaced_custom_object(group=g,
+                                                  version=v,
+                                                  namespace=ns,
+                                                  name=n,
+                                                  plural=r,
+                                                  body={
+                                                      "metadata": {} if rv is None else {
+                                                          "resourceVersion": rv,
+                                                      },
+                                                      "spec": spec,
+                                                  },
+                                                  )
+        return resp, None
     except ApiException as e:
-        return f"k8s: unable to update model {model_id(g, v, r, n, ns)}: {e}"
+        return None, f"k8s: unable to update model {model_id(g, v, r, n, ns)}: {e}"
 
 
 def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
@@ -259,17 +260,17 @@ def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
     while True:
         _, rv, cur_gen = get_spec(g, v, r, n, ns)
         if gen < cur_gen:
-            return cur_gen, f"generation outdated"
+            return cur_gen, None, f"generation outdated"
 
-        e = patch_spec(g, v, r, n, ns, spec, rv=rv)
+        resp, e = patch_spec(g, v, r, n, ns, spec, rv=rv)
         if e is None:
-            return cur_gen, None
+            return cur_gen, resp, None
         print(f"unable to patch model: {e}; retry")
 
 
 # utils
 def put(path, src, target, transform=lambda x: x):
-    if type(target) is not dict:
+    if not isinstance(target, dict):
         return
 
     ps = path.split(".")
@@ -278,7 +279,7 @@ def put(path, src, target, transform=lambda x: x):
             return
         target = target[p]
 
-    if type(src) is not dict:
+    if not isinstance(src, dict):
         if src is None:
             target[ps[-1]] = None
         else:
@@ -290,6 +291,22 @@ def put(path, src, target, transform=lambda x: x):
             return
         src = src[p]
     target[ps[-1]] = transform(src[ps[-1]])
+
+
+def deep_get(d: dict, path: str, default=None):
+    return reduce(lambda _d, key: _d.get(key, default) if isinstance(_d, dict) else default, path.split("."),
+                  d)
+
+
+def deep_set(d: dict, path: str, val):
+    keys = path.split(".")
+    for k in keys[:-1]:
+        if k not in d:
+            return
+        d = d[k]
+    if keys[-1] not in d:
+        return
+    d[keys[-1]] = val
 
 
 def first_attr(attr, d: dict):

@@ -20,7 +20,7 @@ class __Reconciler:
         self.g = os.environ["GROUP"]
         self.v = os.environ["VERSION"]
         self.r = os.environ["PLURAL"]
-        self.gen = -1
+        self.skip_gen = -1
 
         # list of handlers keyed by the priority;
         # TBD use bisect if no other purpose

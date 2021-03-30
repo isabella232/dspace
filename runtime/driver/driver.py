@@ -43,21 +43,21 @@ def main():
         gen = meta["generation"]
         # skip the last self-write
         # TBD for parallel reconciliation may need to lock rc.gen before patch
-        if gen == rc.gen + 1:
-            print(f"driver: skipped gen {gen}")
+        if gen == rc.skip_gen:
+            print(f"driver: skipping gen {gen}")
             return
 
         spec = rc.run(*args, **kwargs)
-        _, e = util.check_gen_and_patch_spec(g, v, r, n, ns, spec, gen=gen)
+        _, resp, e = util.check_gen_and_patch_spec(g, v, r, n, ns, spec, gen=gen)
         if e is not None:
             # retry s.t. the diff object contains the past changes
             raise kopf.TemporaryError(e, delay=0)  # TBD(@kopf) non-zero delay fix
 
         # if the model didn't get updated do not
         # increment the counter
-        _, _, new_gen = util.get_spec(g, v, r, n, ns)
-        rc.gen = rc.gen if gen == new_gen else gen
-        print(f"driver: current gen {rc.gen}")
+        new_gen = resp["metadata"]["generation"]
+        if gen + 1 == new_gen:
+            rc.skip_gen = new_gen
 
     @kopf.on.delete(**_model, **_kwargs, optional=True)
     def on_delete(*args, **kwargs):
