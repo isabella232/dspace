@@ -67,7 +67,6 @@ def h(parent, bp):
 @on.mount("lamps")
 def h(lp, ul, typ):
     lp = first_attr("spec", lp)
-
     assert typ in converters, typ
 
     put(f"control.power.status", lp, ul,
