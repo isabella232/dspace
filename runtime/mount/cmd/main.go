@@ -272,10 +272,10 @@ func (v *Validator) doUpdate(njson, ojson []byte) (vlwh.ValidatorResult, error) 
 	}
 
 	log.Printf("diff %v", patchResult)
-	// XXX: all verbs, shadow check
 	// XXX: access verbs, single-writer check
-	// TODO: check if update mount/yield/connect reference and if it is valid
-	// TODO: update digi-graph
+	// XXX: disallow access to fields except for spec
+	// TBD: check if update mount/yield/connect reference and if it is valid
+	// TBD: update digi-graph
 	return vlwh.ValidatorResult{Valid: true}, nil
 }
 
@@ -353,7 +353,7 @@ func main() {
 
 	// create webhook with the validator
 	wh, err := vlwh.NewWebhook(vlwh.WebhookConfig{
-		Name: "dspace-ac",
+		Name: "dspace-mounter",
 	}, vl)
 	if err != nil {
 		log.Fatalf("error creating webhook: %s", err)
