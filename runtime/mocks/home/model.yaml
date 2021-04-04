@@ -10,14 +10,8 @@ obs:
       items:
         additionalProperties:
           properties:
-            h:
-              type: number
-            w:
-              type: number
-            x:
-              type: number
-            y:
-              type: number
+            location:
+              type: string
           type: object
         type: object
       type: array
