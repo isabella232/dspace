@@ -1,0 +1,7 @@
+group: mock.digi.dev
+image: silveryfu/plug:latest
+mounter: false
+name: plug
+namespace: default
+plural: plugs
+version: v1

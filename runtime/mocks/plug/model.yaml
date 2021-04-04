@@ -1,0 +1,7 @@
+group: mock.digi.dev
+version: v1
+kind: Plug
+control:
+  power: string
+obs:
+  reason: string

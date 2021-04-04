@@ -1,0 +1,7 @@
+apiVersion: mock.digi.dev/v1
+kind: Plug
+metadata:
+  name: plug-test
+spec:
+  control:
+    power: -1
