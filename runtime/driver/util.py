@@ -316,6 +316,10 @@ def deep_set(d: dict, path: str, val):
     d[keys[-1]] = val
 
 
+def typ_attr_from_child_path(child_path):
+    return child_path[2], child_path[-2]
+
+
 def first_attr(attr, d: dict):
     if type(d) is not dict:
         return None

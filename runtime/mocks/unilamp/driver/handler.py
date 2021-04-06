@@ -1,5 +1,6 @@
 import on
 
+import util
 from util import put, first_attr, first_type
 
 """Universal lamp translates power and brightness 
@@ -54,7 +55,7 @@ def h(parent, bp):
     ul = parent
 
     for _, child_path, old, new in bp:
-        typ, attr = child_path[2], child_path[-2]
+        typ, attr = util.typ_attr_from_child_path(child_path)
 
         assert typ in converters, typ
 

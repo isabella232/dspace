@@ -1,5 +1,6 @@
 import on
 
+import util
 from util import put, deep_get, deep_set
 
 """
@@ -7,6 +8,7 @@ Room digivice:
 1. Adjust lamp power and brightness based on pre-defined modes (default priority 0);
 2. Adjust lamp brightness based on the (aggregate) brightness (default priority 1); 
     - brightness is "divided" uniformly across lamps
+3. Intent propagation is implemented for the universal lamp's power only.
 
 Mounts:
 -  mock.digi.dev/v1/unilamps
@@ -70,8 +72,15 @@ lamp_converters = {
 
 # intent back-prop
 @on.mount
-def h():
-    pass
+def h(parent, bp):
+    room = parent
+
+    for _, child_path, old, new in bp:
+        typ, attr = util.typ_attr_from_child_path(child_path)
+
+        if typ == ul_gvr and attr == "power":
+            put(path="control.power.intent",
+                src=new, target=room)
 
 
 # status
@@ -79,7 +88,6 @@ def h():
 def h(parent, mounts):
     room, devices = parent, mounts
     mode = deep_get(room, "control.mode.intent")
-    bright = deep_get(room, "control.brightness.intent")
 
     # Handle mode
     if mode is not None:
@@ -97,7 +105,7 @@ def h(parent, mounts):
                 for attr in ["power", "brightness"]:
                     convert = lamp_converters[lt][attr]["from"]
                     if mode_config[mode]["lamps"][attr] != \
-                            convert(deep_get(_l, f"control.{attr}.intent")):
+                            convert(deep_get(_l, f"control.{attr}.status")):
                         matched = False
                 deep_set(room, f"control.mode.status", mode if matched else "undef")
 
@@ -105,7 +113,24 @@ def h(parent, mounts):
     ...
 
     # Handle brightness
-    # - check lamps
+    _bright = 0
+    for lt in [ul_gvr, cl_gvr]:
+        pc = lamp_converters[lt]["power"]["from"]
+        bc = lamp_converters[lt]["brightness"]["from"]
+
+        # iterate over individual lamp
+        for n, _l in devices.get(lt, {}).items():
+            if "spec" not in _l:
+                continue
+            _l = _l["spec"]
+
+            _p = deep_get(_l, "control.power.status", "off")
+            _b = deep_get(_l, "control.brightness.status", 0)
+
+            if pc(_p) == "on":
+                _bright += bc(_b)
+
+    deep_set(room, f"control.bright.status", _bright)
 
 
 # intent
