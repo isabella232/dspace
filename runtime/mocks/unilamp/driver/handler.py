@@ -40,10 +40,8 @@ converters = {
 
 # validation
 @on.mount
-def h(lamp_types):
-    count = 0
-    for typ, lamps in lamp_types.items():
-        count += len(lamps)
+def h(mounts):
+    count = util.mount_size(mounts)
     assert count <= 1, \
         f"more than one lamp is mounted: " \
         f"{count}"
@@ -59,6 +57,7 @@ def h(parent, bp):
 
         assert typ in converters, typ
 
+        # back-prop logic
         put(path=f"control.{attr}.intent",
             src=new, target=ul,
             transform=converters[typ][attr]["from"])
@@ -68,6 +67,7 @@ def h(parent, bp):
 @on.mount("lamps")
 def h(lp, ul, typ):
     lp = first_attr("spec", lp)
+
     assert typ in converters, typ
 
     put(f"control.power.status", lp, ul,

@@ -1,7 +1,7 @@
 import on
 
 import util
-from util import put, deep_get, deep_set
+from util import put, deep_get, deep_set, mount_size
 
 """
 Room digivice:
@@ -23,7 +23,10 @@ mode_config = {
     "work": {
         "lamps": {
             "power": "on",
-            "brightness": 1.0,
+            "brightness": {
+                "max": 1,
+                "min": 0.7,
+            },
             "ambiance_color": "white",
         }
     },
@@ -34,7 +37,10 @@ mode_config = {
     },
     "idle": {
         "lamps": {
-            "brightness": 0.2,
+            "brightness": {
+                "max": 0.3,
+                "min": 0.0,
+            }
         }
     }
 }
@@ -81,7 +87,8 @@ def h(parent, bp):
 
 # status
 @on.control
-def h(sv, mounts):
+@on.mount
+def default(sv, mounts):
     # if no mounted devices, set the
     # status to intent
     if util.mount_size(mounts) == 0:
@@ -90,42 +97,20 @@ def h(sv, mounts):
                 v["status"] = v["intent"]
 
 
+@on.control
 @on.mount
 def h(parent, mounts):
     room, devices = parent, mounts
     mode = deep_get(room, "control.mode.intent")
+    _config = mode_config[mode]["lamps"]
 
-    # Handle mode
+    # handle mode and brightness
     matched = True
-    if mode is not None:
-
-        # check lamps
-        _config = mode_config[mode]["lamps"]
-        for lt in [ul_gvr, cl_gvr]:
-
-            # iterate over individual lamp
-            for n, _l in devices.get(lt, {}).items():
-                if "spec" not in _l:
-                    continue
-                _l = _l["spec"]
-
-                for attr in ["power", "brightness"]:
-                    _convert = lamp_converters[lt][attr]["from"]
-                    if attr not in _config:
-                        continue
-                    if _config[attr] != _convert(
-                            deep_get(_l, f"control.{attr}.status")):
-                        matched = False
-        deep_set(room, f"control.mode.status", mode if matched else "undef")
-
-    # - other devices
-    ...
-
-    # Handle brightness
     _bright = 0
+
     for lt in [ul_gvr, cl_gvr]:
-        pc = lamp_converters[lt]["power"]["from"]
-        bc = lamp_converters[lt]["brightness"]["from"]
+        _pc = lamp_converters[lt]["power"]["from"]
+        _bc = lamp_converters[lt]["brightness"]["from"]
 
         # iterate over individual lamp
         for n, _l in devices.get(lt, {}).items():
@@ -133,76 +118,113 @@ def h(parent, mounts):
                 continue
             _l = _l["spec"]
 
-            _p = deep_get(_l, "control.power.status", "off")
+            _p = deep_get(_l, "control.power.status", None)
             _b = deep_get(_l, "control.brightness.status", 0)
 
-            if pc(_p) == "on":
-                _bright += bc(_b)
+            # check power
+            if "power" in _config and _config["power"] != _pc(_p):
+                matched = False
 
-    deep_set(room, f"control.bright.status", _bright)
+            # add brightness
+            if _pc(_p) == "on":
+                _bright += _bc(_b)
 
+    deep_set(room, f"control.brightness.status", _bright)
+
+    if "brightness" in _config:
+        _max = _config["brightness"].get("max", 1)
+        _min = _config["brightness"].get("min", 0)
+        if not (_min <= _bright <= _max):
+            matched = False
+
+    # other devices
+    ...
+
+    deep_set(room, f"control.mode.status", mode if matched else "undef")
+
+@on.control("mode")
+
+@on.cond()
+def h():
+    pass
 
 # intent
 @on.mount
-@on.control("mode")
-def h(parent, mounts):
+@on.control("mode", prio=1)
+def do_mode_lamps(parent, mounts):
     room, devices = parent, mounts
-    mode = deep_get(room, "control.mode.intent")
 
+    mode = deep_get(room, "control.mode.intent")
     if mode is None:
         return
 
-    # TBD use agg brightness for mode
-
-    # handle lamps
     _config = mode_config[mode]["lamps"]
+
+    _bright = list()
     for lt in [ul_gvr, cl_gvr]:
+        _pc = lamp_converters[lt]["power"]["to"]
+        _bc = lamp_converters[lt]["brightness"]["to"]
 
         # iterate over individual lamp
         for n, _l in devices.get(lt, {}).items():
-            if "spec" not in _l:
-                continue
-            _l = _l["spec"]
 
-            # configure lamp set-points
-            for attr in ["power", "brightness"]:
-                if attr not in _config:
-                    continue
+            _p = deep_get(_l, "spec.control.power.intent")
+            _b = deep_get(_l, "spec.control.brightness.intent", 0)
 
-                put(f"control.{attr}.intent",
-                    _config[attr], _l,
-                    transform=lamp_converters[lt][attr]["to"])
+            # set power
+            if "power" in _config:
+                deep_set(_l, "spec.control.power.intent",
+                         _pc(_config["power"]))
 
-    # other devices
-    ...
+            # add brightness
+            if _pc(_p) == "on":
+                _bright.append(_bc(_b))
+
+    if "brightness" in _config:
+        print("XXX", mode, _config, len(_bright), devices)
+        _max = _config["brightness"].get("max", 1)
+        _min = _config["brightness"].get("min", 0)
+
+        # reset the lamps' brightness only when they
+        # don't fit the mode
+        if not (_min <= sum(_bright) <= _max) and len(_bright) > 0:
+            _bright = deep_get(room, "control.brightness.intent")
+            if _min <= _bright <= _max:
+                _bright_div = _bright
+            else:
+                _bright_div = (_max + _min) / 2 / len(_bright)
+            _set_bright(devices, _bright_div)
+
+
+# other devices
+...
 
 
 @on.mount
-@on.control("brightness")
-def h(parent, mounts):
+@on.control("brightness", prio=0)
+def do_bright(parent, mounts):
     room, devices = parent, mounts
-    bright = deep_get(room, "control.brightness.intent")
-    lamp_count = len(devices.get(ul_gvr, {})) + \
-                 len(devices.get(cl_gvr, {}))
 
-    if bright is None or lamp_count == 0:
+    bright = deep_get(room, "control.brightness.intent")
+    if bright is None:
         return
 
-    # handle lamps
+    num_active_lamp = \
+        mount_size(mounts, {ul_gvr, cl_gvr}, has_spec=True,
+                   cond=lambda m: deep_get(m, "spec.control.power.status") == "on")
 
-    div = bright / lamp_count
+    if num_active_lamp < 1:
+        return
 
-    # set div for each lamp
+    bright_div = bright / num_active_lamp
+    _set_bright(devices, bright_div)
+
+
+def _set_bright(ds, b):
     for lt in [ul_gvr, cl_gvr]:
+        _lc = lamp_converters[lt]["brightness"]["to"]
 
-        for n, _l in devices.get(lt, {}).items():
-            if "spec" not in _l:
-                continue
-
-            _l = _l["spec"]
-
-            put("control.brightness.intent", div, _l,
-                transform=lamp_converters[lt]["brightness"]["to"])
-
-    # other devices
-    ...
+        for _, _l in ds.get(lt, {}).items():
+            deep_set(_l, "spec.control.brightness.intent",
+                     _lc(b))
+            print("ZZZ", _l)
