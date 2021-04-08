@@ -308,12 +308,15 @@ def deep_get(d: dict, path: str, default=None):
 
 
 def deep_set(d: dict, path: str, val):
+    if not isinstance(d, dict):
+        return
     keys = path.split(".")
     for k in keys[:-1]:
         if k not in d:
             return
         d = d[k]
     d[keys[-1]] = val
+    print("TTT", d, path)
 
 
 def get_inst(d: dict, gvr_str) -> dict:
@@ -334,13 +337,21 @@ def deep_set_all(ds, path: str, val):
             deep_set(d, path, val)
 
 
-def mount_size(mounts: dict, gvr_str: str = None):
-    # return the number of mounted models
-    if gvr_str is not None:
-        return len(mounts.get(gvr_str, {}))
-    else:
-        return sum([len(models)
-                    for _, models in mounts.items()])
+def mount_size(mounts: dict, gvr_set: set = None,
+               has_spec=False, cond: Callable = lambda x: True):
+    count = 0
+    for typ, models in mounts.items():
+        if gvr_set is not None and typ not in gvr_set:
+            continue
+
+        if not all(cond(m) for m in models):
+            continue
+
+        if has_spec:
+            count += sum(1 if "spec" in m else 0 for m in models)
+        else:
+            count += len(models)
+    return count
 
 
 def typ_attr_from_child_path(child_path):

@@ -148,6 +148,10 @@ def _attr(fn, path=".", prio=0):
             return True
         return False
 
+    # TBD(ZH's point): allow user define lambda filter
+    # maybe @on.cond(Callable)?? Akin to the "push-down"
+    # filter to database
+
     def _from_model(d: dict):
         result = dict()
         to_visit = [[d.get("spec", {}), []]]
