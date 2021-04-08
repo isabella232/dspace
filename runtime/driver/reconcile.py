@@ -39,9 +39,10 @@ class __Reconciler:
                        mount=proc_spec.get("mount", {}),
                        back_prop=get_back_prop(diff), diff=diff)
                 except Exception as e:
-                    print(f"reconcile error: {e.with_traceback(tb=sys.exc_info()[2])}")
+                    print(f"reconcile error: {e.with_traceback(sys.exc_info()[2])}")
                     return proc_spec
                 # TBD: detect changes and add to diff
+                # TBD: reason/debug operator
         return proc_spec
 
     def add(self, handler: typing.Callable,

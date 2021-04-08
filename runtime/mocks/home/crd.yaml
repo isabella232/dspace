@@ -38,6 +38,8 @@ spec:
                   mock.digi.dev/v1/rooms:
                     additionalProperties:
                       properties:
+                        generation:
+                          type: number
                         mode:
                           type: string
                         spec:
@@ -250,14 +252,8 @@ spec:
                     items:
                       additionalProperties:
                         properties:
-                          h:
-                            type: number
-                          w:
-                            type: number
-                          x:
-                            type: number
-                          y:
-                            type: number
+                          location:
+                            type: string
                         type: object
                       type: object
                     type: array

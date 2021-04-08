@@ -316,6 +316,33 @@ def deep_set(d: dict, path: str, val):
     d[keys[-1]] = val
 
 
+def get_inst(d: dict, gvr_str) -> dict:
+    inst = dict()
+    for _n, body in d.get(gvr_str, {}).items():
+        i = body.get("spec", None)
+        if i is not None:
+            inst[_n] = i
+    return inst
+
+
+def deep_set_all(ds, path: str, val):
+    if isinstance(ds, list):
+        for d in ds:
+            deep_set(d, path, val)
+    elif isinstance(ds, dict):
+        for _, d in ds.items():
+            deep_set(d, path, val)
+
+
+def mount_size(mounts: dict, gvr_str: str = None):
+    # return the number of mounted models
+    if gvr_str is not None:
+        return len(mounts.get(gvr_str, {}))
+    else:
+        return sum([len(models)
+                    for _, models in mounts.items()])
+
+
 def typ_attr_from_child_path(child_path):
     return child_path[2], child_path[-2]
 

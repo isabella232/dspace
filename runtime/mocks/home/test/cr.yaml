@@ -1,8 +1,8 @@
 apiVersion: mock.digi.dev/v1
-kind: Room
+kind: Home
 metadata:
-  name: room-test
+  name: home-test
 spec:
   control:
     mode:
-      intent: idle
+      intent: normal
