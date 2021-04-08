@@ -30,15 +30,11 @@ mode_config = {
     "sleep": {
         "lamps": {
             "power": "off",
-            "brightness": 0.0,
-            "ambiance_color": "blue",
         }
     },
     "idle": {
         "lamps": {
-            "power": "on",
             "brightness": 0.2,
-            "ambiance_color": "yellow",
         }
     }
 }
@@ -84,15 +80,27 @@ def h(parent, bp):
 
 
 # status
+@on.control
+def h(sv, mounts):
+    # if no mounted devices, set the
+    # status to intent
+    if util.mount_size(mounts) == 0:
+        for _, v in sv.items():
+            if "intent" in v:
+                v["status"] = v["intent"]
+
+
 @on.mount
 def h(parent, mounts):
     room, devices = parent, mounts
     mode = deep_get(room, "control.mode.intent")
 
     # Handle mode
+    matched = True
     if mode is not None:
 
         # check lamps
+        _config = mode_config[mode]["lamps"]
         for lt in [ul_gvr, cl_gvr]:
 
             # iterate over individual lamp
@@ -101,13 +109,14 @@ def h(parent, mounts):
                     continue
                 _l = _l["spec"]
 
-                matched = True
                 for attr in ["power", "brightness"]:
-                    convert = lamp_converters[lt][attr]["from"]
-                    if mode_config[mode]["lamps"][attr] != \
-                            convert(deep_get(_l, f"control.{attr}.status")):
+                    _convert = lamp_converters[lt][attr]["from"]
+                    if attr not in _config:
+                        continue
+                    if _config[attr] != _convert(
+                            deep_get(_l, f"control.{attr}.status")):
                         matched = False
-                deep_set(room, f"control.mode.status", mode if matched else "undef")
+        deep_set(room, f"control.mode.status", mode if matched else "undef")
 
     # - other devices
     ...
@@ -146,6 +155,7 @@ def h(parent, mounts):
     # TBD use agg brightness for mode
 
     # handle lamps
+    _config = mode_config[mode]["lamps"]
     for lt in [ul_gvr, cl_gvr]:
 
         # iterate over individual lamp
@@ -156,8 +166,11 @@ def h(parent, mounts):
 
             # configure lamp set-points
             for attr in ["power", "brightness"]:
+                if attr not in _config:
+                    continue
+
                 put(f"control.{attr}.intent",
-                    mode_config[mode]["lamps"][attr], _l,
+                    _config[attr], _l,
                     transform=lamp_converters[lt][attr]["to"])
 
     # other devices
