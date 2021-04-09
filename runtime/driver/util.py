@@ -307,13 +307,16 @@ def deep_get(d: dict, path: str, default=None):
                   d)
 
 
-def deep_set(d: dict, path: str, val):
+def deep_set(d: dict, path: str, val, create=False):
     if not isinstance(d, dict):
         return
     keys = path.split(".")
     for k in keys[:-1]:
         if k not in d:
-            return
+            if create:
+                d[k] = {}
+            else:
+                return
         d = d[k]
     d[keys[-1]] = val
     print("TTT", d, path)

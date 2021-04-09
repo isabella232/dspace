@@ -1,0 +1,7 @@
+group: mock.digi.dev
+image: silveryfu/scene:latest
+mounter: false
+name: scene
+namespace: default
+plural: scenes
+version: v1

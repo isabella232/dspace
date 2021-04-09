@@ -205,6 +205,11 @@ def _attr(fn, path=".", prio=0):
             kwarg_filter.update({"mount": p})
             args[p] = None
 
+    for p in ["obs"]:
+        if p in sig.parameters:
+            kwarg_filter.update({"obs": p})
+            args[p] = None
+
     for p in ["back_prop", "bp"]:
         if p in sig.parameters:
             kwarg_filter.update({"back_prop": p})
@@ -234,17 +239,24 @@ def _attr(fn, path=".", prio=0):
         elif i == 4:
             kwarg_filter["mount"] = k
         elif i == 5:
+            kwarg_filter["obs"] = k
+        elif i == 6:
+            kwarg_filter["back_prop"] = k
+        elif i == 7:
             kwarg_filter["diff"] = k
         else:
             break
 
-    def wrapper_fn(subview, proc_view, view, old_view, mount, back_prop, diff):
+    def wrapper_fn(subview, proc_view, view,
+                   old_view, mount, obs, back_prop,
+                   diff):
         kwargs = dict()
         for _k, _v in [("subview", subview),
                        ("proc_view", proc_view),
                        ("view", view),
                        ("old_view", old_view),
                        ("mount", mount),
+                       ("obs", obs),
                        ("back_prop", back_prop),
                        ("diff", diff),
                        ("typ", child_typ),

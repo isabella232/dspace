@@ -37,7 +37,7 @@ class __Reconciler:
                 try:
                     fn(subview=sub_spec, proc_view=proc_spec,
                        view=spec, old_view=old,
-                       mount=proc_spec.get("mount", {}),
+                       mount=proc_spec.get("mount", {}), obs=proc_spec.get("obs", {}),
                        back_prop=get_back_prop(diff), diff=diff)
                 except Exception as e:
                     print(f"reconcile error: {e}")
