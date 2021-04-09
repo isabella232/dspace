@@ -1,0 +1,12 @@
+apiVersion: mock.digi.dev/v1
+kind: Cam
+metadata:
+  name: cam-test
+spec:
+  control:
+    angle:
+      intent: 270
+    endpoint:
+      intent: rtsp://192.168.1.16/live
+    sensitivity:
+      intent: 1
