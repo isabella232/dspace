@@ -111,6 +111,17 @@ spec:
                           type: string
                       type: object
                     type: object
+                  mock.digi.dev/v1/motionsensor:
+                    additionalProperties:
+                      properties:
+                        generation:
+                          type: number
+                        mode:
+                          type: string
+                        status:
+                          type: string
+                      type: object
+                    type: object
                   mock.digi.dev/v1/unilamps:
                     additionalProperties:
                       properties:

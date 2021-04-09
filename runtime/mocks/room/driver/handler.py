@@ -142,11 +142,6 @@ def h(parent, mounts):
 
     deep_set(room, f"control.mode.status", mode if matched else "undef")
 
-@on.control("mode")
-
-@on.cond()
-def h():
-    pass
 
 # intent
 @on.mount
@@ -181,7 +176,6 @@ def do_mode_lamps(parent, mounts):
                 _bright.append(_bc(_b))
 
     if "brightness" in _config:
-        print("XXX", mode, _config, len(_bright), devices)
         _max = _config["brightness"].get("max", 1)
         _min = _config["brightness"].get("min", 0)
 

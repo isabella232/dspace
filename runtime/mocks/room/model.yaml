@@ -37,3 +37,5 @@ obs:
 mount:
   mock.digi.dev/v1/unilamps: object
   mock.digi.dev/v1/colorlamps: object
+  mock.digi.dev/v1/motionsensor: object
+
