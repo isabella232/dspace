@@ -5,4 +5,5 @@ control:
   sensitivity: number
 obs:
   last_triggered_time: string
+  battery_level: string
   reason: string

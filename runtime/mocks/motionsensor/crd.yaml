@@ -35,6 +35,8 @@ spec:
                 type: object
               obs:
                 properties:
+                  battery_level:
+                    type: string
                   last_triggered_time:
                     type: string
                   reason:

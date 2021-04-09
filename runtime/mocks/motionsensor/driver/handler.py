@@ -6,14 +6,20 @@ import random
 import os
 
 import util
+from util import deep_set
 
 """Motion sensor mock digivice generates random motion 
 events based on sensitivity."""
 
 _stop_flag = False
 
-_g, _v, _r = os.environ["GROUP"], os.environ["VERSION"], os.environ["PLURAL"]
-_n, _ns = os.environ["NAME"], os.environ["NAMESPACE"]
+auri = {
+    "g": os.environ["GROUP"],
+    "v": os.environ["VERSION"],
+    "r": os.environ["PLURAL"],
+    "n": os.environ["NAME"],
+    "ns": os.environ["NAMESPACE"],
+}
 
 
 def trigger(sty):
@@ -23,18 +29,19 @@ def trigger(sty):
         time.sleep(interval)
         if _stop_flag:
             break
-        _set()
+
+        util.check_gen_and_patch_spec(**auri,
+                                      spec={
+                                          "obs": {
+                                              "last_triggered_time": str(time.time())
+                                          }
+                                      },
+                                      gen=sys.maxsize)
 
 
-def _set():
-    util.check_gen_and_patch_spec(_g, _v, _r,
-                                  _n, _ns,
-                                  {
-                                      "obs": {
-                                          "last_triggered_time": str(time.time())
-                                      }
-                                  },
-                                  sys.maxsize)
+@on.attr
+def h(pv):
+    deep_set(pv, "obs.battery_level", "100%", create=True)
 
 
 # intent
