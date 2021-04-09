@@ -1,0 +1,9 @@
+group: mock.digi.dev
+version: v1
+kind: Roomba
+control:
+  mode: string
+  power: string
+obs:
+  dustbin_status: string
+  reason: string

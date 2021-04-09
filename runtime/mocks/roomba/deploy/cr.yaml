@@ -1,0 +1,10 @@
+apiVersion: mock.digi.dev/v1
+kind: Roomba
+metadata:
+  name: roomba-test
+spec:
+  control:
+    mode:
+      intent: "clean"
+    power:
+      intent: "off"
