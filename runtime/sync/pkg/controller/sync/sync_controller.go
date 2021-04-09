@@ -87,7 +87,9 @@ func (bc *BindingCache) Add(b *Binding) error {
 
 		// validate path
 		if _, err := helper.GetAttr(o, auri.Path); err != nil {
-			return err
+			log.Println("warning:", err)
+			// XXX
+			//return err
 		}
 
 		return this.Watch(&source.Kind{

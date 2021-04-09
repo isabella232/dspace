@@ -34,8 +34,8 @@ spec:
               mode:
                 type: string
               source:
-                description: Auri identifies a set of attributes belonging to a model
-                  on the semantic message bus E.g., /digi.dev/v1/Roomba/default/roomba-foo.power
+                description: Auri identifies a model or its attributes when a path
+                  is given
                 properties:
                   kind:
                     description: model schema
@@ -63,8 +63,8 @@ spec:
                     type: string
                 type: object
               target:
-                description: Auri identifies a set of attributes belonging to a model
-                  on the semantic message bus E.g., /digi.dev/v1/Roomba/default/roomba-foo.power
+                description: Auri identifies a model or its attributes when a path
+                  is given
                 properties:
                   kind:
                     description: model schema
