@@ -27,9 +27,9 @@ obs:
               type: number
             w:
               type: number
-            x:
+            x1:
               type: number
-            y:
+            x2:
               type: number
           type: object
         type: object
