@@ -24,30 +24,38 @@ auri = {
 
 
 def gen_objects():
-    return [
+    return random.choices([
         {
             "human": {
-                "x1": 123,
-                "x2": 256,
-                "w": 50,
-                "h": 400,
+                "x1": random.randint(100, 1000),
+                "x2": random.randint(100, 1000),
+                "w": random.randint(0, 200),
+                "h": random.randint(0, 200),
             }
         },
         {
             "dog": {
-                "x1": 64,
-                "x2": 128,
-                "w": 50,
-                "h": 30,
+                "x1": random.randint(100, 1000),
+                "x2": random.randint(100, 1000),
+                "w": random.randint(0, 200),
+                "h": random.randint(0, 200),
             }
         },
-    ]
+        {
+            "roomba": {
+                "x1": random.randint(100, 1000),
+                "x2": random.randint(100, 1000),
+                "w": random.randint(0, 200),
+                "h": random.randint(0, 200),
+            }
+        },
+    ], k=random.randint(0, 4))
 
 
 def detect():
     global _stop_flag
     while True:
-        interval = random.randint(0, 10)
+        interval = random.randint(5, 60)
         if _stop_flag:
             break
 
@@ -64,7 +72,7 @@ def detect():
 
 
 # intent
-@on.data
+@on.data("input")
 def h():
     global _stop_flag
     _stop_flag = True
