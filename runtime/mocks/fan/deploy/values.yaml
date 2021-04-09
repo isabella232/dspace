@@ -1,0 +1,7 @@
+group: mock.digi.dev
+image: silveryfu/fan:latest
+mounter: false
+name: fan
+namespace: default
+plural: fans
+version: v1

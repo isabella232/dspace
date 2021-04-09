@@ -1,0 +1,9 @@
+group: mock.digi.dev
+version: v1
+kind: Fan
+control:
+  mode: string
+  power: string
+  speed: number
+obs:
+  reason: string

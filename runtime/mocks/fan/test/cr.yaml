@@ -1,0 +1,12 @@
+apiVersion: mock.digi.dev/v1
+kind: Fan
+metadata:
+  name: fan-test
+spec:
+  control:
+    mode:
+      intent: "heating"
+    power:
+      intent: "off"
+    speed:
+      intent: 1
