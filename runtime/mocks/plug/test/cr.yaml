@@ -4,4 +4,5 @@ metadata:
   name: plug-test
 spec:
   control:
-    power: -1
+    power:
+      intent: "off"
