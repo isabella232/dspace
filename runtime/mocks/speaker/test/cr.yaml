@@ -1,0 +1,10 @@
+apiVersion: mock.digi.dev/v1
+kind: Speaker
+metadata:
+  name: speaker-test
+spec:
+  control:
+    source_url:
+      intent: "https://open.spotify.com/artist/1C1x4MVkql8AiABuTw6DgE"
+    volume:
+      intent: 1

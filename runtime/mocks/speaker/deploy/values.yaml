@@ -1,0 +1,7 @@
+group: mock.digi.dev
+image: silveryfu/speaker:latest
+mounter: false
+name: speaker
+namespace: default
+plural: speakers
+version: v1

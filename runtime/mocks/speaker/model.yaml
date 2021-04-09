@@ -1,0 +1,8 @@
+group: mock.digi.dev
+version: v1
+kind: Speaker
+control:
+  volume: number
+  source_url: string
+obs:
+  reason: string
