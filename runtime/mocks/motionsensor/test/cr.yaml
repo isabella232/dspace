@@ -1,0 +1,8 @@
+apiVersion: mock.digi.dev/v1
+kind: MotionSensor
+metadata:
+  name: motionsensor-test
+spec:
+  control:
+    sensitivity:
+      intent: 1
