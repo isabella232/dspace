@@ -141,6 +141,7 @@ func (bc *BindingCache) Remove(name string) {
 	if !ok {
 		return
 	}
+
 	delete(bc.bindings, name)
 
 	var srcName, targetName string
@@ -242,6 +243,9 @@ func (r *ReconcileSync) doSync(request reconcile.Request) (reconcile.Result, err
 	err := r.client.Get(context.TODO(), request.NamespacedName, sc)
 	if err != nil {
 		if errors.IsNotFound(err) {
+
+			r.finalize(name)
+
 			// prune cached binding
 			r.bindingCache.Remove(name)
 
@@ -342,4 +346,45 @@ func (r *ReconcileSync) matchAttr(src *unstructured.Unstructured, srcPath string
 	}
 
 	return r.client.Update(context.TODO(), target)
+}
+
+func (r *ReconcileSync) finalize(name string) {
+	bc := r.bindingCache
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+
+	bd, ok := bc.bindings[name]
+	if !ok {
+		return
+	}
+
+	switch bd.Mode {
+	case digiv1.MatchMode:
+		// flush a write to the target to remove the attribute
+		bdTarget, err := helper.GetObj(r.client, &bd.Target)
+		if err != nil {
+			log.Println("finalize: unable to get target model:", bd.Target)
+			return
+		}
+
+		old := bdTarget.DeepCopy()
+
+		var empty interface{}
+		err = unstructured.SetNestedField(bdTarget.Object, empty, core.AttrPathSlice(bd.Target.Path)...)
+
+		if err != nil {
+			log.Println("finalize: unable to set target attribute", err)
+			return
+		}
+
+		err = r.client.Patch(context.TODO(), bdTarget, client.MergeFrom(old))
+		if err != nil {
+			log.Println("finalize: unable to patch target", err)
+			return
+		}
+	case digiv1.SyncMode:
+		// do nothing
+	default:
+	}
+	log.Println("finalized", name)
 }
