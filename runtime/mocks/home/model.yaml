@@ -4,7 +4,11 @@ kind: Home
 control:
   mode: string
 obs:
-  rooms: array
+  rooms:
+    openapi:
+      items:
+        type: string
+      type: array
   reason: string
   objects:
     openapi:
