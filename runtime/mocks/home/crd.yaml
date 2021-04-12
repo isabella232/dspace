@@ -251,6 +251,17 @@ spec:
                                 reason:
                                   type: string
                               type: object
+                            reflex:
+                              additionalProperties:
+                                properties:
+                                  policy:
+                                    type: string
+                                  priority:
+                                    type: number
+                                  processor:
+                                    type: string
+                                type: object
+                              type: object
                           type: object
                         status:
                           type: string
