@@ -1,0 +1,7 @@
+group: mock.digi.dev
+image: silveryfu/zlake:latest
+mounter: false
+name: zlake
+namespace: default
+plural: zlakes
+version: v1

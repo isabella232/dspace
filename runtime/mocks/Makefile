@@ -1,4 +1,4 @@
-.PHONY: gen patch model model-all delete
+.PHONY: gen patch model all delete
 
 kc := kubectl
 registry := silveryfu
@@ -15,7 +15,7 @@ patch:
 	python patch.py $(KIND)
 model:
 	cd ./$(KIND); $(kc) apply -f crd.yaml
-model-all: | gen patch model
+all: | gen patch
 	$(info model)
 delete:
 	cd ./$(KIND); $(kc) delete -f crd.yaml
@@ -29,7 +29,7 @@ r := $(KIND)s
 n := $(KIND)-test
 ns := default
 
-test: | model-all
+test: | all
 	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
 	cp ./$(KIND)/driver/handler.py $(driver_templates); \
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \

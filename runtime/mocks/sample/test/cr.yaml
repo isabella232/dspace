@@ -1,0 +1,11 @@
+apiVersion: mock.digi.dev/v1
+kind: Sample
+metadata:
+  name: sample-test
+spec:
+  control:
+    mode: -1
+    power: -1
+    volume: -1
+  mount:
+    mock.digi.dev/v1/samplelakes: -1

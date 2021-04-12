@@ -20,5 +20,6 @@ obs:
           type: object
         type: object
       type: array
+reflex: object
 mount:
   mock.digi.dev/v1/rooms: object

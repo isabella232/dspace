@@ -118,18 +118,18 @@ type: object
 
 _reflex = """
 reflex:
-  properties:
+  additionalProperties:
+    properties:
+      policy:
+        type: string
+      processor:
+        type: string
+      priority:
+        type: number
+    type: object
   type: object
 """
 _reflex_attr = """
-additionalProperties:
-  properties:
-    priority:
-      type: string
-    policy:
-      type: string
-  type: object
-type: object
 """
 
 _cr = """
@@ -176,6 +176,12 @@ def h():
 @on.control
 def h():
     ...
+    
+    
+# reflexes
+@on.reflex
+def h():
+    pass
 
 """
 
@@ -201,8 +207,13 @@ def gen(name):
         # fill in attributes
         def make_attr(_name, _attr_tpl, _main_tpl, src_attrs):
             attrs, result = dict(), dict()
+
+            # XXX currently this applies to reflex attr only
+            if isinstance(src_attrs, str):
+                return yaml.load(_main_tpl, Loader=yaml.FullLoader)
+
             for _n, t in src_attrs.items():
-                if type(t) is not str:
+                if not isinstance(t, str):
                     assert type(t) is dict and "openapi" in t
                     attrs[_n] = t["openapi"]
                 else:
@@ -318,4 +329,5 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         gen(sys.argv[1])
     else:
+        # TBD: gen all
         gen("sample")

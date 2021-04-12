@@ -4,6 +4,6 @@ kind: MotionSensor
 control:
   sensitivity: number
 obs:
-  last_triggered_time: string
+  last_triggered_time: number
   battery_level: string
   reason: string

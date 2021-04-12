@@ -1,0 +1,13 @@
+group: mock.digi.dev
+version: v1
+kind: Zlake
+data:
+  input:
+    location: string
+    format: string
+    zql: string
+  output:
+    location: string
+    format: string
+obs:
+  reason: string

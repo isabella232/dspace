@@ -221,4 +221,7 @@ def _set_bright(ds, b):
         for _, _l in ds.get(lt, {}).items():
             deep_set(_l, "spec.control.brightness.intent",
                      _lc(b))
-            print("ZZZ", _l)
+
+
+# reflexes
+

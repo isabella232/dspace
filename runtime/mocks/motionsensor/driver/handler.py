@@ -33,7 +33,7 @@ def trigger(sty):
         util.check_gen_and_patch_spec(**auri,
                                       spec={
                                           "obs": {
-                                              "last_triggered_time": str(time.time())
+                                              "last_triggered_time": time.time()
                                           }
                                       },
                                       gen=sys.maxsize)
