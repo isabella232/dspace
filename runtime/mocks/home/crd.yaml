@@ -132,13 +132,35 @@ spec:
                                         type: string
                                     type: object
                                   type: object
-                                mock.digi.dev/v1/motionsensor:
+                                mock.digi.dev/v1/motionsensors:
                                   additionalProperties:
                                     properties:
                                       generation:
                                         type: number
                                       mode:
                                         type: string
+                                      spec:
+                                        properties:
+                                          control:
+                                            properties:
+                                              sensitivity:
+                                                properties:
+                                                  intent:
+                                                    type: number
+                                                  status:
+                                                    type: number
+                                                type: object
+                                            type: object
+                                          obs:
+                                            properties:
+                                              battery_level:
+                                                type: string
+                                              last_triggered_time:
+                                                type: number
+                                              reason:
+                                                type: string
+                                            type: object
+                                        type: object
                                       status:
                                         type: string
                                     type: object

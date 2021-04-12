@@ -29,7 +29,7 @@ r := $(KIND)s
 n := $(KIND)-test
 ns := default
 
-test: | all
+test: | model all
 	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
 	cp ./$(KIND)/driver/handler.py $(driver_templates); \
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \
