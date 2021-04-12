@@ -51,7 +51,7 @@ def main():
         _, resp, e = util.check_gen_and_patch_spec(g, v, r, n, ns,
                                                    spec, gen=gen)
         if e is not None:
-            if e.status == util.GEN_OUTDATED:
+            if e.status == util.DriverError.GEN_OUTDATED:
                 # retry s.t. the diff object contains the past changes
                 # TBD(@kopf) non-zero delay fix
                 raise kopf.TemporaryError(e, delay=0)

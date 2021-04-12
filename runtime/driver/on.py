@@ -2,6 +2,7 @@ import inspect
 from collections import OrderedDict
 
 import util
+import filter
 from reconcile import rc
 
 """Filters."""
@@ -131,46 +132,6 @@ def _attr(fn, path=".", prio=0):
     # TBD: join multiple path to allow multiple decorators per handler
     _path = tuple(_path)
 
-    # TBD: add shared diff for all handlers
-    def has_diff(_, diff, *args, **kwargs) -> bool:
-        _, _ = args, kwargs
-        changed_paths = {(".",): True}
-        # TBD: add support for incremental diff
-
-        for op, path_, old, new in diff:
-            # on create
-            if old is None and len(path_) == 0:
-                changed_paths.update(_from_model(new))
-            else:
-                changed_paths.update(_from_path_tuple(path_))
-        # print("debug:", _path, changed_paths, diff)
-        if _path in changed_paths or len(diff) == 0:
-            return True
-        return False
-
-    # TBD(ZH's point): allow user define lambda filter
-    # maybe @on.cond(Callable)?? Akin to the "push-down"
-    # filter to database
-
-    def _from_model(d: dict):
-        result = dict()
-        to_visit = [[d.get("spec", {}), []]]
-        for n, prefix in to_visit:
-            result[tuple(prefix)] = True
-            if type(n) is not dict:
-                continue
-            for _k, _v in n.items():
-                to_visit.append([_v, prefix + [_k]])
-        return result
-
-    def _from_path_tuple(p: tuple):
-        # expand a path tuple to dict of paths
-        return {
-            # skip "spec"
-            p[1:_i + 1]: True
-            for _i in range(len(p))
-        }
-
     sig = inspect.signature(fn)
 
     # allow the handler declaration to omit arguments
@@ -184,7 +145,7 @@ def _attr(fn, path=".", prio=0):
             kwarg_filter.update({"subview": p})
             args[p] = None
 
-    for p in ["proc_view", "pv", "cur", "parent"]:
+    for p in ["proc_view", "pv", "cur", "parent", "root"]:
         if p in sig.parameters:
             kwarg_filter.update({"proc_view": p})
             args[p] = None
@@ -267,5 +228,5 @@ def _attr(fn, path=".", prio=0):
 
     rc.add(handler=wrapper_fn,
            priority=prio,
-           condition=has_diff,
+           condition=filter.has_diff,
            path=_path)

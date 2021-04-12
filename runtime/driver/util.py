@@ -1,4 +1,5 @@
 import os
+import uuid
 import asyncio
 import contextlib
 import threading
@@ -23,7 +24,9 @@ except:
 
 KopfRegistry = KopfRegistry
 
-GEN_OUTDATED = 41
+
+class DriverError:
+    GEN_OUTDATED = 41
 
 
 def run_operator(registry: KopfRegistry, verbose=True) -> (threading.Event, threading.Event):
@@ -126,6 +129,10 @@ class Attr:
         pass
 
 
+def uuid_str(length=4):
+    return str(uuid.uuid4())[:length]
+
+
 def spaced_name(n, ns) -> str:
     return f"{ns}/{n}"
 
@@ -205,6 +212,13 @@ def normalized_gvr(s, g, v) -> str:
     return f"{g}/{v}/{r}"
 
 
+def normalized_nsn(s: str) -> str:
+    if "/" not in s:
+        return "default/" + s
+    else:
+        return s
+
+
 def safe_attr(s):
     return s.replace(".", "-")
 
@@ -263,7 +277,7 @@ def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
         _, rv, cur_gen = get_spec(g, v, r, n, ns)
         if gen < cur_gen:
             e = ApiException()
-            e.status = GEN_OUTDATED
+            e.status = DriverError.GEN_OUTDATED
             e.reason = f"generation outdated {gen} < {cur_gen}"
             return cur_gen, None, e
 
@@ -319,7 +333,6 @@ def deep_set(d: dict, path: str, val, create=False):
                 return
         d = d[k]
     d[keys[-1]] = val
-    print("TTT", d, path)
 
 
 def get_inst(d: dict, gvr_str) -> dict:

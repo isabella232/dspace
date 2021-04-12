@@ -1,4 +1,6 @@
-#kopf==0.28.03
+kopf
 kubernetes
 pyyaml
 inflection
+pyjq
+python-box
