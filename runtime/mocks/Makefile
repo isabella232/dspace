@@ -15,7 +15,7 @@ patch:
 	python patch.py $(KIND)
 model:
 	cd ./$(KIND); $(kc) apply -f crd.yaml >/dev/null
-all: | gen patch
+all: | gen patch model
 	$(info model)
 delete:
 	cd ./$(KIND); $(kc) delete -f crd.yaml
@@ -38,14 +38,14 @@ test: | model all
 	python $(driver_templates)/driver.py
 
 # driver
-.PHONY: build
+.PHONY: gen patch build
 build:
 	rm -r $(build_dir) >/dev/null 2>&1 || true
-	cp -r $(driver_templates)/* $(build_dir)
-	cp $(driver_handler) $(build_dir)
-	cd $(build_dir); docker build -t $(registry)/$(KIND):latest -f deploy/image/Dockerfile .
-	docker push $(registry)/$(KIND):latest
-	rm -r $(build_dir)
+	cp -r $(driver_templates)/ $(build_dir) || true
+	cp $(driver_handler) $(build_dir) || true
+	cd $(build_dir); docker build -t $(registry)/$(KIND):latest -f deploy/image/Dockerfile . || true
+	docker push $(registry)/$(KIND):latest || true
+	rm -r $(build_dir) || true
 
 # deploy
 .PHONY: run stop print
