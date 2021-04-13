@@ -20,7 +20,7 @@ all: | gen patch model
 delete:
 	cd ./$(KIND); $(kc) delete -f crd.yaml
 list:
-	ls -d */ | sed 's#/##'
+	ls -d */ 2> /dev/null | sed 's#/##'
 
 .PHONY: test
 
@@ -57,6 +57,10 @@ run: | model
 	rm -r $(build_dir) || true
 stop:
 	helm uninstall $(NAME) >/dev/null && echo $(NAME) || true
-stop:
 print:
 	$(kc) get samples sample -oyaml | $(kc) neat
+
+# tutorial
+.PHONY: tutorial
+tutorial:
+	cp gen.py patch.py Makefile $(GOPATH)/src/digi.dev/tutorial
