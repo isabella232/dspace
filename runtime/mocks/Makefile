@@ -1,4 +1,4 @@
-.PHONY: gen patch model all delete
+.PHONY: gen patch model all delete list
 
 kc := kubectl
 registry := silveryfu
@@ -14,11 +14,13 @@ gen:
 patch:
 	python patch.py $(KIND)
 model:
-	cd ./$(KIND); $(kc) apply -f crd.yaml
+	cd ./$(KIND); $(kc) apply -f crd.yaml >/dev/null
 all: | gen patch
 	$(info model)
 delete:
 	cd ./$(KIND); $(kc) delete -f crd.yaml
+list:
+	ls -d */ | sed 's#/##'
 
 .PHONY: test
 
@@ -38,7 +40,8 @@ test: | model all
 # driver
 .PHONY: build
 build:
-	cp -r $(driver_templates) $(build_dir)
+	rm -r $(build_dir) >/dev/null 2>&1 || true
+	cp -r $(driver_templates)/* $(build_dir)
 	cp $(driver_handler) $(build_dir)
 	cd $(build_dir); docker build -t $(registry)/$(KIND):latest -f deploy/image/Dockerfile .
 	docker push $(registry)/$(KIND):latest
@@ -47,11 +50,13 @@ build:
 # deploy
 .PHONY: run stop print
 run: | model
-	cp -r $(deploy_templates) $(build_dir)
-	cp $(digivice_config) $(build_dir)
-	cd $(build_dir); mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) .
-	rm -r $(build_dir)
+	rm -r $(build_dir) >/dev/null 2>&1 || true
+	cp -r $(deploy_templates) $(build_dir) || true
+	cp $(digivice_config) $(build_dir) || true
+	cd $(build_dir); mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null && echo $(NAME) || true
+	rm -r $(build_dir) || true
 stop:
-	helm uninstall $(NAME)
+	helm uninstall $(NAME) >/dev/null && echo $(NAME) || true
+stop:
 print:
 	$(kc) get samples sample -oyaml | $(kc) neat

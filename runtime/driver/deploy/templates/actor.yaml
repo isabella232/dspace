@@ -30,6 +30,6 @@ spec:
           - name: NAMESPACE
             value: {{ .Values.namespace }}
           - name: MOUNTER
-            value: {{ .Values.mounter }}
+            value: {{ quote .Values.mounter }}
 
 

@@ -404,31 +404,3 @@ def full_gvr(a: str) -> str:
 
 def gvr_equal(a: str, b: str) -> bool:
     return full_gvr(a) == full_gvr(b)
-
-
-if __name__ == "__main__":
-    import json
-
-    print(parse_auri("/MockLamp/mock-lamp-2.spec.power"))
-
-    A = {"control": {"power": {"intent": "off", "status": "on",
-                               "room": {"mode": {"intent": "on",
-                                                 "status": "off"}}}},
-         "data": {"input": {"url": "http://"}, "output": {"objects": "human"}}}
-    print("before:")
-
-
-    def pprint(s):
-        print(json.dumps(A, indent=2))
-
-
-    pprint(A)
-    for t in ["intent", "status", "output"]:
-        print(f"after trimming {t}")
-        pprint(trim_attr(A, {t}))
-
-    diff = [('add', ('spec', 'labels', 'label1'), None, 'new-value'),
-            ('change', ('spec', 'size'), '1G', '2G')]
-    A = {"spec": {"size": "1G"}}
-    print("after applying diff")
-    pprint(apply_diff(A, diff))

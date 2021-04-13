@@ -25,7 +25,7 @@ Command-line dSpace manager.
 // child commands
 var mountCmd = &cobra.Command{
 	Use:   "mount SRC TARGET [ mode ]",
-	Short: "Mount a digivice to another digivice.",
+	Short: "Mount a digivice to another digivice",
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		var mode string
@@ -96,49 +96,69 @@ var pipeCmd = &cobra.Command{
 	},
 }
 
+// XXX rely on external scripts in /mocks
+// TBD support build/image/run/stop in dq
+func runMake(args []string, cmd string) {
+	var out bytes.Buffer
+	cmd_ := exec.Command("make", "-s", cmd)
+	cmd_.Stdout = &out
+	cmd_.Stderr = &out
+
+	cmd_.Env = append(os.Environ(),
+		"KIND="+args[0],
+		"NAME="+args[1],
+	)
+
+	//cmd.Dir
+	var workDir string
+	if workDir = os.Getenv("WORKDIR"); workDir == "" {
+		workDir = "."
+	}
+	cmd_.Dir = workDir
+
+	if err := cmd_.Run(); err != nil {
+		log.Fatalf("error: %v\n%s", err, out.String())
+	}
+	fmt.Print(out.String())
+}
+
+var imageCmd = &cobra.Command{
+	Use:   "image",
+	Short: "List available images",
+	Args:  cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		args = append(args, "", "")
+		runMake(args, "list")
+	},
+}
+
+var buildCmd = &cobra.Command{
+	Use:   "build KIND",
+	Short: "Build a digivice or digilake image",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		args = append(args, "")
+		runMake(args, "build")
+	},
+}
+
 var runCmd = &cobra.Command{
 	Use:   "run KIND NAME",
 	Short: "Run a digivice or digilake",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		// XXX replace the make
-		var out bytes.Buffer
-		cmd_ := exec.Command("make", "run")
-		cmd_.Stdout = &out
-
-		cmd_.Env = append(os.Environ(),
-			"KIND=" + args[0],
-			"NAME=" + args[1],
-		)
-
-		if err := cmd_.Run(); err != nil {
-			log.Fatalf("error: %v", err)
-		}
+		runMake(args, "run")
 	},
 }
-
 
 var stopCmd = &cobra.Command{
 	Use:   "stop KIND NAME",
 	Short: "Stop a digivice or digilake",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		// XXX replace the make
-		var out bytes.Buffer
-		cmd_ := exec.Command("make", "stop")
-		cmd_.Stdout = &out
-
-		cmd_.Env = append(os.Environ(),
-			"KIND=" + args[0],
-			"NAME=" + args[1],
-		)
-
-		if err := cmd_.Run(); err != nil {
-			log.Fatalf("error: %v", err)
-		}
+		runMake(args, "stop")
 	},
 }
-
 
 var (
 	aliasCmd = &cobra.Command{
@@ -205,6 +225,8 @@ var (
 func Execute() {
 	RootCmd.AddCommand(runCmd)
 	RootCmd.AddCommand(stopCmd)
+	RootCmd.AddCommand(buildCmd)
+	RootCmd.AddCommand(imageCmd)
 
 	RootCmd.AddCommand(mountCmd)
 	mountCmd.Flags().BoolP("delete", "d", false, "Unmount")
