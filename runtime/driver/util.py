@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 _handler = logging.StreamHandler()
 _handler.setFormatter(loggers.make_formatter())
 logger.addHandler(_handler)
-logger.setLevel(os.environ.get("LOGLEVEL", logging.INFO))
+logger.setLevel(int(os.environ.get("LOGLEVEL", logging.INFO)))
 
 
 def run_operator(registry: KopfRegistry,

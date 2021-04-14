@@ -32,7 +32,7 @@ class __Reconciler:
         self.n = os.environ["NAME"]
         self.ns = os.environ["NAMESPACE"]
 
-        log_level = os.environ.get("LOGLEVEL", logging.INFO)
+        log_level = int(os.environ.get("LOGLEVEL", logging.INFO))
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(log_level)
 

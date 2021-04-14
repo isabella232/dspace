@@ -15,7 +15,7 @@ def run():
     ns = os.environ.get("NAMESPACE", "default")
 
     # control the log level for k8s event and local/handler logging
-    log_level = os.environ.get("LOGLEVEL", logging.INFO)
+    log_level = int(os.environ.get("LOGLEVEL", logging.INFO))
     logger = logging.getLogger(__name__)
     logger.setLevel(log_level)
 
