@@ -104,10 +104,17 @@ func runMake(args []string, cmd string) {
 	cmd_.Stdout = &out
 	cmd_.Stderr = &out
 
-	cmd_.Env = append(os.Environ(),
-		"KIND="+args[0],
-		"NAME="+args[1],
-	)
+	if len(args) > 0 {
+		cmd_.Env = append(os.Environ(),
+			"KIND="+args[0],
+		)
+	}
+
+	if len(args) > 1 {
+		cmd_.Env = append(os.Environ(),
+			"NAME="+args[1],
+		)
+	}
 
 	//cmd.Dir
 	var workDir string
@@ -127,7 +134,6 @@ var imageCmd = &cobra.Command{
 	Short: "List available images",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		args = append(args, "", "")
 		runMake(args, "list")
 	},
 }
@@ -137,7 +143,6 @@ var buildCmd = &cobra.Command{
 	Short: "Build a digivice or digilake image",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		args = append(args, "")
 		runMake(args, "build")
 	},
 }
@@ -157,6 +162,15 @@ var stopCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		runMake(args, "stop")
+	},
+}
+
+var rmiCmd = &cobra.Command{
+	Use:   "rmi KIND",
+	Short: "Remove an image",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		runMake(args, "delete")
 	},
 }
 
@@ -227,6 +241,7 @@ func Execute() {
 	RootCmd.AddCommand(stopCmd)
 	RootCmd.AddCommand(buildCmd)
 	RootCmd.AddCommand(imageCmd)
+	RootCmd.AddCommand(rmiCmd)
 
 	RootCmd.AddCommand(mountCmd)
 	mountCmd.Flags().BoolP("delete", "d", false, "Unmount")

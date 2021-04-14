@@ -15,12 +15,13 @@ gen:
 patch:
 	python patch.py $(KIND)
 model:
-	cd ./$(KIND); $(kc) apply -f crd.yaml >/dev/null
+	cd ./$(KIND) && $(kc) apply -f crd.yaml >/dev/null
 all: | gen patch model
 	$(info model)
 delete:
-	cd ./$(KIND); $(kc) delete -f crd.yaml
-	rm -r ./$(KIND)
+	cd ./$(KIND) >/dev/null 2>&1; $(kc) delete -f crd.yaml 2>/dev/null || true
+	rm -r ./$(KIND) >/dev/null 2>&1 && echo $(KIND) removed || true
+
 list:
 	ls -d */ 2> /dev/null | sed 's#/##'
 
