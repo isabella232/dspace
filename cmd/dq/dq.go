@@ -66,7 +66,7 @@ var mountCmd = &cobra.Command{
 
 var pipeCmd = &cobra.Command{
 	Use:   "pipe [SRC TARGET] [\"d1 | d2 | ..\"]",
-	Short: "Pipe a model.input.X to a model.output.Y",
+	Short: "Pipe a digilake's input.x to another's output.y",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var pp *client.Piper
@@ -104,15 +104,26 @@ func runMake(args []string, cmd string) {
 	cmd_.Stdout = &out
 	cmd_.Stderr = &out
 
+	cmd_.Env = os.Environ()
 	if len(args) > 0 {
-		cmd_.Env = append(os.Environ(),
+		cmd_.Env = append(cmd_.Env,
 			"KIND="+args[0],
 		)
 	}
 
 	if len(args) > 1 {
-		cmd_.Env = append(os.Environ(),
+		cmd_.Env = append(cmd_.Env,
 			"NAME="+args[1],
+		)
+	}
+
+	if len(args) > 2 {
+		cmd_.Env = append(cmd_.Env,
+			"KOPFLOG="+args[2],
+		)
+	} else {
+		cmd_.Env = append(cmd_.Env,
+			"KOPFLOG=false",
 		)
 	}
 
@@ -131,7 +142,7 @@ func runMake(args []string, cmd string) {
 
 var imageCmd = &cobra.Command{
 	Use:   "image",
-	Short: "List available images",
+	Short: "List available digi images",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		runMake(args, "list")
@@ -140,7 +151,7 @@ var imageCmd = &cobra.Command{
 
 var buildCmd = &cobra.Command{
 	Use:   "build KIND",
-	Short: "Build a digivice or digilake image",
+	Short: "Build a digi image",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		runMake(args, "build")
@@ -149,25 +160,37 @@ var buildCmd = &cobra.Command{
 
 var runCmd = &cobra.Command{
 	Use:   "run KIND NAME",
-	Short: "Run a digivice or digilake",
+	Short: "Run a digi given kind and name",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		runMake(args, "run")
+		var c string
+		if l, _ := cmd.Flags().GetBool("local"); l {
+			c = "test"
+		} else {
+			c = "run"
+		}
+
+		if k, _ := cmd.Flags().GetBool("kopflog"); k {
+			args = append(args, "true")
+		}
+
+		runMake(args, c)
 	},
 }
 
 var stopCmd = &cobra.Command{
 	Use:   "stop KIND NAME",
-	Short: "Stop a digivice or digilake",
+	Short: "Stop a digi given kind and name",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		runMake(args, "stop")
 	},
 }
 
+
 var rmiCmd = &cobra.Command{
 	Use:   "rmi KIND",
-	Short: "Remove an image",
+	Short: "Remove a digi image",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		runMake(args, "delete")
@@ -177,7 +200,7 @@ var rmiCmd = &cobra.Command{
 var (
 	aliasCmd = &cobra.Command{
 		Use:   "alias [AURI ALIAS]",
-		Short: "Create a model alias",
+		Short: "Create a digi alias",
 		Args:  cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
@@ -238,18 +261,22 @@ var (
 // add subcommands here
 func Execute() {
 	RootCmd.AddCommand(runCmd)
+	runCmd.Flags().BoolP("local", "l", false, "Run driver in local console ")
+	runCmd.Flags().BoolP("kopflog", "k", false, "Enable kopf logging")
+
+
 	RootCmd.AddCommand(stopCmd)
 	RootCmd.AddCommand(buildCmd)
 	RootCmd.AddCommand(imageCmd)
 	RootCmd.AddCommand(rmiCmd)
 
 	RootCmd.AddCommand(mountCmd)
-	mountCmd.Flags().BoolP("delete", "d", false, "Unmount")
-	mountCmd.Flags().BoolP("yield", "y", false, "Yield")
-	mountCmd.Flags().BoolP("activate", "a", false, "Activate")
+	mountCmd.Flags().BoolP("delete", "d", false, "Unmount source from target")
+	mountCmd.Flags().BoolP("yield", "y", false, "Yield a mount")
+	mountCmd.Flags().BoolP("activate", "a", false, "Activate a mount")
 
 	RootCmd.AddCommand(pipeCmd)
-	pipeCmd.Flags().BoolP("delete", "d", false, "Unpipe")
+	pipeCmd.Flags().BoolP("delete", "d", false, "Unpipe source from target")
 
 	RootCmd.AddCommand(aliasCmd)
 	aliasCmd.AddCommand(aliasClearCmd)

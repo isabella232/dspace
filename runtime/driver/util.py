@@ -40,7 +40,7 @@ def run_operator(registry: KopfRegistry,
                  skip_log_setup=False,
                  ) -> (threading.Event, threading.Event):
     clusterwide = os.environ.get("CLUSTERWIDE", True)
-    kopf_logging = os.environ.get("KOPFLOG", True)
+    kopf_logging = os.environ.get("KOPFLOG", "true") == "true"
     if not kopf_logging:
         kopf_logger = logging.getLogger("kopf")
         kopf_logger.propagate = False
