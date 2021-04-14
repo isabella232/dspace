@@ -1,7 +1,7 @@
 import os
 import typing
 import traceback
-
+import logging
 from collections import OrderedDict
 
 import util
@@ -31,6 +31,11 @@ class __Reconciler:
         self.r = os.environ["PLURAL"]
         self.n = os.environ["NAME"]
         self.ns = os.environ["NAMESPACE"]
+
+        log_level = os.environ.get("LOGLEVEL", logging.INFO)
+        self._logger = logging.getLogger(__name__)
+        self._logger.setLevel(log_level)
+
         self.skip_gen = -1
 
         # handler info (e.g., priority) are used to
@@ -61,8 +66,8 @@ class __Reconciler:
                        diff=diff,
                        )
                 except Exception as e:
-                    print(f"reconcile error: {e}")
-                    print(traceback.format_exc())
+                    self._logger.error(f"reconcile error: {e}")
+                    self._logger.error(traceback.format_exc())
                     # TBD: expose driver status on model, e.g., obs.reason/or some debug attribute
                     return proc_spec
 

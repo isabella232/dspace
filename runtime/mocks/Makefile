@@ -7,6 +7,7 @@ deploy_templates := ../driver/deploy
 driver_handler := ./$(KIND)/driver/*.py
 digivice_config := ./$(KIND)/deploy/*.yaml
 build_dir := /tmp/dspace-build-$(KIND)
+tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
 
 # model
 gen:
@@ -19,6 +20,7 @@ all: | gen patch model
 	$(info model)
 delete:
 	cd ./$(KIND); $(kc) delete -f crd.yaml
+	rm -r ./$(KIND)
 list:
 	ls -d */ 2> /dev/null | sed 's#/##'
 
@@ -35,7 +37,7 @@ test: | model all
 	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
 	cp ./$(KIND)/driver/handler.py $(driver_templates); \
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \
-	python $(driver_templates)/driver.py
+	python $(driver_templates)
 
 # driver
 .PHONY: gen patch build
@@ -63,4 +65,6 @@ print:
 # tutorial
 .PHONY: tutorial
 tutorial:
-	cp gen.py patch.py Makefile $(GOPATH)/src/digi.dev/tutorial
+	mkdir -p $(tutorial_dir)/workdir || true
+	cp -r ../driver $(tutorial_dir)
+	cp gen.py patch.py Makefile $(tutorial_dir)/workdir

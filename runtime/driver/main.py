@@ -1,19 +1,29 @@
 import os
+import logging
 import kopf
+from kopf.engines import loggers
 
 import util
 from mount import Mounter
 
 
-def main():
+def run():
     g = os.environ["GROUP"]
     v = os.environ["VERSION"]
     r = os.environ["PLURAL"]
     n = os.environ["NAME"]
     ns = os.environ.get("NAMESPACE", "default")
 
+    # control the log level for k8s event and local/handler logging
+    log_level = os.environ.get("LOGLEVEL", logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.setLevel(log_level)
+
+    # prevent printing root
+    logging.getLogger().addHandler(logging.NullHandler())
+
     if os.environ.get("MOUNTER", "true") != "false":
-        Mounter(g, v, r, n, ns).start()
+        Mounter(g, v, r, n, ns, log_level=log_level).start()
 
     _model = {
         "group": g,
@@ -33,6 +43,7 @@ def main():
     @kopf.on.startup(registry=_registry)
     def configure(settings: kopf.OperatorSettings, **_):
         settings.persistence.progress_storage = kopf.AnnotationsProgressStorage()
+        settings.posting.level = log_level
 
     from reconcile import rc
 
@@ -44,7 +55,7 @@ def main():
         # skip the last self-write
         # TBD for parallel reconciliation may need to lock rc.gen before patch
         if gen == rc.skip_gen:
-            print(f"driver: skipping gen {gen}")
+            logger.info(f"Skipping gen {gen}")
             return
 
         spec = rc.run(*args, **kwargs)
@@ -63,6 +74,7 @@ def main():
         new_gen = resp["metadata"]["generation"]
         if gen + 1 == new_gen:
             rc.skip_gen = new_gen
+        logger.info(f"Done reconciliation")
 
     @kopf.on.delete(**_model, **_kwargs, optional=True)
     def on_delete(*args, **kwargs):
@@ -70,8 +82,4 @@ def main():
         # use dq to remove the driver
         # _stop.set()
 
-    _ready, _stop = util.run_operator(_registry)
-
-
-if __name__ == '__main__':
-    main()
+    _ready, _stop = util.run_operator(_registry, log_level=log_level)

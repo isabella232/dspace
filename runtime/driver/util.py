@@ -4,32 +4,48 @@ import asyncio
 import contextlib
 import threading
 import inflection
+import logging
 from typing import Tuple, Callable
 from functools import reduce
 
 import kubernetes
-from kubernetes.client.rest import ApiException
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 import kopf
+from kopf.engines import loggers
 from kopf.reactor.registries import SmartOperatorRegistry as KopfRegistry
 
 try:
-    # deployed with service config
+    # use service config
     config.load_incluster_config()
 except:
-    # deployed with kubeconfig
+    # use kubeconfig
     config.load_kube_config()
-
-KopfRegistry = KopfRegistry
 
 
 class DriverError:
     GEN_OUTDATED = 41
 
 
-def run_operator(registry: KopfRegistry, verbose=True) -> (threading.Event, threading.Event):
+logger = logging.getLogger(__name__)
+_handler = logging.StreamHandler()
+_handler.setFormatter(loggers.make_formatter())
+logger.addHandler(_handler)
+logger.setLevel(os.environ.get("LOGLEVEL", logging.INFO))
+
+
+def run_operator(registry: KopfRegistry,
+                 log_level=logging.INFO,
+                 skip_log_setup=False,
+                 ) -> (threading.Event, threading.Event):
+    clusterwide = os.environ.get("CLUSTERWIDE", True)
+    kopf_logging = os.environ.get("KOPFLOG", True)
+    if not kopf_logging:
+        kopf_logger = logging.getLogger("kopf")
+        kopf_logger.propagate = False
+        kopf_logger.handlers[:] = [logging.NullHandler()]
+
     ready_flag = threading.Event()
     stop_flag = threading.Event()
 
@@ -37,16 +53,20 @@ def run_operator(registry: KopfRegistry, verbose=True) -> (threading.Event, thre
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         with contextlib.closing(loop):
-            kopf.configure(verbose=verbose)
+            if not skip_log_setup:
+                kopf.configure(verbose=log_level <= logging.DEBUG,
+                               debug=log_level <= logging.DEBUG,
+                               quiet=kopf_logging and log_level <= logging.INFO)
             loop.run_until_complete(kopf.operator(
                 ready_flag=ready_flag,
                 stop_flag=stop_flag,
                 registry=registry,
+                clusterwide=clusterwide,
             ))
 
     thread = threading.Thread(target=kopf_thread)
     thread.start()
-    print(f"Started new operator.")
+    logger.info(f"Started an operator")
     return ready_flag, stop_flag
 
 
@@ -242,7 +262,7 @@ def get_spec(g, v, r, n, ns) -> (dict, str, int):
                                              plural=r,
                                              )
     except ApiException as e:
-        print(f"k8s: unable to update model {model_id(g, v, r, n, ns)}:", e)
+        logger.warning(f"Unable to update model {model_id(g, v, r, n, ns)}:", e)
         return None
     return o.get("spec", {}), \
            o["metadata"]["resourceVersion"], \
@@ -278,16 +298,16 @@ def check_gen_and_patch_spec(g, v, r, n, ns, spec, gen):
         if gen < cur_gen:
             e = ApiException()
             e.status = DriverError.GEN_OUTDATED
-            e.reason = f"generation outdated {gen} < {cur_gen}"
+            e.reason = f"Generation outdated {gen} < {cur_gen}"
             return cur_gen, None, e
 
         resp, e = patch_spec(g, v, r, n, ns, spec, rv=rv)
         if e is None:
             return cur_gen, resp, None
         if e.status == 409:
-            print(f"unable to patch model due to conflict; retry")
+            logger.info(f"Unable to patch model due to conflict; retry")
         else:
-            print(f"patch error {e}")
+            logger.warning(f"Patch error {e}")
             return cur_gen, resp, e
 
 

@@ -1,7 +1,8 @@
-import kopf
 import sys
+import logging
 from collections import defaultdict
-import time
+import kopf
+from kopf.engines import loggers
 
 import util
 from util import parse_gvr, spaced_name, parse_spaced_name
@@ -28,8 +29,10 @@ class Watch:
                  update_fn=None,
                  # TBD enable finalizer but avoid looping with multiple children
                  delete_fn=None, delete_optional=True,
-                 field_fn=None, field=""):
+                 field_fn=None, field="",
+                 log_level=logging.INFO):
         self._registry = util.KopfRegistry()
+        self._log_level = log_level
         _args = (g, v, r)
         _kwargs = {
             "registry": self._registry,
@@ -40,6 +43,7 @@ class Watch:
         @kopf.on.startup(registry=self._registry)
         def configure(settings: kopf.OperatorSettings, **_):
             settings.persistence.progress_storage = kopf.AnnotationsProgressStorage()
+            settings.posting.level = log_level
 
         if create_fn is not None:
             kopf.on.create(*_args, **_kwargs)(create_fn)
@@ -56,7 +60,10 @@ class Watch:
         self._ready_flag, self._stop_flag = None, None
 
     def start(self):
-        self._ready_flag, self._stop_flag = util.run_operator(self._registry)
+        self._ready_flag, self._stop_flag = util.run_operator(
+            self._registry, log_level=self._log_level,
+            skip_log_setup=True,
+        )
         return self
 
     def stop(self):
@@ -68,7 +75,8 @@ class Watch:
 class Mounter:
     """Implements the mount semantics for a given (parent) digivice"""
 
-    def __init__(self, g, v, r, n, ns="default"):
+    def __init__(self, g, v, r, n, ns="default",
+                 log_level=logging.INFO):
 
         """ children event handlers """
 
@@ -128,7 +136,7 @@ class Mounter:
             if (gvr_str not in mounts or
                     (nsn_str not in mounts[gvr_str] and
                      name not in mounts[gvr_str])):
-                print(f"unable to find the {nsn_str} or {name} in the {parent}")
+                self._logger.warning(f"Unable to find the {nsn_str} or {name} in the {parent}")
                 return
 
             models = mounts[gvr_str]
@@ -145,10 +153,10 @@ class Mounter:
             )
 
             if e is not None:
-                print(f"mounter: unable to sync from parent due to {e}")
+                self._logger.warning(f"Unable to sync from parent due to {e}")
             else:
                 model_id = util.model_id(group, version, plural,
-                                      name, namespace)
+                                         name, namespace)
                 new_gen = resp["metadata"]["generation"]
                 self._children_gen[model_id] = new_gen
                 if meta["generation"] + 1 == new_gen:
@@ -170,7 +178,7 @@ class Mounter:
                 if (gvr_str not in mounts or
                         (nsn_str not in mounts[gvr_str] and
                          name not in mounts[gvr_str])):
-                    print(f"unable to find the {nsn_str} or {name} in the {parent}")
+                    self._logger.warning(f"unable to find the {nsn_str} or {name} in the {parent}")
                     return
 
                 models = mounts[gvr_str]
@@ -219,7 +227,7 @@ class Mounter:
                 # continue to try until succeed
                 resp, e = util.patch_spec(g, v, r, n, ns, parent_patch, rv=prv)
                 if e is not None:
-                    print(f"mounter: failed to sync to parent due to {e}")
+                    self._logger.warning(f"Failed to sync to parent due to {e}")
                     if e.status != 409:
                         return
                     # time.sleep(1)
@@ -275,13 +283,13 @@ class Mounter:
                 }
                 _, e = util.patch_spec(g, v, r, n, ns, patch, rv=rv)
                 if e is None:
-                    print(f"prune mount: {patch}")
+                    self._logger.info(f"Prune mount: {patch}")
                     return
                 elif e.status != 409:
-                    print(f"prune mount failed due to {e}")
+                    self._logger.warning(f"Prune mount failed due to {e}")
                     return
 
-                print(f"prune mount will retry due to: {e}")
+                self._logger.info(f"Prune mount will retry due to: {e}")
                 spec, rv, _ = util.get_spec(g, v, r, n, ns)
                 mounts = spec.get("mount", {})
 
@@ -310,7 +318,8 @@ class Mounter:
                                 create_fn=on_child_create,
                                 resume_fn=on_child_create,
                                 update_fn=on_child_update,
-                                delete_fn=on_child_delete).start()
+                                delete_fn=on_child_delete,
+                                log_level=log_level).start()
 
             # trim watches no longer needed
             for gvr_str, model_watches in self._children_watches.items():
@@ -383,7 +392,7 @@ class Mounter:
                     spec=cs,
                     gen=max(gen, self._children_gen.get(model_id, -1)))
                 if e is not None:
-                    print(f"mounter: unable to sync to children due to {e}")
+                    self._logger.warning(f"Unable to sync to children due to {e}")
                 else:
                     new_gen = resp["metadata"]["generation"]
                     self._children_gen[model_id] = new_gen
@@ -395,7 +404,8 @@ class Mounter:
                                    create_fn=on_parent_create,
                                    resume_fn=on_parent_create,
                                    field_fn=on_mount_attr_update, field="spec.mount",
-                                   delete_fn=on_parent_delete, delete_optional=True)
+                                   delete_fn=on_parent_delete, delete_optional=True,
+                                   log_level=log_level)
 
         # subscribe to the events of the child models;
         # keyed by the gvr and then spaced name
@@ -410,8 +420,17 @@ class Mounter:
         self._children_skip_gen = dict()
         self._parent_skip_gen = -1
 
+        # mounter logging
+        self._logger = logging.getLogger(__name__)
+        self._logger.setLevel(log_level)
+
+        _handler = logging.StreamHandler()
+        _handler.setFormatter(loggers.make_formatter())
+        self._logger.addHandler(_handler)
+
     def start(self):
         self._parent_watch.start()
+        self._logger.info("Started the mounter")
 
     def stop(self):
         self._parent_watch.stop()
