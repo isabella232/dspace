@@ -1,9 +1,9 @@
 import inspect
 from collections import OrderedDict
 
-import util
-import filter
-from reconcile import rc
+import digi.util as util
+import digi.filter as filter_
+from digi.reconcile import rc
 
 """Filters."""
 
@@ -228,5 +228,5 @@ def _attr(fn, path=".", prio=0):
 
     rc.add(handler=wrapper_fn,
            priority=prio,
-           condition=filter.has_diff,
+           condition=filter_.has_diff,
            path=_path)

@@ -1,10 +1,9 @@
 import os
 import logging
 import kopf
-from kopf.engines import loggers
 
-import util
-from mount import Mounter
+import digi.util as util
+from digi.mount import Mounter
 
 
 def run():

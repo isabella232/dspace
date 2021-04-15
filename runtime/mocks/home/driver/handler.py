@@ -1,7 +1,7 @@
-import on
+import digi.on as on
 
-import util
-from util import deep_get, deep_set, deep_set_all
+import digi.util as util
+from digi.util import deep_get, deep_set, deep_set_all
 
 """
 The home digivice has the following capabilities:

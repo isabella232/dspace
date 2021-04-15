@@ -1,4 +1,4 @@
-import on
+import digi.on as on
 
 
 @on.control

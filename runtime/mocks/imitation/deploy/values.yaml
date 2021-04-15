@@ -1,0 +1,7 @@
+group: mock.digi.dev
+image: silveryfu/imitation:latest
+mounter: false
+name: imitation
+namespace: default
+plural: imitations
+version: v1

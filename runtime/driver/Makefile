@@ -1,3 +1,7 @@
+.PHONY: dist
+dist:
+	python setup.py sdist bdist_wheel && twine upload --skip-existing dist/*
+
 .PHONY: test build deploy template all
 g:="mock.digi.dev"
 v:="v1"
@@ -5,8 +9,9 @@ r:="samples"
 n:="sample"
 ns:="default"
 
+# local tests
 test:
-	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) python driver.py
+	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) python digi
 build:
 	docker build -t silveryfu/sample:latest -f deploy/image/Dockerfile .
 	docker push silveryfu/sample:latest
@@ -19,4 +24,4 @@ all: | build deploy
 
 .PHONY: test_mt clean
 test_mt:
-	python mount_test.py
+	python digi/tests/mount_test.py

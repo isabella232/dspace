@@ -1,0 +1,10 @@
+group: mock.digi.dev
+version: v1
+kind: Imitation
+data:
+  input:
+    target: string
+  output:
+    action: string
+obs:
+  reason: string

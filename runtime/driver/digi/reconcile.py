@@ -4,9 +4,9 @@ import traceback
 import logging
 from collections import OrderedDict
 
-import util
-import filter
-import processor
+import digi.util as util
+import digi.filter as filter_
+import digi.processor as processor
 
 
 class HandlerType:
@@ -116,7 +116,7 @@ class __Reconciler:
             for n, r in reflexes.items():
                 info = self._handler_info.get(n, {
                     "fn": do_nothing,
-                    "condition": filter.always,  # TBD conditioned reflex
+                    "condition": filter_.always,  # TBD conditioned reflex
                     "view_path": ".",
                     "priority": 0,
                     "type": HandlerType.REFLEX,

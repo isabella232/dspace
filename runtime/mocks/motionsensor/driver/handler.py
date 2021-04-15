@@ -5,8 +5,8 @@ import threading
 import random
 import os
 
-import util
-from util import deep_set
+import digi.util as util
+from digi.util import deep_set
 
 """Motion sensor mock digivice generates random motion 
 events based on sensitivity."""

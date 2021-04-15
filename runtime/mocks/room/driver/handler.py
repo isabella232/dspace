@@ -1,7 +1,7 @@
-import on
+import digi.on as on
 
-import util
-from util import put, deep_get, deep_set, mount_size
+import digi.util as util
+from digi.util import put, deep_get, deep_set, mount_size
 
 """
 Room digivice:
@@ -221,7 +221,3 @@ def _set_bright(ds, b):
         for _, _l in ds.get(lt, {}).items():
             deep_set(_l, "spec.control.brightness.intent",
                      _lc(b))
-
-
-# reflexes
-

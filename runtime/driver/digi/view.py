@@ -2,8 +2,8 @@
 import copy
 from kopf.structs.diffs import diff
 
-import util
-from util import deep_set
+import digi.util as util
+from digi.util import deep_set
 
 
 class ModelView:

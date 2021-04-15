@@ -24,3 +24,10 @@ def h():
 @on.control
 def h():
     ...
+    
+    
+# reflexes
+@on.reflex
+def h():
+    pass
+

@@ -8,7 +8,7 @@ _dir = os.path.dirname(os.path.realpath(__file__))
 _parent_dir = os.path.dirname(_dir)
 sys.path.insert(0, _parent_dir)
 
-from processor import jq
+from digi.processor import jq
 
 test_yaml = f"""
 control:

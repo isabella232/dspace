@@ -1,12 +1,11 @@
-import on
 import sys
 import time
 import threading
 import random
 import os
 
-import util
-from util import deep_set, deep_get
+import digi.on as on
+import digi.util as util
 
 """
 Mock scene digilake generates random objects if a url is provided.

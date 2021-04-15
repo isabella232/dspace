@@ -4,8 +4,8 @@ from collections import defaultdict
 import kopf
 from kopf.engines import loggers
 
-import util
-from util import parse_gvr, spaced_name, parse_spaced_name
+import digi.util as util
+from digi.util import parse_gvr, spaced_name, parse_spaced_name
 
 """
 An embedded meta-actor that implements the mount semantics.

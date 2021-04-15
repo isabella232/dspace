@@ -2,7 +2,7 @@
 
 import pyjq
 import time
-from view import ModelView
+from digi.view import ModelView
 
 
 def jq(policy: str):

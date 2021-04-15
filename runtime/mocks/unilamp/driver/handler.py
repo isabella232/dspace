@@ -1,7 +1,7 @@
-import on
+import digi.on as on
 
-import util
-from util import put, first_attr, first_type
+import digi.util as util
+from digi.util import put, first_attr, first_type
 
 """Universal lamp translates power and brightness 
 to vendor specific lamps."""

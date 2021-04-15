@@ -1,4 +1,4 @@
-import digi.on as on
+import on
 
 """Mock lamp sets power and brightness to intents."""
 

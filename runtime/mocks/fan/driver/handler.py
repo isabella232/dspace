@@ -1,6 +1,6 @@
-import on
+import digi.on as on
 
-from util import deep_set, deep_get
+from digi.util import deep_set, deep_get
 
 
 # status

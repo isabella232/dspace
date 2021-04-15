@@ -4,7 +4,7 @@ import subprocess
 import time
 import yaml
 import inflection
-import util
+import digi.util as util
 
 _dir = os.path.dirname(os.path.realpath(__file__))
 _mock_dir = os.path.join(_dir, "..", "mocks")

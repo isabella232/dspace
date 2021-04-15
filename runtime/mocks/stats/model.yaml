@@ -1,0 +1,10 @@
+group: mock.digi.dev
+version: v1
+kind: Stats
+data:
+  input:
+    value: number
+  output:
+    result: string
+obs:
+  reason: string

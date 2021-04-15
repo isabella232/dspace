@@ -4,7 +4,6 @@ import os
 import sys
 import yaml
 import inflection
-import uuid
 
 """
 Generate dSpace CRD from templates and configuration file (model.yaml).
@@ -147,10 +146,10 @@ version: {version}
 plural: {plural}
 mounter: {mounter}
 
-image: silveryfu/{image}:latest
+image: {repo}/{image}:latest
 """
 
-_handler = """import on
+_handler = """import digi.on as on
 
 
 # validation
@@ -306,7 +305,8 @@ def gen(name):
                                          name=model["kind"].lower(),
                                          namespace=model.get("namespace", "default"),
                                          mounter="true" if "mount" in model else "false",
-                                         image=model["kind"].lower()
+                                         image=model["kind"].lower(),
+                                         repo=os.environ.get("REPO", "local"),
                                          )
             values = yaml.load(values, Loader=yaml.FullLoader)
 

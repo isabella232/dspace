@@ -1,0 +1,8 @@
+apiVersion: mock.digi.dev/v1
+kind: Stats
+metadata:
+  name: stats-test
+spec:
+  data:
+    input: -1
+    output: -1

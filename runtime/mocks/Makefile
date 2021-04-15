@@ -1,13 +1,17 @@
 .PHONY: gen patch model all delete list
 
 kc := kubectl
-registry := silveryfu
-driver_templates := ../driver
+driver_templates := ../driver/digi
 deploy_templates := ../driver/deploy
 driver_handler := ./$(KIND)/driver/*.py
 digivice_config := ./$(KIND)/deploy/*.yaml
 build_dir := /tmp/dspace-build-$(KIND)
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
+
+ifndef REPO
+override REPO = silveryfu
+endif
+registry := $(REPO)
 
 # model
 gen:
@@ -36,6 +40,7 @@ ns := default
 
 test: | model all
 	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
+	# TBD: allow standalone handler
 	cp ./$(KIND)/driver/handler.py $(driver_templates); \
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \
 	python $(driver_templates)
