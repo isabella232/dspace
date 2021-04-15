@@ -1,10 +1,9 @@
 .PHONY: gen patch model all delete list
 
 kc := kubectl
-driver_templates := ../driver/digi
-deploy_templates := ../driver/deploy
+driver_dir := ../driver
 driver_handler := ./$(KIND)/driver/*.py
-digivice_config := ./$(KIND)/deploy/*.yaml
+digi_config := ./$(KIND)/deploy/*.yaml
 build_dir := /tmp/dspace-build-$(KIND)
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
 
@@ -41,27 +40,32 @@ ns := default
 test: | model all
 	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
 	# TBD: allow standalone handler
-	cp ./$(KIND)/driver/handler.py $(driver_templates); \
+	cp ./$(KIND)/driver/handler.py $(driver_dir)/digi; \
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \
-	python $(driver_templates)
+	python $(driver_dir)/digi
 
 # driver
-.PHONY: build
-build: | gen patch
+.PHONY: prepare
+prepare:
 	rm -r $(build_dir) >/dev/null 2>&1 || true
-	cp -r $(driver_templates)/ $(build_dir) || true
-	cp $(driver_handler) $(driver_templates) || true
+	mkdir -p $(build_dir)/digi/
+	mkdir -p $(build_dir)/deploy/
+	cp -r $(driver_dir)/digi $(build_dir) || true
+	cp -r $(driver_dir)/deploy $(build_dir) || true
+	cp -r $(driver_dir)/requirements.txt $(build_dir) || true
+
+.PHONY: build
+build: | prepare gen patch
+	cp $(driver_handler) $(build_dir)/digi/ || true
 	cd $(build_dir); docker build -t $(registry)/$(KIND):latest -f deploy/image/Dockerfile . || true
 	docker push $(registry)/$(KIND):latest || true
 	rm -r $(build_dir) || true
 
 # deploy
 .PHONY: run stop print
-run: | model
-	rm -r $(build_dir) >/dev/null 2>&1 || true
-	cp -r $(deploy_templates) $(build_dir) || true
-	cp $(digivice_config) $(build_dir) || true
-	cd $(build_dir); mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null && echo $(NAME) || true
+run: | prepare model
+	cp $(digi_config) $(build_dir)/deploy || true
+	cd $(build_dir)/deploy; mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null && echo $(NAME) || true
 	rm -r $(build_dir) || true
 stop:
 	helm uninstall $(NAME) >/dev/null && echo $(NAME) || true
@@ -72,7 +76,8 @@ print:
 .PHONY: tutorial
 tutorial:
 	mkdir -p $(tutorial_dir)/workdir || true
-	cp -r ../driver/digi $(tutorial_dir)
-	cp -r ../driver/deploy $(tutorial_dir)
-	cp ../driver/requirements.txt $(tutorial_dir)
+	mkdir $(tutorial_dir)/driver || true
+	cp -r $(driver_dir)/digi $(tutorial_dir)/driver
+	cp -r $(driver_dir)/deploy $(tutorial_dir)/driver
+	cp $(driver_dir)/requirements.txt $(tutorial_dir)/driver
 	cp gen.py patch.py Makefile $(tutorial_dir)/workdir
