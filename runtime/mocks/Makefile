@@ -50,7 +50,7 @@ test: | model all
 build: | gen patch
 	rm -r $(build_dir) >/dev/null 2>&1 || true
 	cp -r $(driver_templates)/ $(build_dir) || true
-	cp $(driver_handler) $(build_dir) || true
+	cp $(driver_handler) $(driver_templates) || true
 	cd $(build_dir); docker build -t $(registry)/$(KIND):latest -f deploy/image/Dockerfile . || true
 	docker push $(registry)/$(KIND):latest || true
 	rm -r $(build_dir) || true
@@ -72,5 +72,7 @@ print:
 .PHONY: tutorial
 tutorial:
 	mkdir -p $(tutorial_dir)/workdir || true
-	cp -r ../driver $(tutorial_dir)
+	cp -r ../driver/digi $(tutorial_dir)
+	cp -r ../driver/deploy $(tutorial_dir)
+	cp ../driver/requirements.txt $(tutorial_dir)
 	cp gen.py patch.py Makefile $(tutorial_dir)/workdir

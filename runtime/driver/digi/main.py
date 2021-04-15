@@ -36,7 +36,7 @@ def run():
     }
     _ready, _stop = None, None
 
-    import handler  # decorate the handlers
+    from . import handler  # decorate the handlers
     _ = handler
 
     @kopf.on.startup(registry=_registry)
@@ -44,7 +44,7 @@ def run():
         settings.persistence.progress_storage = kopf.AnnotationsProgressStorage()
         settings.posting.level = log_level
 
-    from reconcile import rc
+    from digi.reconcile import rc
 
     @kopf.on.create(**_model, **_kwargs)
     @kopf.on.resume(**_model, **_kwargs)
