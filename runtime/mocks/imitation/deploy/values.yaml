@@ -1,5 +1,6 @@
 group: mock.digi.dev
 image: silveryfu/imitation:latest
+imagepull: Always
 mounter: false
 name: imitation
 namespace: default

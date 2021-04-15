@@ -1,5 +1,6 @@
 group: mock.digi.dev
 image: silveryfu/scene:latest
+imagepull: Always
 mounter: false
 name: scene
 namespace: default

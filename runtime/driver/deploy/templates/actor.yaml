@@ -17,7 +17,7 @@ spec:
       containers:
         - name: {{ .Values.name }}
           image: {{ .Values.image }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.imagepull }}
           env:
           - name: GROUP
             value: {{ .Values.group }}

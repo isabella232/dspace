@@ -1,5 +1,6 @@
 group: mock.digi.dev
 image: silveryfu/colorlamp:latest
+imagepull: Always
 mounter: false
 name: colorlamp
 namespace: default

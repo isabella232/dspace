@@ -6,3 +6,4 @@ plural: rooms
 mounter: true
 
 image: silveryfu/room:latest
+imagepull: Always

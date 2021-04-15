@@ -147,6 +147,7 @@ plural: {plural}
 mounter: {mounter}
 
 image: {repo}/{image}:latest
+imagepull: {imagepull}
 """
 
 _handler = """import digi.on as on
@@ -291,7 +292,7 @@ def gen(name):
                     yaml.dump(cr, f_)
 
         # deployment cr
-        _gen_cr("deploy")
+        _gen_cr("deploy", name_="\\{\\{ .Values.name \\}\\}")
 
         # testing cr
         _gen_cr("test", name_=model["kind"].lower() + "-test")
@@ -307,6 +308,7 @@ def gen(name):
                                          mounter="true" if "mount" in model else "false",
                                          image=model["kind"].lower(),
                                          repo=os.environ.get("REPO", "local"),
+                                         imagepull=os.environ.get("IMAGEPULL", "Always"),
                                          )
             values = yaml.load(values, Loader=yaml.FullLoader)
 

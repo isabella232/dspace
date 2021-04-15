@@ -6,3 +6,4 @@ plural: lamps
 mounter: false
 
 image: silveryfu/lamp:latest
+imagepull: Always

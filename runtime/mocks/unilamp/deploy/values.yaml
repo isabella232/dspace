@@ -6,3 +6,4 @@ plural: unilamps
 version: v1
 
 image: silveryfu/unilamp:latest
+imagepull: Always

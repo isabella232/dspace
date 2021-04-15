@@ -1,5 +1,6 @@
 group: mock.digi.dev
 image: silveryfu/zlake:latest
+imagepull: Always
 mounter: false
 name: zlake
 namespace: default

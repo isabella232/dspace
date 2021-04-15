@@ -1,5 +1,6 @@
 group: mock.digi.dev
 image: silveryfu/fan:latest
+imagepull: Always
 mounter: false
 name: fan
 namespace: default

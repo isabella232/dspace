@@ -55,6 +55,8 @@ def patch():
 
     # load crds
     for md in model_dirs:
+        if md.startswith("."):
+            continue
         f_crd = os.path.join(_dir_path, md, "crd.yaml")
         with open(f_crd) as f:
             crd = yaml.load(f, Loader=yaml.FullLoader)

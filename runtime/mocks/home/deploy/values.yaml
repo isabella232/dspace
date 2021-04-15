@@ -5,3 +5,4 @@ version: v1
 plural: rooms
 
 image: silveryfu/room:latest
+imagepull: Always

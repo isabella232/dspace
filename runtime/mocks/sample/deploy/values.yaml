@@ -5,3 +5,4 @@ version: v1
 plural: samples
 
 image: silveryfu/sample:latest
+imagepull: Always

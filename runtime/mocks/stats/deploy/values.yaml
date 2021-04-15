@@ -1,5 +1,6 @@
 group: mock.digi.dev
 image: silveryfu/stats:latest
+imagepull: Always
 mounter: false
 name: stats
 namespace: default

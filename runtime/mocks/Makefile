@@ -7,6 +7,10 @@ digi_config := ./$(KIND)/deploy/*.yaml
 build_dir := /tmp/dspace-build-$(KIND)
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
 
+ifndef IMAGEPULL
+override IMAGEPULL = Always
+endif
+
 ifndef REPO
 override REPO = silveryfu
 endif
