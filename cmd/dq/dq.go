@@ -99,10 +99,7 @@ var pipeCmd = &cobra.Command{
 // XXX rely on external scripts in /mocks
 // TBD support build/image/run/stop in dq
 func runMake(args []string, cmd string) {
-	var out bytes.Buffer
 	cmd_ := exec.Command("make", "-s", cmd)
-	cmd_.Stdout = &out
-	cmd_.Stderr = &out
 
 	cmd_.Env = os.Environ()
 	if len(args) > 0 {
@@ -127,12 +124,28 @@ func runMake(args []string, cmd string) {
 		)
 	}
 
-	//cmd.Dir
 	var workDir string
 	if workDir = os.Getenv("WORKDIR"); workDir == "" {
 		workDir = "."
 	}
 	cmd_.Dir = workDir
+
+	var out bytes.Buffer
+	cmd_.Stdout = os.Stdout
+	cmd_.Stdout = &out
+	cmd_.Stderr = &out
+
+	//stdout, _ := cmd_.StdoutPipe()
+	//_ = cmd_.Start()
+	//oneRune := make([]byte, utf8.UTFMax)
+	//for {
+	//	count, err := stdout.Read(oneRune)
+	//	if err != nil {
+	//		break
+	//	}
+	//	fmt.Printf("%s", oneRune[:count])
+	//}
+	//_ = cmd_.Wait()
 
 	if err := cmd_.Run(); err != nil {
 		log.Fatalf("error: %v\n%s", err, out.String())
@@ -186,7 +199,6 @@ var stopCmd = &cobra.Command{
 		runMake(args, "stop")
 	},
 }
-
 
 var rmiCmd = &cobra.Command{
 	Use:   "rmi KIND",
@@ -263,7 +275,6 @@ func Execute() {
 	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().BoolP("local", "l", false, "Run driver in local console ")
 	runCmd.Flags().BoolP("kopflog", "k", false, "Enable kopf logging")
-
 
 	RootCmd.AddCommand(stopCmd)
 	RootCmd.AddCommand(buildCmd)

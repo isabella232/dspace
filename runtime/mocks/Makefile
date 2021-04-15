@@ -41,8 +41,8 @@ test: | model all
 	python $(driver_templates)
 
 # driver
-.PHONY: gen patch build
-build:
+.PHONY: build
+build: | gen patch
 	rm -r $(build_dir) >/dev/null 2>&1 || true
 	cp -r $(driver_templates)/ $(build_dir) || true
 	cp $(driver_handler) $(build_dir) || true
