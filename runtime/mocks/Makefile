@@ -44,7 +44,7 @@ ns := default
 test: | model all
 	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
 	# TBD: allow standalone handler
-	cp ./$(KIND)/driver/handler.py $(driver_dir)/digi; \
+	rsync ./$(KIND)/driver/handler.py $(driver_dir)/digi; \
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \
 	python $(driver_dir)/digi
 
@@ -54,13 +54,13 @@ prepare:
 	rm -r $(build_dir) >/dev/null 2>&1 || true
 	mkdir -p $(build_dir)/digi/
 	mkdir -p $(build_dir)/deploy/
-	cp -r $(driver_dir)/digi $(build_dir) || true
-	cp -r $(driver_dir)/deploy $(build_dir) || true
-	cp -r $(driver_dir)/requirements.txt $(build_dir) || true
+	rsync -r $(driver_dir)/digi $(build_dir) || true
+	rsync -r $(driver_dir)/deploy $(build_dir) || true
+	rsync -r $(driver_dir)/requirements.txt $(build_dir) || true
 
 .PHONY: build
 build: | prepare gen patch
-	cp $(driver_handler) $(build_dir)/digi/ || true
+	rsync $(driver_handler) $(build_dir)/digi/ || true
 	cd $(build_dir); docker build -t $(registry)/$(KIND):latest -f deploy/image/Dockerfile . || true
 	docker push $(registry)/$(KIND):latest || true
 	rm -r $(build_dir) || true
@@ -68,7 +68,7 @@ build: | prepare gen patch
 # deploy
 .PHONY: run stop print
 run: | prepare model
-	cp $(digi_config) $(build_dir)/deploy || true
+	rsync $(digi_config) $(build_dir)/deploy || true
 	cd $(build_dir)/deploy; mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null && echo $(NAME) || true
 	rm -r $(build_dir) || true
 stop:
@@ -81,7 +81,7 @@ print:
 tutorial:
 	mkdir -p $(tutorial_dir)/workdir || true
 	mkdir $(tutorial_dir)/driver || true
-	cp -r $(driver_dir)/digi $(tutorial_dir)/driver
-	cp -r $(driver_dir)/deploy $(tutorial_dir)/driver
-	cp $(driver_dir)/requirements.txt $(tutorial_dir)/driver
-	cp gen.py patch.py Makefile $(tutorial_dir)/workdir
+	rsync -r $(driver_dir)/digi $(tutorial_dir)/driver
+	rsync -r $(driver_dir)/deploy $(tutorial_dir)/driver
+	rsync $(driver_dir)/requirements.txt $(tutorial_dir)/driver
+	rsync gen.py patch.py Makefile $(tutorial_dir)/workdir
