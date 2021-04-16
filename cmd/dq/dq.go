@@ -98,29 +98,13 @@ var pipeCmd = &cobra.Command{
 
 // XXX rely on external scripts in /mocks
 // TBD support build/image/run/stop in dq
-func runMake(args []string, cmd string) {
+func runMake(args map[string]string, cmd string, quiet bool) error {
 	cmd_ := exec.Command("make", "-s", cmd)
-
 	cmd_.Env = os.Environ()
-	if len(args) > 0 {
-		cmd_.Env = append(cmd_.Env,
-			"KIND="+args[0],
-		)
-	}
 
-	if len(args) > 1 {
+	for k, v := range args {
 		cmd_.Env = append(cmd_.Env,
-			"NAME="+args[1],
-		)
-	}
-
-	if len(args) > 2 {
-		cmd_.Env = append(cmd_.Env,
-			"KOPFLOG="+args[2],
-		)
-	} else {
-		cmd_.Env = append(cmd_.Env,
-			"KOPFLOG=false",
+			fmt.Sprintf("%s=%s", k, v),
 		)
 	}
 
@@ -135,6 +119,16 @@ func runMake(args []string, cmd string) {
 	cmd_.Stdout = &out
 	cmd_.Stderr = &out
 
+	if err := cmd_.Run(); err != nil {
+		log.Fatalf("error: %v\n%s", err, out.String())
+		return err
+	}
+
+	if !quiet {
+		fmt.Print(out.String())
+	}
+
+	// TBD streaming output
 	//stdout, _ := cmd_.StdoutPipe()
 	//_ = cmd_.Start()
 	//oneRune := make([]byte, utf8.UTFMax)
@@ -146,11 +140,7 @@ func runMake(args []string, cmd string) {
 	//	fmt.Printf("%s", oneRune[:count])
 	//}
 	//_ = cmd_.Wait()
-
-	if err := cmd_.Run(); err != nil {
-		log.Fatalf("error: %v\n%s", err, out.String())
-	}
-	fmt.Print(out.String())
+	return nil
 }
 
 var imageCmd = &cobra.Command{
@@ -158,7 +148,8 @@ var imageCmd = &cobra.Command{
 	Short: "List available digi images",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		runMake(args, "list")
+		q, _ := cmd.Flags().GetBool("quiet")
+		_ = runMake(nil, "list", q)
 	},
 }
 
@@ -167,7 +158,14 @@ var buildCmd = &cobra.Command{
 	Short: "Build a digi image",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runMake(args, "build")
+		q, _ := cmd.Flags().GetBool("quiet")
+
+		kind := args[0]
+		if err := runMake(map[string]string{
+			"KIND": kind,
+		}, "build", q); err == nil {
+			fmt.Println(kind)
+		}
 	},
 }
 
@@ -183,11 +181,17 @@ var runCmd = &cobra.Command{
 			c = "run"
 		}
 
+		kopflog := "false"
 		if k, _ := cmd.Flags().GetBool("kopflog"); k {
-			args = append(args, "true")
+			kopflog = "true"
 		}
 
-		runMake(args, c)
+		q, _ := cmd.Flags().GetBool("quiet")
+		_ = runMake(map[string]string{
+			"KIND": args[0],
+			"NAME": args[1],
+			"KOPFLOG": kopflog,
+		}, c, q)
 	},
 }
 
@@ -196,7 +200,11 @@ var stopCmd = &cobra.Command{
 	Short: "Stop a digi given kind and name",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		runMake(args, "stop")
+		q, _ := cmd.Flags().GetBool("quiet")
+		_ = runMake(map[string]string{
+			"KIND": args[0],
+			"NAME": args[1],
+		}, "stop", q)
 	},
 }
 
@@ -205,7 +213,10 @@ var rmiCmd = &cobra.Command{
 	Short: "Remove a digi image",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runMake(args, "delete")
+		q, _ := cmd.Flags().GetBool("quiet")
+		_ = runMake(map[string]string{
+			"KIND": args[0],
+		}, "delete", q)
 	},
 }
 
@@ -270,14 +281,15 @@ var (
 	}
 )
 
-// add subcommands here
+// add sub-commands here
 func Execute() {
+	RootCmd.AddCommand(buildCmd)
+
 	RootCmd.AddCommand(runCmd)
-	runCmd.Flags().BoolP("local", "l", false, "Run driver in local console ")
+	runCmd.Flags().BoolP("local", "l", false, "Run driver in local console")
 	runCmd.Flags().BoolP("kopflog", "k", false, "Enable kopf logging")
 
 	RootCmd.AddCommand(stopCmd)
-	RootCmd.AddCommand(buildCmd)
 	RootCmd.AddCommand(imageCmd)
 	RootCmd.AddCommand(rmiCmd)
 
@@ -293,6 +305,7 @@ func Execute() {
 	aliasCmd.AddCommand(aliasClearCmd)
 	aliasCmd.AddCommand(aliasResolveCmd)
 
+	RootCmd.PersistentFlags().BoolP("quiet", "q", false, "Hide output")
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
