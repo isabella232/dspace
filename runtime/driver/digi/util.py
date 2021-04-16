@@ -9,7 +9,7 @@ from typing import Tuple, Callable
 from functools import reduce
 
 import kubernetes
-from kubernetes import client, config
+from kubernetes import config
 from kubernetes.client.rest import ApiException
 
 import kopf

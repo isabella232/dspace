@@ -111,7 +111,7 @@ def _attr(fn, path=".", prio=0):
         ps_gvr = path.split("/")
         assert len(ps_gvr) == 1 or len(ps_gvr) == 3
         if len(ps) == 1:
-            # @mount w/o paramters
+            # @mount w/o parameters
             _path = ps
         elif len(ps_gvr) == 1:
             # this gvr does not have group and version
@@ -119,6 +119,7 @@ def _attr(fn, path=".", prio=0):
             ps[1], child_typ = gvr, gvr
             _path = ps
         elif len(ps_gvr) == 3:
+            # TBD handle dot in version
             gvr = util.gvr(ps_gvr[0].replace("mount.", ""),
                            ps_gvr[1],
                            ps_gvr[2].split(".")[0])

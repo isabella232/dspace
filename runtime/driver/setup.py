@@ -16,9 +16,10 @@ setup(
     include_package_data=True,
     install_requires=[
         "kubernetes",
+        'kopf',
         "pyyaml",
-        "inflection",
         "pyjq",
+        "inflection",
         "python-box",
     ],
 )
