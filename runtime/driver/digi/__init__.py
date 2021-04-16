@@ -11,7 +11,7 @@ def set_default_gvr():
     if "NAME" not in os.environ:
         os.environ["NAME"] = "nil"
     if "NAMESPACE" not in os.environ:
-        os.environ["NAMESPACE"] = "nil"
+        os.environ["NAMESPACE"] = "default"
 
 
 set_default_gvr()
