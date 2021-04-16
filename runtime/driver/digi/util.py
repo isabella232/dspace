@@ -5,7 +5,9 @@ import contextlib
 import threading
 import inflection
 import logging
-from typing import Tuple, Callable
+from typing import (
+    Tuple, Callable, Union, Any, Iterable
+)
 from functools import reduce
 
 import kubernetes
@@ -29,9 +31,9 @@ class DriverError:
 
 
 logger = logging.getLogger(__name__)
-_handler = logging.StreamHandler()
-_handler.setFormatter(loggers.make_formatter())
-logger.addHandler(_handler)
+__handler = logging.StreamHandler()
+__handler.setFormatter(loggers.make_formatter())
+logger.addHandler(__handler)
 logger.setLevel(int(os.environ.get("LOGLEVEL", logging.INFO)))
 
 
@@ -74,79 +76,6 @@ class NamespacedName:
     def __init__(self, n, ns="default"):
         self.name = n
         self.namespace = ns
-
-
-class Auri:
-    def __init__(self, **kwargs):
-        self.group = str(kwargs["group"])
-        self.version = str(kwargs["version"])
-        self.kind = str(kwargs["kind"]).lower()
-        self.resource = inflection.pluralize(self.kind)
-        self.name = str(kwargs["name"])
-        self.namespace = str(kwargs["namespace"])
-        self.path = str(kwargs["path"])
-
-    def gvr(self) -> tuple:
-        return self.group, self.version, self.resource
-
-    def gvk(self) -> tuple:
-        return self.group, self.version, self.kind
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        return f"" \
-               f"/{self.group}" \
-               f"/{self.version}" \
-               f"/{self.kind}" \
-               f"/{self.namespace}" \
-               f"/{self.name}{self.path}"
-
-
-def parse_auri(s: str) -> Auri or None:
-    ps = s.partition(".")
-    main_segs = ps[0].lstrip("/").split("/")
-    attr_path = "" if len(ps) < 2 else "." + ps[2]
-
-    parsed = {
-        2: lambda x: {
-            "group": "digi.dev",
-            "version": "v1",
-            "kind": x[0],
-            "name": x[1],
-            "namespace": "default",
-            "path": attr_path,
-        },
-        3: lambda x: {
-            "group": "digi.dev",
-            "version": "v1",
-            "kind": x[0],
-            "name": x[2],
-            "namespace": x[1],
-            "path": attr_path,
-        },
-        5: lambda x: {
-            "group": x[0],
-            "version": x[1],
-            "kind": x[2],
-            "name": x[3],
-            "namespace": x[4],
-            "path": attr_path,
-        },
-    }.get(len(main_segs), lambda: {})(main_segs)
-
-    if parsed is None:
-        return None
-    return Auri(**parsed)
-
-
-class Attr:
-    def __init__(self):
-        pass
-
-    def flattened(self):
-        pass
 
 
 def uuid_str(length=4):
@@ -336,15 +265,20 @@ def put(path, src, target, transform=lambda x: x):
     target[ps[-1]] = transform(src[ps[-1]])
 
 
-def deep_get(d: dict, path: str, default=None):
-    return reduce(lambda _d, key: _d.get(key, default) if isinstance(_d, dict) else default, path.split("."),
-                  d)
+def deep_get(d: dict, path: Union[str, Iterable], default=None) -> Any:
+    return reduce(lambda _d, key: _d.get(key, default) if isinstance(_d, dict) else default,
+                  path.split(".") if isinstance(path, str) else path, d)
 
 
-def deep_set(d: dict, path: str, val, create=False):
+def deep_set(d: dict, path: Union[str, Iterable], val: Any, create=False):
     if not isinstance(d, dict):
         return
-    keys = path.split(".")
+    if isinstance(path, str):
+        keys = path.split(".")
+    elif isinstance(d, Iterable):
+        keys = path
+    else:
+        return
     for k in keys[:-1]:
         if k not in d:
             if create:
@@ -424,3 +358,69 @@ def full_gvr(a: str) -> str:
 
 def gvr_equal(a: str, b: str) -> bool:
     return full_gvr(a) == full_gvr(b)
+
+
+# TBD deprecate
+class Auri:
+    def __init__(self, **kwargs):
+        self.group = str(kwargs["group"])
+        self.version = str(kwargs["version"])
+        self.kind = str(kwargs["kind"]).lower()
+        self.resource = inflection.pluralize(self.kind)
+        self.name = str(kwargs["name"])
+        self.namespace = str(kwargs["namespace"])
+        self.path = str(kwargs["path"])
+
+    def gvr(self) -> tuple:
+        return self.group, self.version, self.resource
+
+    def gvk(self) -> tuple:
+        return self.group, self.version, self.kind
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        return f"" \
+               f"/{self.group}" \
+               f"/{self.version}" \
+               f"/{self.kind}" \
+               f"/{self.namespace}" \
+               f"/{self.name}{self.path}"
+
+
+def parse_auri(s: str) -> Auri or None:
+    ps = s.partition(".")
+    main_segs = ps[0].lstrip("/").split("/")
+    attr_path = "" if len(ps) < 2 else "." + ps[2]
+
+    parsed = {
+        2: lambda x: {
+            "group": "digi.dev",
+            "version": "v1",
+            "kind": x[0],
+            "name": x[1],
+            "namespace": "default",
+            "path": attr_path,
+        },
+        3: lambda x: {
+            "group": "digi.dev",
+            "version": "v1",
+            "kind": x[0],
+            "name": x[2],
+            "namespace": x[1],
+            "path": attr_path,
+        },
+        5: lambda x: {
+            "group": x[0],
+            "version": x[1],
+            "kind": x[2],
+            "name": x[3],
+            "namespace": x[4],
+            "path": attr_path,
+        },
+    }.get(len(main_segs), lambda: {})(main_segs)
+
+    if parsed is None:
+        return None
+    return Auri(**parsed)
