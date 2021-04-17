@@ -16,6 +16,7 @@ var (
 	_                  = MountAttrPathSlice
 )
 
+// Mount reference
 type Mount struct {
 	Source Auri `json:"source,omitempty"`
 	Target Auri `json:"target,omitempty"`

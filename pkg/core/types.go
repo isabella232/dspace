@@ -69,10 +69,13 @@ func (k *Kind) EscapedGvrString() string {
 type Auri struct {
 	// model schema
 	Kind Kind `json:"kind,omitempty"`
+
 	// name of the model
 	Name string `json:"name,omitempty"`
+
 	// namespace of the model
 	Namespace string `json:"namespace,omitempty"`
+
 	// path to attribute(s) in the model; if path empty, Auri points to the model
 	Path string `json:"path,omitempty"`
 }
