@@ -343,7 +343,7 @@ var (
 		Short: "resolve an alias",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := client.ResolveAndPrint(args[0]); err != nil {
+			if err := client.ResolveFromLocal(args[0]); err != nil {
 				fmt.Printf("unable to resolve alias %s: %v\n", args[0], err)
 				os.Exit(1)
 			}
