@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/spf13/cobra"
 	"log"
 	"os"
 	"os/exec"
-
-	"github.com/spf13/cobra"
+	"strings"
 
 	"digi.dev/dspace/client"
 	"digi.dev/dspace/pkg/core"
@@ -128,6 +128,13 @@ func runMake(args map[string]string, cmd string, quiet bool) error {
 		fmt.Print(out.String())
 	}
 
+	if strings.Contains(
+		strings.ToLower(out.String()),
+		"error",
+	) {
+		return fmt.Errorf("%s\n", out.String())
+	}
+
 	// TBD streaming output
 	//stdout, _ := cmd_.StdoutPipe()
 	//_ = cmd_.Start()
@@ -149,6 +156,9 @@ var imageCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		q, _ := cmd.Flags().GetBool("quiet")
+		if !q {
+			fmt.Println("IMAGE ID")
+		}
 		_ = runMake(nil, "list", q)
 	},
 }
@@ -163,7 +173,7 @@ var buildCmd = &cobra.Command{
 		kind := args[0]
 		if err := runMake(map[string]string{
 			"KIND": kind,
-		}, "build", q); err == nil {
+		}, "build", q); err == nil && !q {
 			fmt.Println(kind)
 		}
 	},
@@ -187,11 +197,13 @@ var runCmd = &cobra.Command{
 		}
 
 		q, _ := cmd.Flags().GetBool("quiet")
-		_ = runMake(map[string]string{
-			"KIND": args[0],
-			"NAME": args[1],
+		if err := runMake(map[string]string{
+			"KIND":    args[0],
+			"NAME":    args[1],
 			"KOPFLOG": kopflog,
-		}, c, q)
+		}, c, q); err == nil && !q {
+			fmt.Println(args[1])
+		}
 	},
 }
 
@@ -201,10 +213,12 @@ var stopCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		q, _ := cmd.Flags().GetBool("quiet")
-		_ = runMake(map[string]string{
+		if err := runMake(map[string]string{
 			"KIND": args[0],
 			"NAME": args[1],
-		}, "stop", q)
+		}, "stop", q); err == nil && !q {
+			fmt.Println(args[1])
+		}
 	},
 }
 
@@ -214,9 +228,11 @@ var rmiCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		q, _ := cmd.Flags().GetBool("quiet")
-		_ = runMake(map[string]string{
+		if err := runMake(map[string]string{
 			"KIND": args[0],
-		}, "delete", q)
+		}, "delete", q); err == nil && !q {
+			fmt.Printf("%s removed\n", args[0])
+		}
 	},
 }
 

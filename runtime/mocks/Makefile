@@ -27,7 +27,7 @@ all: | gen patch model
 	$(info model)
 delete:
 	cd ./$(KIND) >/dev/null 2>&1; $(kc) delete -f crd.yaml 2>/dev/null || true
-	rm -r ./$(KIND) >/dev/null 2>&1 && echo $(KIND) removed || true
+	rm -r ./$(KIND) >/dev/null 2>&1 || true
 
 list:
 	ls -d */ 2> /dev/null | sed 's#/##'
@@ -69,10 +69,11 @@ build: | prepare gen patch
 .PHONY: run stop print
 run: | prepare model
 	rsync $(digi_config) $(build_dir)/deploy || true
-	cd $(build_dir)/deploy; mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null && echo $(NAME) || true
+	cd $(build_dir)/deploy; mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null || true
 	rm -r $(build_dir) || true
 stop:
-	helm uninstall $(NAME) >/dev/null && echo $(NAME) || true
+	$(kc) delete $(KIND) $(NAME) >/dev/null 2>&1 || true
+	helm uninstall $(NAME) >/dev/null || true
 print:
 	$(kc) get samples sample -oyaml | $(kc) neat
 

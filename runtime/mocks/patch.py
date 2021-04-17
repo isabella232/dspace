@@ -58,6 +58,8 @@ def patch():
         if md.startswith("."):
             continue
         f_crd = os.path.join(_dir_path, md, "crd.yaml")
+        if not os.path.isfile(f_crd):
+            continue
         with open(f_crd) as f:
             crd = yaml.load(f, Loader=yaml.FullLoader)
             if crd is None:

@@ -1,6 +1,5 @@
 """Views used for manipulation."""
 import os
-import pprint as pp
 import copy
 from box import Box
 from kopf.structs.diffs import diff
@@ -176,3 +175,5 @@ class DotView:
         for k, v in DotView._char_map.items():
             s = s.replace(k, v)
         return s
+
+
