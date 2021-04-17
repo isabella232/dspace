@@ -1,5 +1,6 @@
 """Views used for manipulation."""
 import os
+import pprint as pp
 import copy
 from box import Box
 from kopf.structs.diffs import diff
@@ -122,3 +123,56 @@ class TypeView:
                 nsn = util.normalized_nsn(path[1])
                 path = ["mount", typ, nsn, "spec"] + list(path[2:])
                 deep_set(_root, path, new)
+
+
+class DotView:
+    """Dot accessible models."""
+    _char_map = {
+        "-": "_",
+        ".": "_",
+        "/": "_",
+        " ": "_",
+        "\\": "_",
+    }
+
+    def __init__(self, src_view):
+        self._src_view = src_view
+        self._dot_view = None
+        self._dot_view_old = None
+        # map between unsafe attributes
+        # to original ones
+        self._attr_map = dict()
+
+    def __enter__(self):
+        # box does not record nor expose a conversion
+        # map for the safe attributes, so we do so
+        # ahead of time and pass a safe dict to box;
+        # the self._attr_map keeps track of any conversion.
+        self._dot_view_old = self._to_safe_dict(self._src_view)
+        self._dot_view = Box(self._dot_view_old)
+        return self._dot_view
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _src = self._src_view
+        self._dot_view = self._dot_view.to_dict()
+        _diffs = diff(self._dot_view_old, self._dot_view)
+        for op, path, old, new in _diffs:
+            path = [self._attr_map.get(p, p) for p in path]
+            deep_set(_src, path, new)
+
+    def _to_safe_dict(self, d: dict) -> dict:
+        safe_d = dict()
+        for k, v in d.items():
+            orig_k = k
+            k = self._to_safe_attr(k)
+            self._attr_map[k] = orig_k
+            if isinstance(v, dict):
+                v = self._to_safe_dict(v)
+            safe_d[k] = v
+        return safe_d
+
+    @staticmethod
+    def _to_safe_attr(s: str):
+        for k, v in DotView._char_map.items():
+            s = s.replace(k, v)
+        return s

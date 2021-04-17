@@ -49,6 +49,12 @@ def test():
         tv["lamps"]["lamp-test"]["control"]["power"]["intent"] = "off"
     print(f"-----\nafter: {v}\n")
 
+    v = copy.deepcopy(orig_v)
+    print("with type + dot view chain, before:", v)
+    with TypeView(v) as tv, DotView(tv) as dv:
+        dv.lamps.lamp_test.control.power.intent = "off"
+    print(f"-----\nafter: {v}\n")
+
 
 if __name__ == '__main__':
     test()
