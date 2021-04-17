@@ -8,8 +8,8 @@ cli: | dq
 
 
 # Build dAC
-IMAGE="silveryfu/dac"
-DAC="./runtime/admission"
+IMAGE="silveryfu/mounter"
+DAC="./runtime/mounter"
 
 .PHONY: dac-build
 dac-build:
