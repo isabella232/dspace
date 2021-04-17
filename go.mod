@@ -11,6 +11,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/sjson v1.1.1
 	github.com/xlab/treeprint v1.0.0
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
 	k8s.io/client-go v12.0.0+incompatible

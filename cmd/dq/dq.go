@@ -3,11 +3,15 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/spf13/cobra"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"digi.dev/dspace/client"
 	"digi.dev/dspace/pkg/core"
@@ -191,18 +195,68 @@ var runCmd = &cobra.Command{
 			c = "run"
 		}
 
-		kopflog := "false"
-		if k, _ := cmd.Flags().GetBool("kopflog"); k {
-			kopflog = "true"
+		kopfLog := "false"
+		if k, _ := cmd.Flags().GetBool("kopf-log"); k {
+			kopfLog = "true"
 		}
 
-		q, _ := cmd.Flags().GetBool("quiet")
+		createAlias := true
+		if noAlias, _ := cmd.Flags().GetBool("no-alias"); noAlias {
+			createAlias = false
+		}
+
+		quiet, _ := cmd.Flags().GetBool("quiet")
+		kind, name := args[0], args[1]
 		if err := runMake(map[string]string{
-			"KIND":    args[0],
-			"NAME":    args[1],
-			"KOPFLOG": kopflog,
-		}, c, q); err == nil && !q {
+			"KIND":    kind,
+			"NAME":    name,
+			"KOPFLOG": kopfLog,
+		}, c, quiet); err == nil && !quiet {
 			fmt.Println(args[1])
+
+			// add alias
+			if createAlias {
+				var workDir string
+				if workDir = os.Getenv("WORKDIR"); workDir == "" {
+					workDir = "."
+				}
+
+				type gvr struct {
+					Group   string `yaml:"group,omitempty"`
+					Version string `yaml:"version,omitempty"`
+					Kind    string `yaml:"kind,omitempty"`
+				}
+
+				raw := gvr{}
+				modelFile, err := ioutil.ReadFile(filepath.Join(workDir, kind, "model.yaml"))
+				if err != nil {
+					log.Printf("unable to create alias, cannot open model file: %v", err)
+				}
+
+				err = yaml.Unmarshal(modelFile, &raw)
+				if err != nil {
+					log.Fatalf("unable to create alias, cannot unmarshal model file: %v", err)
+				}
+
+				auri := &core.Auri{
+					Kind: core.Kind{
+						Group:   raw.Group,
+						Version: raw.Version,
+						Name:    raw.Kind,
+					},
+					Name:      name,
+					// XXX use ns from cmdline option once added
+					Namespace: "default",
+				}
+				alias := client.Alias{
+					Name: name,
+					Auri: auri,
+				}
+
+				if err := alias.Set(); err != nil {
+					log.Fatalf("unable to create alias %v", err)
+				}
+			}
 		}
 	},
 }
@@ -303,7 +357,8 @@ func Execute() {
 
 	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().BoolP("local", "l", false, "Run driver in local console")
-	runCmd.Flags().BoolP("kopflog", "k", false, "Enable kopf logging")
+	runCmd.Flags().BoolP("no-alias", "n", false, "Do not create alias to the model")
+	runCmd.Flags().BoolP("kopf-log", "k", false, "Enable kopf logging")
 
 	RootCmd.AddCommand(stopCmd)
 	RootCmd.AddCommand(imageCmd)
