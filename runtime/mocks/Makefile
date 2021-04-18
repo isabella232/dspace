@@ -10,13 +10,17 @@ ifndef REPO
 override REPO = silveryfu
 endif
 
+ifndef DIGIREPO
+override DIGIREPO = /tmp/digirepo
+endif
+
+
 kc := kubectl
-driver_dir := ../driver
+driver_dir := $(WORKDIR)/../driver
 driver_handler := $(WORKDIR)/$(KIND)/driver/*.py
 build_dir := /tmp/dspace-build-$(KIND)
 digi_config := $(WORKDIR)/$(KIND)/deploy/*.yaml
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
-fake_digi_repo := /tmp/digi_repo
 
 # model
 .PHONY: gen patch model all delete list
@@ -68,11 +72,11 @@ build: | prepare gen patch
 
 # image
 .PHONY: push pull
-# XXX
 push:
-	tar czf $(KIND)
+	mkdir $(DIGIREPO) >/dev/null 2>&1 || true
+	cd $(WORKDIR); tar czf $(KIND).gz $(KIND) && mv $(KIND).gz $(DIGIREPO)/ >/dev/null || true
 pull:
-	XXX
+	cd $(WORKDIR); rsync $(DIGIREPO)/$(KIND).gz . && tar xzf $(KIND).gz && rm $(KIND).gz > /dev/null
 
 # deploy
 .PHONY: run stop print

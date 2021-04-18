@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	"digi.dev/dspace/client"
 	"digi.dev/dspace/pkg/core"
@@ -183,6 +183,61 @@ var buildCmd = &cobra.Command{
 	},
 }
 
+// XXX naive pull and push support single user/repo only
+var pullCmd = &cobra.Command{
+	Use:   "pull KIND",
+	Short: "Pull a digi image",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		q, _ := cmd.Flags().GetBool("quiet")
+
+		kind := args[0]
+		if err := runMake(map[string]string{
+			"KIND": kind,
+		}, "pull", q); err != nil {
+			return
+		}
+
+		if err := runMake(map[string]string{
+			"KIND": kind,
+		}, "build", true); err == nil && !q {
+			fmt.Println(kind)
+		}
+	},
+}
+
+var pushCmd = &cobra.Command{
+	Use:   "push KIND",
+	Short: "Push a digi image",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		q, _ := cmd.Flags().GetBool("quiet")
+
+		kind := args[0]
+		if err := runMake(map[string]string{
+			"KIND": kind,
+		}, "push", q); err == nil && !q {
+			fmt.Println(kind)
+		}
+	},
+}
+
+var logCmd = &cobra.Command{
+	Use:     "log KIND",
+	Short:   "Print log of a digi driver",
+	Aliases: []string{"logs"},
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		q, _ := cmd.Flags().GetBool("quiet")
+
+		name := args[0]
+		if err := runMake(map[string]string{
+			"NAME": name,
+		}, "log", q); err == nil && !q {
+		}
+	},
+}
+
 var runCmd = &cobra.Command{
 	Use:   "run KIND NAME",
 	Short: "Run a digi given kind and name",
@@ -244,7 +299,7 @@ var runCmd = &cobra.Command{
 						Version: raw.Version,
 						Name:    raw.Kind,
 					},
-					Name:      name,
+					Name: name,
 					// XXX use ns from cmdline option once added
 					Namespace: "default",
 				}
@@ -353,16 +408,18 @@ var (
 
 // add sub-commands here
 func Execute() {
+	RootCmd.AddCommand(pullCmd)
+	RootCmd.AddCommand(pushCmd)
+	RootCmd.AddCommand(imageCmd)
+	RootCmd.AddCommand(rmiCmd)
 	RootCmd.AddCommand(buildCmd)
+	RootCmd.AddCommand(logCmd)
+	RootCmd.AddCommand(stopCmd)
 
 	RootCmd.AddCommand(runCmd)
 	runCmd.Flags().BoolP("local", "l", false, "Run driver in local console")
 	runCmd.Flags().BoolP("no-alias", "n", false, "Do not create alias to the model")
 	runCmd.Flags().BoolP("kopf-log", "k", false, "Enable kopf logging")
-
-	RootCmd.AddCommand(stopCmd)
-	RootCmd.AddCommand(imageCmd)
-	RootCmd.AddCommand(rmiCmd)
 
 	RootCmd.AddCommand(mountCmd)
 	mountCmd.Flags().BoolP("delete", "d", false, "Unmount source from target")
