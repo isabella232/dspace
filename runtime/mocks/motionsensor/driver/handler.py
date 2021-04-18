@@ -26,7 +26,7 @@ auri = {
 def trigger(sty):
     global _stop_flag
     while True:
-        interval = random.randint(0, sty * 60)
+        interval = random.randint(0, 60 / sty)
         time.sleep(interval)
         if _stop_flag:
             break
