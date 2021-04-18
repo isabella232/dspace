@@ -116,8 +116,8 @@ class TypeView:
 
         for op, path, old, new in _diffs:
             typ = path[0]
-            if typ == self._r:
-                deep_set(_root, ".".join(path[2:]), new)
+            if typ == "root":
+                deep_set(_root, ".".join(path[1:]), new)
             else:
                 typ = self._typ_full_typ[typ]
                 nsn = util.normalized_nsn(path[1])

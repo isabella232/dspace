@@ -36,6 +36,7 @@ def test():
                 intent: "on"
     """
 
+    # TBD root tests
     orig_v = yaml.load(test_yaml, Loader=yaml.FullLoader)
     v = copy.deepcopy(orig_v)
     print("# Using model view, before:", v)
