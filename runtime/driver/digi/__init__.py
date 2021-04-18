@@ -1,4 +1,8 @@
 import os
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(int(os.environ.get("LOGLEVEL", logging.INFO)))
 
 
 def set_default_gvr():
@@ -26,5 +30,6 @@ from digi import (
 from digi.main import run
 
 __all__ = [
-    "on", "util", "view", "filter", "run"
+    "on", "util", "view", "filter",
+    "run", "logger"
 ]

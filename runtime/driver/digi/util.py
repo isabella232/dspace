@@ -15,8 +15,9 @@ from kubernetes import config
 from kubernetes.client.rest import ApiException
 
 import kopf
-from kopf.engines import loggers
 from kopf.reactor.registries import SmartOperatorRegistry as KopfRegistry
+
+from digi import logger
 
 try:
     # use service config
@@ -28,13 +29,6 @@ except:
 
 class DriverError:
     GEN_OUTDATED = 41
-
-
-logger = logging.getLogger(__name__)
-__handler = logging.StreamHandler()
-__handler.setFormatter(loggers.make_formatter())
-logger.addHandler(__handler)
-logger.setLevel(int(os.environ.get("LOGLEVEL", logging.INFO)))
 
 
 def run_operator(registry: KopfRegistry,
