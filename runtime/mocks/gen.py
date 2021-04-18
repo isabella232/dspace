@@ -178,12 +178,6 @@ def h():
 def h():
     ...
     
-    
-# reflexes
-@on.reflex
-def h():
-    pass
-    
 
 if __name__ == '__main__':
     digi.run()
