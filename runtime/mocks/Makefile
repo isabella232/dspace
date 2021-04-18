@@ -84,7 +84,6 @@ run: | prepare model
 	rsync $(digi_config) $(build_dir)/deploy || true
 	cd $(build_dir)/deploy; mv cr.yaml ./templates; \
 	helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null || true \
-	# last line add kubectl annotation
 	rm -r $(build_dir) || true
 stop:
 	$(kc) delete $(KIND) $(NAME) >/dev/null 2>&1 || true

@@ -293,6 +293,7 @@ def gen(name):
                         cr["spec"][_name].update({a: -1})
 
                 with open(cr_file, "w") as f_:
+                    # TBD add plain-write
                     yaml.dump(cr, f_)
 
         # deployment cr
