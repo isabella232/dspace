@@ -1,3 +1,4 @@
+import digi
 import digi.on as on
 
 import digi.util as util
@@ -221,3 +222,7 @@ def _set_bright(ds, b):
         for _, _l in ds.get(lt, {}).items():
             deep_set(_l, "spec.control.brightness.intent",
                      _lc(b))
+
+
+if __name__ == '__main__':
+    digi.run()

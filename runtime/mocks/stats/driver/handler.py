@@ -1,3 +1,4 @@
+import digi
 import digi.on as on
 
 
@@ -24,10 +25,7 @@ def h():
 @on.control
 def h():
     ...
-    
-    
-# reflexes
-@on.reflex
-def h():
-    pass
 
+
+if __name__ == '__main__':
+    digi.run()

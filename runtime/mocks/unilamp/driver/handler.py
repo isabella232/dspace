@@ -1,3 +1,4 @@
+import digi
 import digi.on as on
 
 import digi.util as util
@@ -106,3 +107,7 @@ def h(parent, child):
 
     put(f"control.brightness.intent", ul, lp,
         transform=converters[typ]["brightness"]["to"])
+
+
+if __name__ == '__main__':
+    digi.run()

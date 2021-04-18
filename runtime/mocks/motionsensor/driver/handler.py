@@ -1,10 +1,11 @@
-import on
 import sys
 import time
 import threading
 import random
 import os
 
+import digi
+import digi.on as on
 import digi.util as util
 from digi.util import deep_set
 
@@ -58,3 +59,7 @@ def h(sv):
     t = threading.Thread(target=trigger,
                          args=(sty,))
     t.start()
+
+
+if __name__ == '__main__':
+    digi.run()

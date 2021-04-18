@@ -1,0 +1,7 @@
+apiVersion: tutorial.digi.dev/v1
+kind: Tutorial
+metadata:
+  name: \{\{ .Values.name \}\}
+spec:
+  control:
+    name: -1

@@ -23,6 +23,8 @@ from digi import (
     filter,
 )
 
+from digi.main import run
+
 __all__ = [
-    "on", "util", "view", "filter"
+    "on", "util", "view", "filter", "run"
 ]

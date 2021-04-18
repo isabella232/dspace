@@ -12,6 +12,7 @@ def run():
     r = os.environ["PLURAL"]
     n = os.environ["NAME"]
     ns = os.environ.get("NAMESPACE", "default")
+    print("XXX", g, v, r, n, ns)
 
     # control the log level for k8s event and local/handler logging
     log_level = int(os.environ.get("LOGLEVEL", logging.INFO))

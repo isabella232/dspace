@@ -92,7 +92,8 @@ class TypeView:
         self._typ_full_typ = dict()
 
     def __enter__(self):
-        _view = {self._r: {"root": self._root_view}}
+        # _view = {self._r: {"root": self._root_view}}
+        _view = {"root": self._root_view}
         _mount = self._root_view.get("mount", {})
 
         for typ, ms in _mount.items():
@@ -102,7 +103,7 @@ class TypeView:
 
             for n, m in ms.items():
                 if "spec" not in m:
-                    m = m.get("spec", {})
+                    continue
                 n = n.replace("default/", "")
                 _view[_typ].update({n: m["spec"]})
 
@@ -175,5 +176,3 @@ class DotView:
         for k, v in DotView._char_map.items():
             s = s.replace(k, v)
         return s
-
-

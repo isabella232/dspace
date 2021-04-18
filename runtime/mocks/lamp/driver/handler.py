@@ -1,3 +1,4 @@
+import digi
 import digi.on as on
 
 """Mock lamp sets power and brightness to intents."""
@@ -13,3 +14,7 @@ def h0(p):
 def h1(b):
     b["status"] = b.get("intent",
                         b.get("status", "-1"))
+
+
+if __name__ == '__main__':
+    digi.run()

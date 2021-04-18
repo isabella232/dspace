@@ -4,6 +4,7 @@ import threading
 import random
 import os
 
+import digi
 import digi.on as on
 import digi.util as util
 
@@ -82,3 +83,7 @@ def h():
     _stop_flag = False
     t = threading.Thread(target=detect)
     t.start()
+
+
+if __name__ == '__main__':
+    digi.run()

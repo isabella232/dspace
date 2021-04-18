@@ -1,0 +1,7 @@
+apiVersion: tutorial.digi.dev/v1
+kind: Tutorial
+metadata:
+  name: tutorial-test
+spec:
+  control:
+    name: -1

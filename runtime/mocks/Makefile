@@ -1,11 +1,6 @@
-.PHONY: gen patch model all delete list
-
-kc := kubectl
-driver_dir := ../driver
-driver_handler := ./$(KIND)/driver/*.py
-digi_config := ./$(KIND)/deploy/*.yaml
-build_dir := /tmp/dspace-build-$(KIND)
-tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
+ifndef WORKDIR
+override WORKDIR = .
+endif
 
 ifndef IMAGEPULL
 override IMAGEPULL = Always
@@ -14,20 +9,28 @@ endif
 ifndef REPO
 override REPO = silveryfu
 endif
-registry := $(REPO)
+
+kc := kubectl
+driver_dir := ../driver
+driver_handler := $(WORKDIR)/$(KIND)/driver/*.py
+build_dir := /tmp/dspace-build-$(KIND)
+digi_config := $(WORKDIR)/$(KIND)/deploy/*.yaml
+tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
+fake_digi_repo := /tmp/digi_repo
 
 # model
+.PHONY: gen patch model all delete list
 gen:
 	python gen.py $(KIND)
 patch:
 	python patch.py $(KIND)
 model:
-	cd ./$(KIND) && $(kc) apply -f crd.yaml >/dev/null
+	cd $(WORKDIR)/$(KIND) && $(kc) apply -f crd.yaml >/dev/null
 all: | gen patch model
 	$(info model)
 delete:
-	cd ./$(KIND) >/dev/null 2>&1; $(kc) delete -f crd.yaml 2>/dev/null || true
-	rm -r ./$(KIND) >/dev/null 2>&1 || true
+	cd $(WORKDIR)/$(KIND) >/dev/null 2>&1; $(kc) delete -f crd.yaml 2>/dev/null || true
+	rm -r $(WORKDIR)/$(KIND) >/dev/null 2>&1 || true
 
 list:
 	ls -d */ 2> /dev/null | sed 's#/##'
@@ -42,11 +45,9 @@ n := $(KIND)-test
 ns := default
 
 test: | model all
-	cd ./$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
-	# TBD: allow standalone handler
-	rsync ./$(KIND)/driver/handler.py $(driver_dir)/digi; \
+	cd $(WORKDIR)/$(KIND)/test; $(kc) delete $(KIND) $(n); $(kc) apply -f cr.yaml
 	GROUP=$(g) VERSION=$(v) PLURAL=$(r) NAME=$(n) NAMESPACE=$(ns) MOUNTER=$(MOUNTER) \
-	python $(driver_dir)/digi
+	python $(WORKDIR)/$(KIND)/driver/handler.py
 
 # driver
 .PHONY: prepare
@@ -61,21 +62,37 @@ prepare:
 .PHONY: build
 build: | prepare gen patch
 	rsync $(driver_handler) $(build_dir)/digi/ || true
-	cd $(build_dir); docker build -t $(registry)/$(KIND):latest -f deploy/image/Dockerfile . || true
-	docker push $(registry)/$(KIND):latest || true
+	cd $(build_dir); docker build -t $(REPO)/$(KIND):latest -f deploy/image/Dockerfile . || true
+	docker push $(REPO)/$(KIND):latest || true
 	rm -r $(build_dir) || true
+
+# image
+.PHONY: push pull
+# XXX
+push:
+	tar czf $(KIND)
+pull:
+	XXX
 
 # deploy
 .PHONY: run stop print
 run: | prepare model
 	rsync $(digi_config) $(build_dir)/deploy || true
-	cd $(build_dir)/deploy; mv cr.yaml ./templates; helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null || true
+	cd $(build_dir)/deploy; mv cr.yaml ./templates; \
+	helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null || true \
+	# last line add kubectl annotation
 	rm -r $(build_dir) || true
 stop:
 	$(kc) delete $(KIND) $(NAME) >/dev/null 2>&1 || true
 	helm uninstall $(NAME) >/dev/null || true
 print:
 	$(kc) get samples sample -oyaml | $(kc) neat
+
+# debug
+.PHONY: log
+log:
+	kubectl logs `kubectl get pod --field-selector status.phase=Running \
+	-l name=room-test -oname --sort-by=.status.startTime | tail -n1 | sed "s/^.\{4\}//"`
 
 # tutorial
 .PHONY: tutorial

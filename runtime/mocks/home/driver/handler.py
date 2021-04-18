@@ -1,3 +1,4 @@
+import digi
 import digi.on as on
 
 import digi.util as util
@@ -118,3 +119,7 @@ def h(parent, mounts):
 
     deep_set_all(rooms, "spec.control.mode.intent",
                  mode_config[mode]["rooms"]["mode"])
+
+
+if __name__ == '__main__':
+    digi.run()

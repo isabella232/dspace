@@ -1,0 +1,8 @@
+group: tutorial.digi.dev
+image: local/tutorial:latest
+imagepull: Always
+mounter: false
+name: tutorial
+namespace: default
+plural: tutorials
+version: v1

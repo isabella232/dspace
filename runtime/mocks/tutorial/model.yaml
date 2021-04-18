@@ -1,0 +1,9 @@
+group: tutorial.digi.dev
+version: v1
+kind: Tutorial
+meta:
+  ami: string
+  instanceType: string
+  timeLimit: number
+control:
+  name: string

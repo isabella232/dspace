@@ -1,3 +1,4 @@
+import digi
 import digi.on as on
 
 
@@ -24,3 +25,7 @@ def h():
 @on.control
 def h():
     ...
+
+
+if __name__ == '__main__':
+    digi.run()

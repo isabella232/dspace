@@ -150,7 +150,8 @@ image: {repo}/{image}:latest
 imagepull: {imagepull}
 """
 
-_handler = """import digi.on as on
+_handler = """import digi
+import digi.on as on
 
 
 # validation
@@ -182,7 +183,10 @@ def h():
 @on.reflex
 def h():
     pass
+    
 
+if __name__ == '__main__':
+    digi.run()
 """
 
 
