@@ -50,6 +50,7 @@ def run_operator(registry: KopfRegistry,
         asyncio.set_event_loop(loop)
         with contextlib.closing(loop):
             if not skip_log_setup:
+                # XXX (@kopf) disallow kopf configure root logger
                 kopf.configure(verbose=log_level <= logging.DEBUG,
                                debug=log_level <= logging.DEBUG,
                                quiet=kopf_logging and log_level <= logging.INFO)

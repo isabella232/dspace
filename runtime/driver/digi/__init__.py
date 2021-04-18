@@ -1,7 +1,11 @@
 import os
 import logging
+from kopf.engines import loggers
 
 logger = logging.getLogger(__name__)
+__handler = logging.StreamHandler()
+__handler.setFormatter(loggers.make_formatter())
+logger.addHandler(__handler)
 logger.setLevel(int(os.environ.get("LOGLEVEL", logging.INFO)))
 
 
@@ -31,5 +35,5 @@ from digi.main import run
 
 __all__ = [
     "on", "util", "view", "filter",
-    "run", "logger"
+    "run", "logger",
 ]
