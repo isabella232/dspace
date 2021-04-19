@@ -18,7 +18,7 @@ endif
 kc := kubectl
 driver_dir := $(WORKDIR)/../driver
 driver_handler := $(WORKDIR)/$(KIND)/driver/*.py
-build_dir := /tmp/dspace-build-$(KIND)
+build_dir := /tmp/dspace-build-$(KIND)-$(NAME)
 digi_config := $(WORKDIR)/$(KIND)/deploy/*.yaml
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
 
@@ -80,14 +80,14 @@ pull:
 
 # deploy
 .PHONY: run stop print
-run: | prepare model
+run: | stop prepare model
 	rsync $(digi_config) $(build_dir)/deploy || true
 	cd $(build_dir)/deploy; mv cr.yaml ./templates; \
 	helm install -f values.yaml --set name=$(NAME) $(NAME) . >/dev/null || true \
 	rm -r $(build_dir) || true
 stop:
 	$(kc) delete $(KIND) $(NAME) >/dev/null 2>&1 || true
-	helm uninstall $(NAME) >/dev/null || true
+	helm uninstall $(NAME) >/dev/null 2>&1 || true
 print:
 	$(kc) get samples sample -oyaml | $(kc) neat
 

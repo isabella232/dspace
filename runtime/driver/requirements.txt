@@ -1,4 +1,4 @@
-kopf
+# kopf
 kubernetes
 pyyaml
 inflection
