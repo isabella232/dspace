@@ -95,7 +95,7 @@ print:
 .PHONY: log
 log:
 	kubectl logs `kubectl get pod --field-selector status.phase=Running \
-	-l name=room-test -oname --sort-by=.status.startTime | tail -n1 | sed "s/^.\{4\}//"`
+	-l name=$(NAME) -oname --sort-by=.status.startTime | tail -n1 | sed "s/^.\{4\}//"`
 
 # tutorial
 .PHONY: tutorial
