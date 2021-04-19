@@ -141,7 +141,7 @@ def _attr(fn, path=".", prio=0):
     args = OrderedDict(sig.parameters)
 
     # allow aliases
-    for p in ["subview", "sv"]:
+    for p in ["subview", "sub_view", "sv"]:
         if p in sig.parameters:
             kwarg_filter.update({"subview": p})
             args[p] = None

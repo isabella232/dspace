@@ -267,7 +267,7 @@ var runCmd = &cobra.Command{
 			"NAME":    name,
 			"KOPFLOG": kopfLog,
 		}, c, quiet); err == nil && !quiet {
-			fmt.Println(args[1])
+			fmt.Println(name)
 
 			// add alias
 			if createAlias {
