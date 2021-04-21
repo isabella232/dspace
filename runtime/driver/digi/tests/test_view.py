@@ -42,18 +42,21 @@ def test():
     print("# Using model view, before:", v)
     with ModelView(v) as mv:
         mv["lamp-test"]["control"]["power"]["intent"] = "off"
+        mv["root"]["control"]["mode"]["status"] = "away"
     print(f"-----\nafter: {v}\n")
 
     v = copy.deepcopy(orig_v)
     print("# Using type view, before:", v)
     with TypeView(v) as tv:
         tv["lamps"]["lamp-test"]["control"]["power"]["intent"] = "off"
+        mv["root"]["control"]["mode"]["status"] = "away"
     print(f"-----\nafter: {v}\n")
 
     v = copy.deepcopy(orig_v)
     print("with type + dot view chain, before:", v)
     with TypeView(v) as tv, DotView(tv) as dv:
         dv.lamps.lamp_test.control.power.intent = "off"
+        dv.root.control.brightness.status = "away"
     print(f"-----\nafter: {v}\n")
 
 
