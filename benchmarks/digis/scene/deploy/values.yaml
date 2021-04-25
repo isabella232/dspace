@@ -1,0 +1,8 @@
+group: bench.digi.dev
+image: silveryfu/scene:bench
+imagepull: Always
+mounter: false
+name: scene
+namespace: default
+plural: scenes
+version: v1

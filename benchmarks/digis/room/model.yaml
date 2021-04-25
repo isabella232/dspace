@@ -1,0 +1,27 @@
+group: bench.digi.dev
+version: v1
+kind: Room
+control:
+  brightness: number
+obs:
+  reason: string
+  objects:
+    openapi:
+      items:
+        additionalProperties:
+          properties:
+            h:
+              type: number
+            w:
+              type: number
+            x1:
+              type: number
+            x2:
+              type: number
+          type: object
+        type: object
+      type: array
+mount:
+  bench.digi.dev/v1/lamps: object
+  bench.digi.dev/v1/cams: object
+  bench.digi.dev/v1/scenes: object

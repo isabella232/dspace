@@ -1,0 +1,8 @@
+group: bench.digi.dev
+image: silveryfu/cam:bench
+imagepull: Always
+mounter: false
+name: cam
+namespace: default
+plural: cams
+version: v1

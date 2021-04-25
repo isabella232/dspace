@@ -1,0 +1,26 @@
+group: bench.digi.dev
+version: v1
+kind: Scene
+data:
+  input:
+    url: string
+  output:
+    objects:
+      openapi:
+        items:
+          additionalProperties:
+            properties:
+              h:
+                type: number
+              w:
+                type: number
+              x1:
+                type: number
+              x2:
+                type: number
+            type: object
+          type: object
+        type: array
+obs:
+  reason: string
+

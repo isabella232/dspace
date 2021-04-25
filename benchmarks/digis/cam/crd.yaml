@@ -1,0 +1,58 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: cams.bench.digi.dev
+spec:
+  group: bench.digi.dev
+  names:
+    kind: Cam
+    listKind: CamList
+    plural: cams
+    singular: cam
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            type: string
+          kind:
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              control:
+                properties:
+                  angle:
+                    properties:
+                      intent:
+                        type: number
+                      status:
+                        type: number
+                    type: object
+                  endpoint:
+                    properties:
+                      intent:
+                        type: string
+                      status:
+                        type: string
+                    type: object
+                  sensitivity:
+                    properties:
+                      intent:
+                        type: number
+                      status:
+                        type: number
+                    type: object
+                type: object
+              obs:
+                properties:
+                  reason:
+                    type: string
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true

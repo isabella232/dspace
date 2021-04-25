@@ -1,0 +1,9 @@
+name: lamp
+namespace: default
+group: bench.digi.dev
+version: v1
+plural: lamps
+mounter: false
+
+image: silveryfu/lamp:bench
+imagepull: Always

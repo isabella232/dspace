@@ -1,0 +1,10 @@
+apiVersion: bench.digi.dev/v1
+kind: Lamp
+metadata:
+  name: {{ .Values.name }}
+spec:
+  control:
+    power:
+      intent: "off"
+    brightness:
+      intent: 0.8
