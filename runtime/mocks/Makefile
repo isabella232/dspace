@@ -16,10 +16,11 @@ endif
 
 
 kc := kubectl
-driver_dir := $(WORKDIR)/../driver
+digi_src := $(GOPATH)/src/digi.dev/dspace
+driver_dir := $(digi_src)/runtime/driver
 driver_handler := $(WORKDIR)/$(KIND)/driver/*.py
-build_dir := /tmp/dspace-build-$(KIND)-$(NAME)
 digi_config := $(WORKDIR)/$(KIND)/deploy/*.yaml
+build_dir := /tmp/dspace-build-$(KIND)-$(NAME)
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
 
 # model
@@ -101,8 +102,15 @@ log:
 .PHONY: tutorial
 tutorial:
 	mkdir -p $(tutorial_dir)/workdir || true
-	mkdir $(tutorial_dir)/driver || true
-	rsync -r $(driver_dir)/digi $(tutorial_dir)/driver
-	rsync -r $(driver_dir)/deploy $(tutorial_dir)/driver
-	rsync $(driver_dir)/requirements.txt $(tutorial_dir)/driver
+#	mkdir $(tutorial_dir)/driver || true
+#	rsync -r $(driver_dir)/digi $(tutorial_dir)/driver
+#	rsync -r $(driver_dir)/deploy $(tutorial_dir)/driver
+#	rsync $(driver_dir)/requirements.txt $(tutorial_dir)/driver
 	rsync gen.py patch.py Makefile $(tutorial_dir)/workdir
+
+.PHONY: dq bench
+dq:
+	mkdir -p ~/.dq/
+	rsync gen.py patch.py Makefile ~/.dq/
+bench:
+	rsync gen.py patch.py Makefile ../../benchmarks

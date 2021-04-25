@@ -114,6 +114,7 @@ func runMake(args map[string]string, cmd string, quiet bool) error {
 
 	var workDir string
 	if workDir = os.Getenv("WORKDIR"); workDir == "" {
+		// TBD: use the .dq's makefile
 		workDir = "."
 	}
 	cmd_.Dir = workDir

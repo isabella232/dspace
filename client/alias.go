@@ -1,11 +1,8 @@
 package client
 
-// TBD: Alias creates name --> auri alias
-//
-
 import (
-	//"encoding/json"
 	"fmt"
+
 	"github.com/spf13/viper"
 
 	"digi.dev/dspace/client/config"
