@@ -1,8 +1,8 @@
 import digi
 import digi.on as on
 
-"""Mock lamp sets power and brightness to intents."""
 
+# TBD: find lifx
 
 @on.control("power")
 def h0(p):

@@ -1,6 +1,8 @@
 group: bench.digi.dev
 version: v1
 kind: Lamp
+meta:
+  endpoint: string
 control:
   power: string
   brightness: number
