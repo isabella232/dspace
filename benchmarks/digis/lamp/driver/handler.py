@@ -67,6 +67,7 @@ def h0(sv):
     global _dev
     for _ in range(sv.get("discover_retry", 3)):
         _dev = lifx.discover(e)
+        logger.info(_dev)
         if _dev is not None:
             break
 

@@ -22,7 +22,7 @@ endif
 kc := kubectl
 digi_src := $(GOPATH)/src/digi.dev/dspace
 driver_dir := $(digi_src)/runtime/driver
-driver_handler := $(WORKDIR)/$(KIND)/driver/*.py
+driver_handler := $(WORKDIR)/$(KIND)/driver/*
 digi_config := $(WORKDIR)/$(KIND)/deploy/*.yaml
 build_dir := /tmp/dspace-build-$(KIND)-$(NAME)
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
@@ -62,15 +62,13 @@ test: | model all
 .PHONY: prepare
 prepare:
 	rm -r $(build_dir) >/dev/null 2>&1 || true
-	mkdir -p $(build_dir)/digi/
 	mkdir -p $(build_dir)/deploy/
-	rsync -r $(driver_dir)/digi $(build_dir) || true
 	rsync -r $(driver_dir)/deploy $(build_dir) || true
 	rsync -r $(driver_dir)/requirements.txt $(build_dir) || true
 
 .PHONY: build
 build: | prepare gen patch
-	rsync $(driver_handler) $(build_dir)/digi/ || true
+	rsync $(driver_handler) $(build_dir)/ || true
 	cd $(build_dir); docker build -t $(REPO)/$(KIND):$(TAG) -f deploy/image/Dockerfile . || true
 	docker push $(REPO)/$(KIND):$(TAG)|| true
 	rm -r $(build_dir) || true

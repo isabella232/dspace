@@ -18,7 +18,7 @@ build:
 deploy:
 	cd deploy; helm install -f values.yaml $(n) .
 template:
-	cd deploy; helm template . 
+	cd deploy; helm template .
 all: | build deploy
 	$(info build and deploy)
 

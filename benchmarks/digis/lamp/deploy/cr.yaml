@@ -8,3 +8,7 @@ spec:
       intent: "off"
     brightness:
       intent: 0.8
+  meta:
+    endpoint: d0:73:d5:5b:bb:fd
+    poll_interval: 0.1
+    discover_retry: 3
