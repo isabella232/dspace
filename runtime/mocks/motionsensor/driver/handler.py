@@ -23,6 +23,7 @@ auri = {
 }
 
 
+# TBD: do not use a global _stop_flag
 def trigger(sty):
     global _stop_flag
     while True:

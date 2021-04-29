@@ -42,8 +42,12 @@ spec:
                 type: object
               meta:
                 properties:
+                  discover_retry:
+                    type: number
                   endpoint:
                     type: string
+                  poll_interval:
+                    type: number
                 type: object
               obs:
                 properties:

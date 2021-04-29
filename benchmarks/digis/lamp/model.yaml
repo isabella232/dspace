@@ -3,6 +3,8 @@ version: v1
 kind: Lamp
 meta:
   endpoint: string
+  poll_interval: number
+  discover_retry: number
 control:
   power: string
   brightness: number
