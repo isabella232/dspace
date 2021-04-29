@@ -14,6 +14,10 @@ ifndef DIGIREPO
 override DIGIREPO = /tmp/digirepo
 endif
 
+ifndef TAG
+override TAG = mock
+endif
+
 
 kc := kubectl
 digi_src := $(GOPATH)/src/digi.dev/dspace
@@ -43,7 +47,7 @@ list:
 .PHONY: test
 
 # test configs
-g := mock.digi.dev
+g := $(TAG).digi.dev
 v := v1
 r := $(KIND)s
 n := $(KIND)-test
@@ -67,8 +71,8 @@ prepare:
 .PHONY: build
 build: | prepare gen patch
 	rsync $(driver_handler) $(build_dir)/digi/ || true
-	cd $(build_dir); docker build -t $(REPO)/$(KIND):latest -f deploy/image/Dockerfile . || true
-	docker push $(REPO)/$(KIND):latest || true
+	cd $(build_dir); docker build -t $(REPO)/$(KIND):$(TAG) -f deploy/image/Dockerfile . || true
+	docker push $(REPO)/$(KIND):$(TAG)|| true
 	rm -r $(build_dir) || true
 
 # image
