@@ -3,6 +3,8 @@ kind: Lamp
 metadata:
   name: lamp-test
 spec:
+  meta:
+    endpoint: d0:73:d5:5b:bb:fd
   control:
     power:
       intent: "off"

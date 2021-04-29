@@ -40,6 +40,11 @@ spec:
                         type: string
                     type: object
                 type: object
+              meta:
+                properties:
+                  endpoint:
+                    type: string
+                type: object
               obs:
                 properties:
                   reason:

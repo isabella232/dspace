@@ -1,19 +1,47 @@
 import digi
 import digi.on as on
+from digi import logger
+from digi.util import deep_get
+
+import digi.reconcile as rc
+
+import time
+import threading
+import lifx
 
 
-# TBD: find lifx
-
-@on.control("power")
-def h0(p):
-    p["status"] = p.get("intent",
-                        p.get("status", "undef"))
+def _poll_and_update(id_):
+    pass
 
 
-@on.control("brightness")
-def h1(b):
-    b["status"] = b.get("intent",
-                        b.get("status", "-1"))
+dev = None
+
+
+# status
+@on.meta
+def h0(sv):
+    e = sv.get("endpoint", None)
+    if e is None:
+        return
+
+    global dev
+    dev = lifx.discover(e)
+    # convert
+    # _t = threading.Thread(target=_poll_and_update,
+    #                       args=(e,))
+
+    # t1.start()
+    # t1.join()
+
+
+# intent
+@on.control
+def h1(sv):
+    p, b = deep_get(sv, "power.intent"), \
+           deep_get(sv, "brightness.intent")
+    # convert
+    status = lifx.get(dev)
+    logger.info(status)
 
 
 if __name__ == '__main__':

@@ -102,10 +102,6 @@ log:
 .PHONY: tutorial
 tutorial:
 	mkdir -p $(tutorial_dir)/workdir || true
-#	mkdir $(tutorial_dir)/driver || true
-#	rsync -r $(driver_dir)/digi $(tutorial_dir)/driver
-#	rsync -r $(driver_dir)/deploy $(tutorial_dir)/driver
-#	rsync $(driver_dir)/requirements.txt $(tutorial_dir)/driver
 	rsync gen.py patch.py Makefile $(tutorial_dir)/workdir
 
 .PHONY: dq bench

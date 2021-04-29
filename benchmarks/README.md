@@ -6,7 +6,7 @@ Setup:
      PHY        |     DSPACE     |      PHY
 human input --> | room -- lamp --|-- lifx lamp -> actuate
                 |      \_ cam  --|-- wyze cam  <- signal
-     obseve <-- |          |     |                              
+    observe <-- |          |     |                              
                 |      \_ scene  |                            
    [on-prem]    |    [on-prem]   |   [on-prem]
 ```
@@ -40,7 +40,7 @@ Setup:
      PHY        |     DSPACE     |      PHY
 human input --> | room -- lamp --|-- lifx lamp -> actuate
                 |      \_ cam  --|-- wyze cam  <- signal
-     obseve <-- |          |     |                              
+    observe <-- |          |     |                              
                 |      \_ scene  |                            
    [on-prem]    |     [cloud]    |   [on-prem]
 ```
@@ -56,11 +56,11 @@ Hybrid deployment
 
 Setup
 ```
-     PHY        |     DSPACE        |      PHY
+     PHY        |      DSPACE       |      PHY
 human input --> | room -- lamp ---- |-- lifx lamp -> actuate
                 |     \   _ _ _ _ _ |
                 |      \_|__ cam  --|-- wyze cam  <- signal
-     obseve <-- |        |    |     |                              
+    observe <-- |        |    |     |                              
                 |      \_|__ scene  |                            
    [on-prem]    |[cloud] | [on-prem]|   [on-prem]
 ```
