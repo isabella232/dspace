@@ -1,8 +1,9 @@
 import digi
 import digi.on as on
 from digi import logger
-from digi.util import deep_get
+from digi.util import deep_get, patch_spec
 
+import os
 import time
 import threading
 import lifx
@@ -49,11 +50,23 @@ class _Poll(threading.Thread):
         while True:
             if self.stop_flag:
                 break
+
             status = lifx.get(self.dev)
-            # TBD post it
             p, b = status.get("power", {}), status.get("color", {})[2]
-            logger.debug(f"power: {convert['power']['from'](p)}; "
-                         f"brightness: {convert['brightness']['from'](b)}")
+
+            resp, e = patch_spec(*digi.auri, {
+                "control": {
+                    "power": {
+                        "status": convert["power"]["from"](p)
+                    },
+                    "brightness": {
+                        "status": convert["brightness"]["from"](b)
+                    },
+                }
+            })
+            if e is not None:
+                logger.error(f"unable to update status {e}")
+
             time.sleep(self.interval)
 
 
@@ -67,7 +80,6 @@ def h0(sv):
     global _dev
     for _ in range(sv.get("discover_retry", 3)):
         _dev = lifx.discover(e)
-        logger.info(_dev)
         if _dev is not None:
             break
 
