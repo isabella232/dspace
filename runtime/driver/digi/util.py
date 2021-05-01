@@ -31,6 +31,9 @@ class DriverError:
     GEN_OUTDATED = 41
 
 
+_api = kubernetes.client.CustomObjectsApi()
+
+
 def run_operator(registry: KopfRegistry,
                  log_level=logging.INFO,
                  skip_log_setup=False,
@@ -176,15 +179,15 @@ def parse_model_id(s) -> Tuple[str, str, str, str, str]:
 
 
 def get_spec(g, v, r, n, ns) -> (dict, str, int):
-    api = kubernetes.client.CustomObjectsApi()
+    global _api
 
     try:
-        o = api.get_namespaced_custom_object(group=g,
-                                             version=v,
-                                             namespace=ns,
-                                             name=n,
-                                             plural=r,
-                                             )
+        o = _api.get_namespaced_custom_object(group=g,
+                                              version=v,
+                                              namespace=ns,
+                                              name=n,
+                                              plural=r,
+                                              )
     except ApiException as e:
         logger.warning(f"Unable to update model {model_id(g, v, r, n, ns)}:", e)
         return None
@@ -194,21 +197,20 @@ def get_spec(g, v, r, n, ns) -> (dict, str, int):
 
 
 def patch_spec(g, v, r, n, ns, spec: dict, rv=None):
-    api = kubernetes.client.CustomObjectsApi()
-
+    global _api
     try:
-        resp = api.patch_namespaced_custom_object(group=g,
-                                                  version=v,
-                                                  namespace=ns,
-                                                  name=n,
-                                                  plural=r,
-                                                  body={
-                                                      "metadata": {} if rv is None else {
-                                                          "resourceVersion": rv,
-                                                      },
-                                                      "spec": spec,
-                                                  },
-                                                  )
+        resp = _api.patch_namespaced_custom_object(group=g,
+                                                   version=v,
+                                                   namespace=ns,
+                                                   name=n,
+                                                   plural=r,
+                                                   body={
+                                                       "metadata": {} if rv is None else {
+                                                           "resourceVersion": rv,
+                                                       },
+                                                       "spec": spec,
+                                                   },
+                                                   )
         return resp, None
     except ApiException as e:
         return None, e

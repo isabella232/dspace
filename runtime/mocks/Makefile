@@ -63,6 +63,7 @@ test: | model all
 prepare:
 	rm -r $(build_dir) >/dev/null 2>&1 || true
 	mkdir -p $(build_dir)/deploy/
+	rsync -r $(driver_dir) $(build_dir) || true
 	rsync -r $(driver_dir)/deploy $(build_dir) || true
 	rsync -r $(driver_dir)/requirements.txt $(build_dir) || true
 
