@@ -83,7 +83,9 @@ class _Poll(threading.Thread):
                         "backward_leaf": time.time()
                     }
                 })
-                _backward_set = True
+                logger.info(f"BENCH backward {b} {e}")
+                if e is None:
+                    _backward_set = True
 
             time.sleep(self.interval)
 
@@ -122,12 +124,14 @@ def h1(sv, pv):
     # benchmark
     global _forward_set
     if deep_get(sv, "brightness.intent") == 0.1 and not _forward_set:
-        patch_spec(*_measure, {
+        resp, e = patch_spec(*_measure, {
             "obs": {
                 "forward_leaf": time.time()
             }
         })
-        _forward_set = True
+        logger.info(f"BENCH forward {e}")
+        if e is None:
+            _forward_set = True
 
     status = lifx.get(_dev)
     power = status.get("power", 0)

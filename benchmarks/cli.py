@@ -108,5 +108,8 @@ def reset():
 
 if __name__ == '__main__':
     init()
+    # result = benchmark_room_lamp()
+    # reset()
+    # time.sleep(5)
     result = benchmark_room_lamp()
     pp.pprint(result)

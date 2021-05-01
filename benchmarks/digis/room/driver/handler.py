@@ -15,13 +15,15 @@ _backward_set = False
 def h(proc_view):
     # benchmark
     global _forward_set
-    if deep_get(proc_view, "control.brightness.intent") == 0.1:
+    if deep_get(proc_view, "control.brightness.intent") == 0.1 and not _forward_set:
         resp, e = patch_spec(*_measure, {
             "obs": {
                 "forward_root": time.time()
             }
         })
-        _forward_set = True
+        logger.info(f"BENCH: {time.time()} {e}")
+        if e is None:
+            _forward_set = True
 
     with TypeView(proc_view) as tv, DotView(tv) as dv:
         room_brightness = dv.root.control.brightness
@@ -39,11 +41,12 @@ def h(proc_view):
     # benchmark
     global _backward_set
     if deep_get(proc_view, "control.brightness.status") == 0.1:
-        patch_spec(*_measure, {
+        resp, e = patch_spec(*_measure, {
             "obs": {
                 "backward_root": time.time()
             }
         })
+        logger.info(f"BENCH: {e}")
         _backward_set = True
 
 
