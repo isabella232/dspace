@@ -24,7 +24,7 @@ digi_src := $(GOPATH)/src/digi.dev/dspace
 driver_dir := $(digi_src)/runtime/driver
 driver_handler := $(WORKDIR)/$(KIND)/driver/*
 digi_config := $(WORKDIR)/$(KIND)/deploy/*.yaml
-build_dir := /tmp/dspace-build-$(KIND)-$(NAME)
+build_dir := /tmp/dspace-build-$(KIND)-$(TAG)
 tutorial_dir := $(GOPATH)/src/digi.dev/tutorial
 
 # model
@@ -111,4 +111,4 @@ dq:
 	mkdir -p ~/.dq/
 	rsync gen.py patch.py Makefile ~/.dq/
 bench:
-	rsync gen.py patch.py Makefile ../../benchmarks
+	rsync gen.py patch.py Makefile ../../benchmarks/digis/

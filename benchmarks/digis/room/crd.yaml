@@ -33,13 +33,6 @@ spec:
                         type: number
                     type: object
                 type: object
-              meta:
-                properties:
-                  backward_value:
-                    type: number
-                  forward_value:
-                    type: number
-                type: object
               mount:
                 properties:
                   bench.digi.dev/v1/cams:

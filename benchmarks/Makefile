@@ -4,7 +4,11 @@
 # - make graph (create the digi-graph)
 # - make run (start benchmarks)
 .PHONY: graph stop run
-graph:
+measure:
+	cd digis/measure; \
+	kubectl apply -f crd.yaml; \
+	kubectl apply -f test/cr.yaml
+graph: | measure
 	# construct digi-graph
 	# assume the lamp is already running
 	cd digis; \
@@ -13,7 +17,8 @@ graph:
 	kubectl get rooms room-test -oyaml | kubectl neat
 stop:
 	cd digis; \
-	dq stop room room-test || true
-	dq stop lamp lamp-test || true
+	dq stop room room-test || true; \
+	dq stop lamp lamp-test || true; \
+	cd measure/test; kubectl delete -f cr.yaml || true
 run:
 	python cli.py
