@@ -1,10 +1,14 @@
 group: bench.digi.dev
 version: v1
 kind: Room
+meta:
+  forward_value: number
+  backward_value: number
 control:
   brightness: number
 obs:
-  reason: string
+  forward_ts: number
+  backward_ts: number
   objects:
     openapi:
       items:

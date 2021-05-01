@@ -2,6 +2,8 @@ group: bench.digi.dev
 version: v1
 kind: Lamp
 meta:
+  forward_value: number
+  backward_value: number
   endpoint: string
   poll_interval: number
   discover_retry: number
@@ -9,4 +11,5 @@ control:
   power: string
   brightness: number
 obs:
-  reason: string
+  forward_ts: number
+  backward_ts: number

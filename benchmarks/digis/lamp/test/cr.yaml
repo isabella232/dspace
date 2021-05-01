@@ -3,10 +3,14 @@ kind: Lamp
 metadata:
   name: lamp-test
 spec:
-  meta:
-    endpoint: d0:73:d5:5b:bb:fd
   control:
     power:
-      intent: "off"
+      intent: "on"
     brightness:
       intent: 0.8
+  meta:
+    forward_value: 0.1
+    backward_value: 0.1
+    endpoint: d0:73:d5:5b:bb:fd
+    poll_interval: 0.1
+    discover_retry: 3

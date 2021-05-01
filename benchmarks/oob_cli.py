@@ -8,7 +8,7 @@ import logging
 
 import kopf
 import digi.util as util
-from digi.util import patch_spec, get_spec, deep_get
+from digi.util import patch_spec
 
 room = ("bench.digi.dev", "v1", "rooms", "room-test", "default")
 lamp = ("bench.digi.dev", "v1", "lamps", "lamp-test", "default")
@@ -38,8 +38,49 @@ def send_request(auri, s: dict):
         exit()
 
 
+@kopf.on.update(*room[:3], **_kwargs)
+def h_room(spec, *args, **kwargs):
+    global measure
+    _, _ = args, kwargs
+
+    b = spec["control"]["brightness"]
+    if b["intent"] == ROOM_INTENT:
+        measure["forward_root"] = time.time()
+
+    if b["status"] == ROOM_STATUS:
+        _t = time.time()
+        measure["backward_root"] = _t
+        measure["fulfill"] = _t
+        measure["end"] = _t
+
+
+@kopf.on.update(*lamp[:3], **_kwargs)
+def h_lamp(spec, *args, **kwargs):
+    global measure
+    _, _ = args, kwargs
+
+    b = spec["control"]["brightness"]
+    if b["intent"] == LAMP_INTENT:
+        measure["forward_leaf"] = time.time()
+
+    if b["status"] == LAMP_STATUS:
+        measure["backward_leaf"] = time.time()
+
+
+@kopf.on.update(*cam[:3], **_kwargs)
+def h_cam(spec, *args, **kwargs):
+    global measure
+    _, _ = args, kwargs
+
+
+@kopf.on.update(*scene[:3], **_kwargs)
+def h_scene(spec, *args, **kwargs):
+    global measure
+    _, _ = args, kwargs
+
+
 def benchmark_room_lamp():
-    global measure, room, lamp
+    global measure
     measure = dict()
     measure = {
         "start": time.time(),
@@ -55,7 +96,7 @@ def benchmark_room_lamp():
     send_request(room, {
         "control": {
             "brightness": {
-                "intent": ROOM_INTENT
+                "intent": ROOM_STATUS
             }
         }
     })
@@ -65,20 +106,9 @@ def benchmark_room_lamp():
     # wait until results are ready
     while True:
         pp.pprint(measure)
+        time.sleep(5)
         if all(v is not None for v in measure.values()):
             break
-        time.sleep(5)
-
-        room_spec, _, _ = get_spec(*room)
-        lamp_spec, _, _ = get_spec(*lamp)
-
-        # XXX simplify this mess
-        measure["forward_root"] = deep_get(room_spec, "obs.forward_ts")
-        measure["forward_leaf"] = deep_get(lamp_spec, "obs.forward_ts")
-        measure["backward_root"] = deep_get(room_spec, "obs.backward_ts")
-        measure["backward_leaf"] = deep_get(lamp_spec, "obs.backward_ts")
-        measure["fulfill"] = deep_get(room_spec, "obs.backward_ts")
-        measure["end"] = deep_get(room_spec, "obs.backward_ts")
 
     # post proc
     return {

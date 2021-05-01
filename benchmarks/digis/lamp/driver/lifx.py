@@ -3,15 +3,23 @@ from lifxlan import LifxLAN
 
 
 def put(dev, power, color):
+    # TBD: in a single call
     dev.set_power(power)
     dev.set_color(color)
 
 
-def get(dev):
-    return {
-        "power": dev.get_power(),
-        "color": dev.get_color(),
-    }
+def get(dev, retry=3):
+    for _ in range(retry):
+        try:
+            status = {
+                "power": dev.get_power(),
+                "color": dev.get_color(),
+            }
+            return status
+        except Exception as e:
+            logger.info(f"lifx: unable to get status due to {e}")
+            continue
+    return None
 
 
 def discover(_id):

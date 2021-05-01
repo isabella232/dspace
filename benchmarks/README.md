@@ -1,7 +1,8 @@
 Latency breakdown (local)
 --
 
-Setup: 
+### Setup
+
 ```
      PHY        |     DSPACE     |      PHY
 human input --> | room -- lamp --|-- lifx lamp -> actuate
@@ -14,7 +15,8 @@ human input --> | room -- lamp --|-- lifx lamp -> actuate
 * Repeat it `K` times and collect metrics (below)
 * Runtime (apiserver, etcd, digis) and the cli are run locally on the same machine
 
-Metrics: 
+### Metrics
+
 * E2E latency (`E2E`): time between client send a request to update an intent until the client sees the status is set equal to the intent
 * Request latency (`RT`): time to complete and respond to a client request
 * Time-to-fulfillment (`TTF`): time it takes to full-fill/reconcile an intent
@@ -24,18 +26,23 @@ Metrics:
 
 > `TTF = FPT + BPT + DT`
 
-How to measure:
+To measure:
 * `E2E`: measured at the CLI, the elapsed time between the request submission to the status update (both at the parent)
 * `RT`: measured at the CLI, the elapsed time betwen the request submission to receiving the response
 * `FPT`: measure the timestamps at the root (when the intent is written) and the leaf digi (after setting the device's setpoint)
 * `BPT`: measure the timestamps at the leaf (when the status update is received at the device) and the root digi (after setting the root's status)
 * `DT`: measure at the leaf digi for the elapsed time between setting the device setpoint and receiving its status update
 
+###Results
+
+
+
+
 
 Remote deployment
 --
 
-Setup:
+###Setup
 ```
      PHY        |     DSPACE     |      PHY
 human input --> | room -- lamp --|-- lifx lamp -> actuate
@@ -46,7 +53,8 @@ human input --> | room -- lamp --|-- lifx lamp -> actuate
 ```
 * Same as the local setup except the runtime components run in the cloud
 
-Metrics:
+###Metrics
+
 * Same as in the local setup; plus:
 * Network latency (in-band or out-of-band/ping measurements)
 * Bandwidth consumption (total bytes), measured at the network interface on the cloud machine
@@ -54,7 +62,7 @@ Metrics:
 Hybrid deployment
 --
 
-Setup
+###Setup
 ```
      PHY        |      DSPACE       |      PHY
 human input --> | room -- lamp ---- |-- lifx lamp -> actuate
@@ -66,14 +74,14 @@ human input --> | room -- lamp ---- |-- lifx lamp -> actuate
 ```
 * Same as the remote setup except the cam and scene digis are run on-prem
 
-Metrics:
+###Metrics
 * Same as the remote setup
 
- 
+
 Throughput (local)
 --
 
-Setup:
+###Setup
 ```
 parent (room1) - child (mock lamp1)
 parent (room2) - child (mock lamp2)
@@ -85,7 +93,7 @@ parent (room2) - child (mock lamp2)
 HL abstraction scalability
 --
 
-Setup:
+###Setup
 ```
 parent (room) - child (mock lamp1)
               \ child (mock lamp2)

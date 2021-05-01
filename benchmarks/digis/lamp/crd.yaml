@@ -42,17 +42,23 @@ spec:
                 type: object
               meta:
                 properties:
+                  backward_value:
+                    type: number
                   discover_retry:
                     type: number
                   endpoint:
                     type: string
+                  forward_value:
+                    type: number
                   poll_interval:
                     type: number
                 type: object
               obs:
                 properties:
-                  reason:
-                    type: string
+                  backward_ts:
+                    type: number
+                  forward_ts:
+                    type: number
                 type: object
             type: object
         type: object

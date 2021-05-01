@@ -2,7 +2,6 @@ import sys
 import time
 import threading
 import random
-import os
 
 import digi
 import digi.on as on
@@ -14,13 +13,7 @@ Mock scene digilake generates random objects if a url is provided.
 
 _stop_flag = False
 
-auri = {
-    "g": os.environ["GROUP"],
-    "v": os.environ["VERSION"],
-    "r": os.environ["PLURAL"],
-    "n": os.environ["NAME"],
-    "ns": os.environ["NAMESPACE"],
-}
+auri = digi.auri
 
 
 def gen_objects():

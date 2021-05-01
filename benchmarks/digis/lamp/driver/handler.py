@@ -1,9 +1,8 @@
 import digi
 import digi.on as on
 from digi import logger
-from digi.util import deep_get, patch_spec
+from digi.util import deep_get, patch_spec, deep_set
 
-import os
 import time
 import threading
 import lifx
@@ -40,11 +39,15 @@ convert = {
 
 
 class _Poll(threading.Thread):
-    def __init__(self, dev, interval=0.1):
+    def __init__(self, dev, interval=0.1, backward_value=0):
         threading.Thread.__init__(self)
         self.dev = dev
         self.interval = interval
         self.stop_flag = False
+
+        # benchmark
+        self.backward_value = backward_value
+        self._observed_backward = False
 
     def run(self):
         while True:
@@ -52,18 +55,28 @@ class _Poll(threading.Thread):
                 break
 
             status = lifx.get(self.dev)
+            if status is None:
+                continue
             p, b = status.get("power", {}), status.get("color", {})[2]
+            p, b = convert["power"]["from"](p), convert["brightness"]["from"](b)
 
-            resp, e = patch_spec(*digi.auri, {
+            patch = {
                 "control": {
                     "power": {
-                        "status": convert["power"]["from"](p)
+                        "status": p,
                     },
                     "brightness": {
-                        "status": convert["brightness"]["from"](b)
+                        "status": b,
                     },
                 }
-            })
+            }
+
+            # benchmark
+            if b == self.backward_value and not self._observed_backward:
+                deep_set(patch, "obs.backward_ts", time.time(), create=True)
+                self._observed_backward = True
+
+            resp, e = patch_spec(*digi.auri, patch)
             if e is not None:
                 logger.error(f"unable to update status {e}")
 
@@ -72,7 +85,7 @@ class _Poll(threading.Thread):
 
 # status
 @on.meta
-def h0(sv):
+def h0(sv, pv):
     e = sv.get("endpoint", None)
     if e is None:
         return
@@ -90,13 +103,14 @@ def h0(sv):
         _poll.stop_flag = True
 
     _p = _Poll(dev=_dev,
-               interval=sv.get("poll_interval", 0.5))
+               interval=sv.get("poll_interval", 0.5),
+               backward_value=deep_get(pv, "meta.backward_value"))
     _p.start()
 
 
 # intent
 @on.control
-def h1(sv):
+def h1(sv, pv):
     global _dev
     if _dev is None:
         return
@@ -106,12 +120,17 @@ def h1(sv):
     color = list(status.get("color", [1, 1, 1, 1]))
 
     p, b = deep_get(sv, "power.intent"), deep_get(sv, "brightness.intent")
+
     if p is not None:
         power = convert["power"]["to"](p)
     if b is not None:
         color[2] = convert["brightness"]["to"](b)
 
-    # TBD: in a single call
+    # benchmark
+    logger.info(f"DEBUG: {b} {pv}")
+    if b == pv["meta"]["forward_value"] and deep_get(pv, "obs.forward_ts") is None:
+        deep_set(pv, "obs.forward_ts", time.time(), create=True)
+
     lifx.put(_dev, power, color)
 
 

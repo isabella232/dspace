@@ -3,8 +3,9 @@ kind: Room
 metadata:
   name: {{ .Values.name }}
 spec:
+  meta:
+    forward_value: 0.1
+    backward_value: 0.1
   control:
     brightness:
       intent: 0.8
-    mode:
-      intent: idle

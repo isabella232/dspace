@@ -1,9 +1,9 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: rooms.mock.digi.dev
+  name: rooms.bench.digi.dev
 spec:
-  group: mock.digi.dev
+  group: bench.digi.dev
   names:
     kind: Room
     listKind: RoomList
@@ -25,13 +25,6 @@ spec:
             properties:
               control:
                 properties:
-                  ambiance_color:
-                    properties:
-                      intent:
-                        type: string
-                      status:
-                        type: string
-                    type: object
                   brightness:
                     properties:
                       intent:
@@ -39,79 +32,17 @@ spec:
                       status:
                         type: number
                     type: object
-                  mode:
-                    properties:
-                      intent:
-                        type: string
-                      status:
-                        type: string
-                    type: object
                 type: object
               meta:
                 properties:
-                  modeConfig:
-                    additionalProperties:
-                      properties:
-                        brightness:
-                          type: number
-                        power:
-                          type: string
-                      type: object
-                    type: object
+                  backward_value:
+                    type: number
+                  forward_value:
+                    type: number
                 type: object
               mount:
                 properties:
-                  mock.digi.dev/v1/colorlamps:
-                    additionalProperties:
-                      properties:
-                        generation:
-                          type: number
-                        mode:
-                          type: string
-                        spec: &id001
-                          properties:
-                            control:
-                              properties:
-                                brightness:
-                                  properties:
-                                    intent:
-                                      type: number
-                                    status:
-                                      type: number
-                                  type: object
-                                hue:
-                                  properties:
-                                    intent:
-                                      type: number
-                                    status:
-                                      type: number
-                                  type: object
-                                power:
-                                  properties:
-                                    intent:
-                                      type: number
-                                    status:
-                                      type: number
-                                  type: object
-                                saturation:
-                                  properties:
-                                    intent:
-                                      type: number
-                                    status:
-                                      type: number
-                                  type: object
-                              type: object
-                            obs:
-                              properties:
-                                reason:
-                                  type: string
-                              type: object
-                          type: object
-                        status:
-                          type: string
-                      type: object
-                    type: object
-                  mock.digi.dev/v1/motionsensors:
+                  bench.digi.dev/v1/cams:
                     additionalProperties:
                       properties:
                         generation:
@@ -122,6 +53,20 @@ spec:
                           properties:
                             control:
                               properties:
+                                angle:
+                                  properties:
+                                    intent:
+                                      type: number
+                                    status:
+                                      type: number
+                                  type: object
+                                endpoint:
+                                  properties:
+                                    intent:
+                                      type: string
+                                    status:
+                                      type: string
+                                  type: object
                                 sensitivity:
                                   properties:
                                     intent:
@@ -132,10 +77,6 @@ spec:
                               type: object
                             obs:
                               properties:
-                                battery_level:
-                                  type: string
-                                last_triggered_time:
-                                  type: number
                                 reason:
                                   type: string
                               type: object
@@ -144,7 +85,7 @@ spec:
                           type: string
                       type: object
                     type: object
-                  mock.digi.dev/v1/unilamps:
+                  bench.digi.dev/v1/lamps:
                     additionalProperties:
                       properties:
                         generation:
@@ -170,63 +111,38 @@ spec:
                                       type: string
                                   type: object
                               type: object
-                            mount:
+                            meta:
                               properties:
-                                mock.digi.dev/v1/colorlamps:
-                                  additionalProperties:
-                                    properties:
-                                      generation:
-                                        type: number
-                                      mode:
-                                        type: string
-                                      spec: *id001
-                                      status:
-                                        type: string
-                                    type: object
-                                  type: object
-                                mock.digi.dev/v1/lamps:
-                                  additionalProperties:
-                                    properties:
-                                      generation:
-                                        type: number
-                                      mode:
-                                        type: string
-                                      spec:
-                                        properties:
-                                          control:
-                                            properties:
-                                              brightness:
-                                                properties:
-                                                  intent:
-                                                    type: number
-                                                  status:
-                                                    type: number
-                                                type: object
-                                              power:
-                                                properties:
-                                                  intent:
-                                                    type: string
-                                                  status:
-                                                    type: string
-                                                type: object
-                                            type: object
-                                          obs:
-                                            properties:
-                                              reason:
-                                                type: string
-                                            type: object
-                                        type: object
-                                      status:
-                                        type: string
-                                    type: object
-                                  type: object
+                                backward_value:
+                                  type: number
+                                discover_retry:
+                                  type: number
+                                endpoint:
+                                  type: string
+                                forward_value:
+                                  type: number
+                                poll_interval:
+                                  type: number
                               type: object
                             obs:
                               properties:
-                                reason:
-                                  type: string
+                                backward_ts:
+                                  type: number
+                                forward_ts:
+                                  type: number
                               type: object
                           type: object
+                        status:
+                          type: string
+                      type: object
+                    type: object
+                  bench.digi.dev/v1/scenes:
+                    additionalProperties:
+                      properties:
+                        generation:
+                          type: number
+                        mode:
+                          type: string
                         status:
                           type: string
                       type: object
@@ -234,6 +150,10 @@ spec:
                 type: object
               obs:
                 properties:
+                  backward_ts:
+                    type: number
+                  forward_ts:
+                    type: number
                   objects:
                     items:
                       additionalProperties:
@@ -249,19 +169,6 @@ spec:
                         type: object
                       type: object
                     type: array
-                  reason:
-                    type: string
-                type: object
-              reflex:
-                additionalProperties:
-                  properties:
-                    policy:
-                      type: string
-                    priority:
-                      type: number
-                    processor:
-                      type: string
-                  type: object
                 type: object
             type: object
         type: object
