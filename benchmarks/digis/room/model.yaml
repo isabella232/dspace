@@ -1,9 +1,6 @@
 group: bench.digi.dev
 version: v1
 kind: Room
-meta:
-  forward_value: number
-  backward_value: number
 control:
   brightness: number
 obs:

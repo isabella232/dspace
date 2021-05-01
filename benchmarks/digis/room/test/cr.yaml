@@ -3,9 +3,6 @@ kind: Room
 metadata:
   name: room-test
 spec:
-  meta:
-    forward_value: 0.1
-    backward_value: 0.1
   control:
     brightness:
       intent: 0.8

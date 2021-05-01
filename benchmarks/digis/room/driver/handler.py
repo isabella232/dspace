@@ -3,17 +3,25 @@ import time
 import digi
 from digi import on, logger
 from digi.view import TypeView, DotView
-from digi.util import deep_get, deep_set
+from digi.util import deep_get, deep_set, patch_spec
+
+_measure = ("bench.digi.dev", "v1", "measures", "measure-test", "default")
+_forward_set = False
+_backward_set = False
 
 
 @on.mount
 @on.control
 def h(proc_view):
     # benchmark
-    if deep_get(proc_view, "control.brightness.intent") \
-            == deep_get(proc_view, "meta.forward_value", "") \
-            and deep_get(proc_view, "obs.forward_ts") is None:
-        deep_set(proc_view, "obs.forward_ts", time.time(), create=True)
+    global _forward_set
+    if deep_get(proc_view, "control.brightness.intent") == 0.1:
+        resp, e = patch_spec(*_measure, {
+            "obs": {
+                "forward_root": time.time()
+            }
+        })
+        _forward_set = True
 
     with TypeView(proc_view) as tv, DotView(tv) as dv:
         room_brightness = dv.root.control.brightness
@@ -29,10 +37,14 @@ def h(proc_view):
             _l.control.brightness.intent = room_brightness.intent / len(active_lamps)
 
     # benchmark
-    if deep_get(proc_view, "control.brightness.status") \
-            == deep_get(proc_view, "meta.backward_value", "") \
-            and deep_get(proc_view, "obs.backward_ts") is None:
-        deep_set(proc_view, "obs.backward_ts", time.time(), create=True)
+    global _backward_set
+    if deep_get(proc_view, "control.brightness.status") == 0.1:
+        patch_spec(*_measure, {
+            "obs": {
+                "backward_root": time.time()
+            }
+        })
+        _backward_set = True
 
 
 if __name__ == '__main__':

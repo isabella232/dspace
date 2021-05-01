@@ -1,0 +1,8 @@
+group: bench.digi.dev
+image: local/measure:latest
+imagepull: Always
+mounter: false
+name: measure
+namespace: default
+plural: measures
+version: v1

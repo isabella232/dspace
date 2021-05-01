@@ -1,0 +1,8 @@
+group: bench.digi.dev
+version: v1
+kind: Measure
+obs:
+  forward_root: number
+  backward_root: number
+  forward_leaf: number
+  backward_leaf: number

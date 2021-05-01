@@ -1,0 +1,10 @@
+apiVersion: bench.digi.dev/v1
+kind: Measure
+metadata:
+  name: \{\{ .Values.name \}\}
+spec:
+  obs:
+    backward_leaf: -1
+    backward_root: -1
+    forward_leaf: -1
+    forward_root: -1
