@@ -4,11 +4,8 @@ This is a mock CLI for sending requests for benchmarks.
 
 import time
 import pprint as pp
-import logging
 
-import kopf
-import digi.util as util
-from digi.util import patch_spec, get_spec, deep_get
+from digi.util import patch_spec, get_spec
 
 room_gvr = ("bench.digi.dev", "v1", "rooms", "room-test", "default")
 measure_gvr = ("bench.digi.dev", "v1", "measures", "measure-test", "default")
@@ -21,11 +18,6 @@ LAMP_STATUS = 0.1
 
 measure = None
 
-_registry = util.KopfRegistry()
-_kwargs = {
-    "registry": _registry,
-}
-
 
 def send_request(auri, s: dict):
     global measure
@@ -36,27 +28,28 @@ def send_request(auri, s: dict):
         exit()
 
 
-def benchmark_room_lamp():
+def benchmark_room_lamp(root_intent=ROOM_INTENT, skip_result=False):
     global measure
     measure = dict()
     measure = {
         "start": time.time(),
-        "request": None,
-        "forward_root": None,
+        # "request": None,
+        # "forward_root": None,
+        # "backward_root": None,
         "forward_leaf": None,
-        "backward_root": None,
         "backward_leaf": None,
     }
 
     send_request(room_gvr, {
         "control": {
             "brightness": {
-                "intent": ROOM_INTENT
+                "intent": root_intent
             }
         }
     })
 
-    measure["request"] = time.time()
+    if skip_result:
+        return {}
 
     # wait until results are ready
     while True:
@@ -65,51 +58,39 @@ def benchmark_room_lamp():
 
         measure_spec, _, _ = get_spec(*measure_gvr)
         measure.update(measure_spec["obs"])
-        pp.pprint(measure)
-
-        time.sleep(3)
-
+    now = time.time()
+    pp.pprint(measure)
     # post proc
     return {
-        "rt": measure["request"] - measure["start"],
-        "ttf": measure["backward_root"] - measure["forward_root"],
-        "fpt": measure["forward_leaf"] - measure["forward_root"],
-        "bpt": measure["backward_root"] - measure["backward_leaf"],
+        "ttf": now - measure["start"],
+        "fpt": measure["forward_leaf"] - measure["start"],
+        "bpt": now - measure["backward_leaf"],
         "dt": measure["backward_leaf"] - measure["forward_leaf"],
     }
-
-
-def benchmark_room_scene():
-    # TBD
-    pass
-
-
-def init():
-    util.run_operator(_registry, log_level=logging.INFO)
-
-    # assume the digi-graph has
-    # been created with the default
-    # brightness of the room set to
-    # 0.8
-    ...
 
 
 def reset():
     global measure
     measure = None
-    send_request(room_gvr, {
-        "control": {
-            "brightness": {
-                "intent": ROOM_ORIG_INTENT
-            }
+
+    send_request(measure_gvr, {
+        "obs": {
+            # "forward_root": -1,
+            # "backward_root": -1,
+            "forward_leaf": -1,
+            "backward_leaf": -1,
         }
     })
 
 
 if __name__ == '__main__':
-    init()
-    # result = benchmark_room_lamp()
-    # reset()
-    # time.sleep(5)
-    result = benchmark_room_lamp()
+    # warm-up
+    benchmark_room_lamp(root_intent=0.5, skip_result=True)
+    print("warmed up")
+    time.sleep(5)
+
+    reset()
+
+    time.sleep(5)
+    result = benchmark_room_lamp(root_intent=ROOM_INTENT)
     pp.pprint(result)

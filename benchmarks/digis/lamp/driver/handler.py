@@ -43,7 +43,7 @@ convert = {
 
 
 class _Poll(threading.Thread):
-    def __init__(self, dev, interval=0.1):
+    def __init__(self, dev, interval=0.01):
         threading.Thread.__init__(self)
         self.dev = dev
         self.interval = interval
@@ -83,7 +83,6 @@ class _Poll(threading.Thread):
                         "backward_leaf": time.time()
                     }
                 })
-                logger.info(f"BENCH backward {b} {e}")
                 if e is None:
                     _backward_set = True
 
@@ -92,7 +91,7 @@ class _Poll(threading.Thread):
 
 # status
 @on.meta
-def h0(sv, pv):
+def h0(sv):
     e = sv.get("endpoint", None)
     if e is None:
         return
@@ -110,7 +109,7 @@ def h0(sv, pv):
         _poll.stop_flag = True
 
     _p = _Poll(dev=_dev,
-               interval=sv.get("poll_interval", 0.5))
+               interval=sv.get("poll_interval", 0.01))
     _p.start()
 
 
@@ -129,7 +128,6 @@ def h1(sv, pv):
                 "forward_leaf": time.time()
             }
         })
-        logger.info(f"BENCH forward {e}")
         if e is None:
             _forward_set = True
 

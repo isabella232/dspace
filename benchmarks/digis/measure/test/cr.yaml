@@ -5,6 +5,6 @@ metadata:
 spec:
   obs:
     backward_leaf: -1
-    backward_root: -1
+#    backward_root: -1
     forward_leaf: -1
-    forward_root: -1
+#    forward_root: -1

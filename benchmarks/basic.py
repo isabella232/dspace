@@ -46,7 +46,6 @@ def bench_kopf():
     @kopf.on.update(*room[:3], **_kwargs)
     def h_room(*args, **kwargs):
         # logging.error(f"update: {time.time() - start}")
-        print(f"UPDATE: {time.time()}")
         print(f"update: {time.time() - start}")
 
     # run_operator(_registry, log_level=logging.DEBUG)
@@ -56,6 +55,7 @@ def bench_kopf():
     start = time.time()
 
     api = kubernetes.client.CustomObjectsApi()
+
     def send():
         resp = api.patch_namespaced_custom_object(group="bench.digi.dev",
                                                   version="v1",
@@ -69,13 +69,11 @@ def bench_kopf():
                                                       },
                                                   },
                                                   )
-        print("DONE SENDING", time.time())
 
     send()
 
     time.sleep(2)
     start = time.time()
-    print("START", start)
     send()
 
     time.sleep(2)
@@ -84,49 +82,50 @@ def bench_kopf():
 
     time.sleep(3600)
 
+
 def bench_k8s():
     api = kubernetes.client.CustomObjectsApi()
     coreapi = kubernetes.client.CoreV1Api()
     try:
-        # start = time.time()
-        # coreapi.patch_namespaced_pod(
-        #     namespace="default",
-        #     name="room-test-96b78c8bf-nvrct",
-        #     body={
-        #         "spec": {},
-        #     },
-        # )
-        # print("pod", time.time() - start)
+        start = time.time()
+        coreapi.patch_namespaced_pod(
+            namespace="default",
+            name="room-test-96b78c8bf-nvrct",
+            body={
+                "spec": {},
+            },
+        )
+        print("pod", time.time() - start)
 
         start = time.time()
-        resp = api.patch_namespaced_custom_object(group="bench.digi.dev",
-                                                  version="v1",
-                                                  namespace="default",
-                                                  name="room-test",
-                                                  plural="rooms",
-                                                  body={
-                                                      "spec": {},
-                                                  },
-                                                  )
+        _ = api.patch_namespaced_custom_object(group="bench.digi.dev",
+                                               version="v1",
+                                               namespace="default",
+                                               name="room-test",
+                                               plural="rooms",
+                                               body={
+                                                   "spec": {},
+                                               },
+                                               )
         print("room", time.time() - start)
-
-        # api = kubernetes.client.CustomObjectsApi()
 
         start = time.time()
-        resp = api.patch_namespaced_custom_object(group="bench.digi.dev",
-                                                  version="v1",
-                                                  namespace="default",
-                                                  name="room-test",
-                                                  plural="rooms",
-                                                  body={
-                                                      "spec": {},
-                                                  },
-                                                  )
+        _ = api.patch_namespaced_custom_object(group="bench.digi.dev",
+                                               version="v1",
+                                               namespace="default",
+                                               name="room-test",
+                                               plural="rooms",
+                                               body={
+                                                   "spec": {},
+                                               },
+                                               )
         print("room", time.time() - start)
+
+        # TBD benchmark get_spec
     except Exception as e:
         print(e)
 
 
 if __name__ == '__main__':
-    # bench_k8s()
+    bench_k8s()
     bench_kopf()
