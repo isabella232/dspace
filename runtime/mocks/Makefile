@@ -18,6 +18,10 @@ ifndef TAG
 override TAG = mock
 endif
 
+ifndef IMAGEBUILD
+override IMAGEBUILD =
+endif
+
 
 kc := kubectl
 digi_src := $(GOPATH)/src/digi.dev/dspace
@@ -70,7 +74,7 @@ prepare:
 .PHONY: build
 build: | prepare gen patch
 	rsync $(driver_handler) $(build_dir)/ || true
-	cd $(build_dir); docker build -t $(REPO)/$(KIND):$(TAG) -f deploy/image/Dockerfile . || true
+	cd $(build_dir); docker build $(IMAGEBUILD) -t $(REPO)/$(KIND):$(TAG) -f deploy/image/Dockerfile . || true
 	docker push $(REPO)/$(KIND):$(TAG)|| true
 	rm -r $(build_dir) || true
 
