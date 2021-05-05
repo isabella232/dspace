@@ -33,7 +33,7 @@ To measure:
 * `BPT`: measure the timestamps at the leaf (when the status update is received at the device) and the root digi (after setting the root's status)
 * `DT`: measure at the leaf digi for the elapsed time between setting the device setpoint and receiving its status update
 
-###Results
+### Results
 
 
 
@@ -42,7 +42,7 @@ To measure:
 Remote deployment
 --
 
-###Setup
+### Setup
 ```
      PHY        |     DSPACE     |      PHY
 human input --> | room -- lamp --|-- lifx lamp -> actuate
@@ -53,7 +53,7 @@ human input --> | room -- lamp --|-- lifx lamp -> actuate
 ```
 * Same as the local setup except the runtime components run in the cloud
 
-###Metrics
+### Metrics
 
 * Same as in the local setup; plus:
 * Network latency (in-band or out-of-band/ping measurements)
@@ -62,7 +62,7 @@ human input --> | room -- lamp --|-- lifx lamp -> actuate
 Hybrid deployment
 --
 
-###Setup
+### Setup
 ```
      PHY        |      DSPACE       |      PHY
 human input --> | room -- lamp ---- |-- lifx lamp -> actuate
@@ -74,14 +74,14 @@ human input --> | room -- lamp ---- |-- lifx lamp -> actuate
 ```
 * Same as the remote setup except the cam and scene digis are run on-prem
 
-###Metrics
+### Metrics
 * Same as the remote setup
 
 
 Throughput (local)
 --
 
-###Setup
+### Setup
 ```
 parent (room1) - child (mock lamp1)
 parent (room2) - child (mock lamp2)
@@ -93,7 +93,7 @@ parent (room2) - child (mock lamp2)
 HL abstraction scalability
 --
 
-###Setup
+### Setup
 ```
 parent (room) - child (mock lamp1)
               \ child (mock lamp2)
