@@ -1,0 +1,6 @@
+group: digi.dev
+version: v1
+kind: Ird
+# TBD: allow gen to handle plain object for mount
+# and x-kubernetes-preserve-unknown-fields: true
+mount: object

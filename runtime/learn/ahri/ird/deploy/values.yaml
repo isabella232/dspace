@@ -1,0 +1,8 @@
+group: digi.dev
+image: local/ird:latest
+imagepull: Always
+mounter: false
+name: ird
+namespace: default
+plural: irds
+version: v1
