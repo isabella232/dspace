@@ -1,0 +1,9 @@
+group: digi.dev
+version: v1
+kind: Imitation
+data:
+  input:
+    state: object
+    action: object
+  output:
+    action: string

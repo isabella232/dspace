@@ -1,0 +1,4 @@
+apiVersion: digi.dev/v1
+kind: Imitation
+metadata:
+  name: imitation-test

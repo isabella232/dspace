@@ -1,4 +1,0 @@
-kopf==0.28.03
-kubernetes
-pyyaml
-inflection

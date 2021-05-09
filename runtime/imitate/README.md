@@ -7,9 +7,7 @@ The `imitator` meta actor implements logic to learn how a driver/app. actors mak
 
 An imitate model looks like:
 
-`
-XXX
-`
+> TBD
 
 Despite the name, The goal is not to learn to imitate the user; The goal is to learn a "policy" that interacts effectively with the user, making them happy.
 

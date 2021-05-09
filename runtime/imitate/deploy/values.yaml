@@ -1,0 +1,8 @@
+group: digi.dev
+image: local/imitation:latest
+imagepull: Always
+mounter: false
+name: imitation
+namespace: default
+plural: imitations
+version: v1
