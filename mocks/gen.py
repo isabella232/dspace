@@ -212,8 +212,9 @@ def gen(name):
 
             for _n, t in src_attrs.items():
                 if not isinstance(t, str):
-                    assert type(t) is dict and "openapi" in t
-                    attrs[_n] = t["openapi"]
+                    # TBD refactor the gen rules
+                    assert isinstance(t, dict)
+                    attrs[_n] = t.get("openapi", t)
                 else:
                     attrs[_n] = yaml.load(_attr_tpl.format(name=_n, datatype=t),
                                           Loader=yaml.FullLoader)
